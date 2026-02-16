@@ -1,0 +1,41 @@
+{
+  "description": "Statblock-format för DoD 1991 monster och NPC:er",
+  "jsonFormat": {
+    "type": "statblock",
+    "name": "<Varelsenamn>",
+    "stats": {
+      "STY": "<int>",
+      "STO": "<int>",
+      "FYS": "<int>",
+      "SMI": "<int>",
+      "INT": "<int>",
+      "PSY": "<int>",
+      "KP": "<int>",
+      "SB": "<string, t.ex. '1T6'>"
+    },
+    "extraStats": {
+      "Förflyttning": "<string, t.ex. 'L12/F28'>",
+      "Naturligt skydd": "<string, t.ex. '4 poäng päls'>"
+    },
+    "other": {
+      "Hemvist": "<string>",
+      "Vanligthet": "<string>",
+      "Antal": "<string>"
+    },
+    "skills": {
+      "<Antal> <Vapen> (<Skada>)": "FV <int>",
+      "<Färdighet>": "<int>"
+    }
+  },
+  "markdownFormat": {
+    "grundegenskaper": "| Egenskap | Värde |\n|----------|-------|\n| STY | {value} |\n| FYS | {value} |\n| SMI | {value} |\n| INT | {value} |\n| PSY | {value} |\n| KAR | {value} |",
+    "färdigheter": "| Färdighet | FV |\n|-----------|-----|\n| {skill} | {value} |"
+  },
+  "primaryAttributes": ["STY", "STO", "FYS", "SMI", "INT", "PSY"],
+  "derivedAttributes": ["KP", "SB"],
+  "commonExtraStats": ["Förflyttning", "Naturligt skydd"],
+  "commonOther": ["Hemvist", "Vanligthet", "Antal"],
+  "backwardsCompatibility": {
+    "attributes": "Alias för 'stats' (äldre format)"
+  }
+}

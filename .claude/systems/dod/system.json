@@ -1,0 +1,45 @@
+{
+  "name": "Drakar och Demoner",
+  "shortName": "DoD",
+  "genre": "Fantasy",
+  "publisher": "Äventyrsspel / Riot Minds",
+  "editions": [
+    { "name": "Drakar och Demoner (1982)", "year": 1982, "system": "BRP" },
+    { "name": "Drakar och Demoner Expert (1985)", "year": 1985, "system": "BRP" },
+    { "name": "Drakar och Demoner (1991)", "year": 1991, "system": "BRP", "default": true },
+    { "name": "Drakar och Demoner Trudvang (2001)", "year": 2001, "system": "D20" },
+    { "name": "Drakar och Demoner (2023)", "year": 2023, "system": "Year Zero Engine" }
+  ],
+  "defaultEdition": "1991",
+  "attributes": {
+    "primary": ["STY", "FYS", "SMI", "INT", "PSY", "KAR"],
+    "derived": ["KP", "SB"],
+    "labels": {
+      "STY": "Styrka",
+      "FYS": "Fysik",
+      "SMI": "Smidighet",
+      "INT": "Intelligens",
+      "PSY": "Psyke",
+      "KAR": "Karisma",
+      "KP": "Kroppspoäng",
+      "SB": "Skadebonus"
+    },
+    "range": "3-18 (3T6)"
+  },
+  "skillSystem": {
+    "type": "percentile",
+    "label": "Färdighetsvärde (FV)",
+    "range": "1-20+",
+    "categories": ["Vapenstrider", "Rörelsefärdigheter", "Kommunikationsfärdigheter", "Kunskapsfärdigheter", "Magiska färdigheter"]
+  },
+  "combatTerms": {
+    "KP": "Kroppspoäng (hit points)",
+    "SB": "Skadebonus",
+    "SV": "Skyddsvärde (armor)",
+    "FV": "Färdighetsvärde (skill value)",
+    "Förflyttning": "Movement rate"
+  },
+  "magicSystem": "Besvärjelser med magipunkter",
+  "races": ["Människa", "Dvärg", "Alv", "Halvling"],
+  "era": "Medeltida fantasy, nordisk/skandinavisk atmosfär"
+}

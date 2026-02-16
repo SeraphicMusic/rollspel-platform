@@ -1,0 +1,148 @@
+{
+  "artists": {
+    "ackegard": {
+      "name": "Håkan Ackegård",
+      "period": "1980s-1990s",
+      "knownFor": ["Drakar och Demoner 1991", "Äventyrsspel", "Sagan om Ringen (Swedish edition)"],
+      "technique": "Pen and ink, crosshatching",
+      "colorPalette": "Black and white only",
+      "characteristics": [
+        "Extremely detailed crosshatching",
+        "Dramatic shadow work",
+        "Gothic medieval architecture",
+        "Grotesque creature design",
+        "High contrast compositions",
+        "Anatomically detailed figures"
+      ],
+      "promptModifiers": [
+        "black and white ink illustration",
+        "detailed crosshatching",
+        "dramatic shadows",
+        "Nordic fantasy aesthetic",
+        "dungeon crawler art style",
+        "medieval atmosphere",
+        "pen and ink technique",
+        "high contrast",
+        "intricate linework"
+      ],
+      "negativePrompts": [
+        "color",
+        "digital art",
+        "smooth gradients",
+        "anime style",
+        "cartoon"
+      ],
+      "exampleSubjects": [
+        "armored warriors in dark dungeons",
+        "grotesque trolls and monsters",
+        "mysterious wizards",
+        "medieval tavern scenes",
+        "dragon encounters"
+      ]
+    },
+    "bergting": {
+      "name": "Peter Bergting",
+      "period": "2000s-present",
+      "knownFor": ["The Portent", "Domovoi", "B.P.R.D.", "Conan"],
+      "technique": "Graphic novel style, bold linework",
+      "colorPalette": "Limited palette - muted earth tones with selective accent colors",
+      "characteristics": [
+        "Bold, heavy black areas",
+        "Dynamic compositions",
+        "Viking/Norse influences",
+        "Stylized but expressive",
+        "Moody atmospheres",
+        "Strong silhouettes"
+      ],
+      "promptModifiers": [
+        "graphic novel illustration",
+        "bold linework",
+        "heavy blacks",
+        "Nordic mythology",
+        "viking aesthetic",
+        "dynamic composition",
+        "stylized art",
+        "moody atmosphere",
+        "limited color palette",
+        "dark fantasy comic art"
+      ],
+      "negativePrompts": [
+        "photorealistic",
+        "pastel colors",
+        "cute",
+        "chibi",
+        "manga style"
+      ],
+      "exampleSubjects": [
+        "viking warriors",
+        "Norse gods",
+        "trolls in snowy forests",
+        "mythological beasts",
+        "dark fantasy heroes"
+      ]
+    },
+    "egerkrans": {
+      "name": "Johan Egerkrans",
+      "period": "2010s-present",
+      "knownFor": ["Nordiska väsen", "Drakar", "Nordiska gudar", "De döda", "Vaesen RPG"],
+      "technique": "Watercolor and digital painting",
+      "colorPalette": "Muted earth tones - browns, greens, grays with subtle warmth",
+      "characteristics": [
+        "Atmospheric watercolor washes",
+        "Soft, diffused lighting",
+        "Naturalistic creature design",
+        "Folklore authenticity",
+        "Mysterious, ethereal mood",
+        "Detailed textures (fur, feathers, bark)"
+      ],
+      "promptModifiers": [
+        "watercolor illustration",
+        "atmospheric",
+        "Scandinavian folklore",
+        "mystical mood",
+        "fairy tale illustration",
+        "ethereal lighting",
+        "muted earth tones",
+        "naturalistic fantasy",
+        "folklore creature",
+        "soft edges",
+        "book illustration quality"
+      ],
+      "negativePrompts": [
+        "harsh lighting",
+        "neon colors",
+        "anime",
+        "cartoon style",
+        "digital render"
+      ],
+      "exampleSubjects": [
+        "forest trolls",
+        "näcken by a lake",
+        "dragons in misty mountains",
+        "tomte in a barn",
+        "skogsrå in birch forest"
+      ]
+    }
+  },
+  "promptTemplates": {
+    "_note": "Use {subject}, {mood}, {composition}, {system_era} as template variables. {system_era} comes from systems/<system>/system.json 'era' field.",
+    "base": "Create a {style} illustration depicting {subject}. Setting: {system_era}.",
+    "ackegard": "Create a black and white ink illustration in the style of Swedish fantasy illustrator Håkan Ackegård. The subject is: {subject}. Setting: {system_era}. Use traditional pen and ink technique with detailed crosshatching, high contrast with dramatic shadows, Nordic atmosphere, and intricate line work. Mood: {mood}. Composition: {composition}.",
+    "bergting": "Create a stylized graphic novel illustration in the style of Swedish artist Peter Bergting (The Portent, Domovoi). The subject is: {subject}. Setting: {system_era}. Use bold, dynamic linework with heavy blacks, graphic novel aesthetic, Nordic mythology influences, limited muted color palette, and moody atmospheric backgrounds. Mood: {mood}. Composition: {composition}.",
+    "egerkrans": "Create a watercolor-style illustration in the manner of Swedish illustrator Johan Egerkrans (Nordiska väsen, Drakar). The subject is: {subject}. Setting: {system_era}. Use atmospheric watercolor technique with soft edges, Scandinavian folklore inspiration, mystical ethereal mood, muted earth tones, naturalistic creature design, and fairy tale book illustration quality. Mood: {mood}. Composition: {composition}."
+  },
+  "imagenSettings": {
+    "ackegard": {
+      "aspectRatio": "4:3",
+      "negativePrompt": "color, digital art, smooth gradients, anime, cartoon, photorealistic"
+    },
+    "bergting": {
+      "aspectRatio": "16:9",
+      "negativePrompt": "photorealistic, pastel colors, cute, chibi, manga, bright colors"
+    },
+    "egerkrans": {
+      "aspectRatio": "3:4",
+      "negativePrompt": "harsh lighting, neon colors, anime, cartoon, digital render, sharp edges"
+    }
+  }
+}

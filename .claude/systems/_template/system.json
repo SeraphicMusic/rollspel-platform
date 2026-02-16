@@ -1,0 +1,29 @@
+{
+  "name": "<Systemets fulla namn>",
+  "shortName": "<Kortnamn>",
+  "genre": "<Fantasy|Sci-fi|Postapokalyps|Horror|...>",
+  "publisher": "<Förlag>",
+  "editions": [
+    { "name": "<Utgåvans namn>", "year": 0, "system": "<Grundsystem>", "default": true }
+  ],
+  "defaultEdition": "<standard-utgåva>",
+  "attributes": {
+    "primary": ["<ATTR1>", "<ATTR2>"],
+    "derived": ["<DERIVED1>"],
+    "labels": {
+      "<ATTR1>": "<Fullständigt namn>",
+      "<ATTR2>": "<Fullständigt namn>"
+    },
+    "range": "<t.ex. 3-18 eller 2-5>"
+  },
+  "skillSystem": {
+    "type": "<percentile|dice-pool|modifier>",
+    "label": "<Vad kallas färdighetsvärdet>",
+    "range": "<Intervall>",
+    "categories": ["<Kategori1>", "<Kategori2>"]
+  },
+  "combatTerms": {},
+  "magicSystem": "<Beskrivning av magiksystem>",
+  "races": ["<Ras1>", "<Ras2>"],
+  "era": "<Beskrivning av tidsepok och atmosfär>"
+}

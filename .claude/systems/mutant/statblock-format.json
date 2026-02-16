@@ -1,0 +1,30 @@
+{
+  "description": "Statblock-format för Mutant: År Noll NPC:er och monster",
+  "jsonFormat": {
+    "type": "statblock",
+    "name": "<Varelsenamn>",
+    "stats": {
+      "STY": "<int 2-5>",
+      "KYL": "<int 2-5>",
+      "SMI": "<int 2-5>",
+      "SKP": "<int 2-5>"
+    },
+    "skills": {
+      "<Färdighet>": "<int 0-5>"
+    },
+    "mutations": ["<mutation1>", "<mutation2>"],
+    "gear": ["<utrustning1>", "<utrustning2>"],
+    "other": {
+      "Typ": "<Människa|Mutant|Robot|Djurmutant>",
+      "Arketyp": "<arketyp>",
+      "Skydd": "<int>"
+    }
+  },
+  "markdownFormat": {
+    "grundegenskaper": "| Egenskap | Värde |\n|----------|-------|\n| STY | {value} |\n| KYL | {value} |\n| SMI | {value} |\n| SKP | {value} |",
+    "färdigheter": "| Färdighet | Poäng |\n|-----------|-------|\n| {skill} | {value} |"
+  },
+  "primaryAttributes": ["STY", "KYL", "SMI", "SKP"],
+  "derivedAttributes": [],
+  "archetypes": ["Kämpe", "Hund", "Klockare", "Krossare", "Fixare", "Hanterare", "Jägare", "Slavdrivare"]
+}

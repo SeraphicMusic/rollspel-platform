@@ -1,0 +1,48 @@
+{
+  "name": "Mutant",
+  "shortName": "Mutant",
+  "genre": "Postapokalyps",
+  "publisher": "Free League Publishing",
+  "editions": [
+    { "name": "Mutant (1984)", "year": 1984, "system": "BRP" },
+    { "name": "Mutant 2: Undergångens arvtagare (1989)", "year": 1989, "system": "BRP" },
+    { "name": "Mutant: År Noll (2014)", "year": 2014, "system": "Year Zero Engine", "default": true },
+    { "name": "Mutant: Elysium (2017)", "year": 2017, "system": "Year Zero Engine" },
+    { "name": "Mutant: Mechatron (2018)", "year": 2018, "system": "Year Zero Engine" },
+    { "name": "Mutant: Ad Astra (2019)", "year": 2019, "system": "Year Zero Engine" }
+  ],
+  "defaultEdition": "År Noll",
+  "attributes": {
+    "primary": ["STY", "KYL", "SMI", "SKP"],
+    "derived": [],
+    "labels": {
+      "STY": "Styrka",
+      "KYL": "Kyla",
+      "SMI": "Smidighet",
+      "SKP": "Skärpa"
+    },
+    "range": "2-5"
+  },
+  "skillSystem": {
+    "type": "dice-pool",
+    "label": "Färdighetspoäng",
+    "range": "0-5",
+    "diceType": "T6",
+    "successOn": 6,
+    "categories": [
+      "Styrka-färdigheter (Slåss, Tvinga, Bära)",
+      "Kyla-färdigheter (Skjuta, Kämpa, Uthärda)",
+      "Smidighet-färdigheter (Smyga, Fly, Flyga)",
+      "Skärpa-färdigheter (Hitta, Begripa, Leda, Läka)"
+    ]
+  },
+  "combatTerms": {
+    "Skadepoäng": "Damage",
+    "Skydd": "Armor value",
+    "Kritisk skada": "Critical injury",
+    "Pushar": "Reroll failed dice (take mutation point)"
+  },
+  "magicSystem": "Mutationer (psi, biotronic, insekt, växt, djur etc.)",
+  "races": ["Människa", "Mutant", "Robot", "Djurmutant"],
+  "era": "Postapokalyptisk framtid, Skandinavien efter undergången"
+}

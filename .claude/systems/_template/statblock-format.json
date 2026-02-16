@@ -1,0 +1,16 @@
+{
+  "description": "Statblock-format för <System>",
+  "jsonFormat": {
+    "type": "statblock",
+    "name": "<Varelsenamn>",
+    "stats": {},
+    "skills": {},
+    "other": {}
+  },
+  "markdownFormat": {
+    "grundegenskaper": "| Egenskap | Värde |\n|----------|-------|\n| <ATTR> | {value} |",
+    "färdigheter": "| Färdighet | Värde |\n|-----------|-------|\n| {skill} | {value} |"
+  },
+  "primaryAttributes": [],
+  "derivedAttributes": []
+}

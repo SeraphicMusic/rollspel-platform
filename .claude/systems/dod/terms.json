@@ -1,0 +1,55 @@
+{
+  "description": "DoD-specifik terminologi och vanliga OCR-fel",
+  "terminology": {
+    "STY": "Styrka",
+    "FYS": "Fysik",
+    "SMI": "Smidighet",
+    "INT": "Intelligens",
+    "PSY": "Psyke",
+    "KAR": "Karisma",
+    "STO": "Storlek",
+    "KP": "Kroppspoäng",
+    "SB": "Skadebonus",
+    "SV": "Skyddsvärde",
+    "FV": "Färdighetsvärde",
+    "MP": "Magipunkter",
+    "BF": "Besvärjelseformler",
+    "EP": "Erfarenhetspoäng",
+    "SL": "Spelledare",
+    "RP": "Rollperson",
+    "SLP": "Spelledarperson"
+  },
+  "commonOcrErrors": {
+    "description": "Vanliga OCR-fel vid skanning av DoD-böcker",
+    "characterSubstitutions": {
+      "ö": ["o", "6"],
+      "å": ["a", "à"],
+      "ä": ["a", "à"],
+      "é": ["e"],
+      "ü": ["u"],
+      "1": ["l", "I"],
+      "0": ["O", "o"],
+      "rn": ["m"],
+      "ii": ["ü"],
+      "fi": ["fi (ligatur)"]
+    },
+    "commonMisreads": [
+      { "wrong": "Fardighet", "correct": "Färdighet" },
+      { "wrong": "Forflyttning", "correct": "Förflyttning" },
+      { "wrong": "Kroppspoang", "correct": "Kroppspoäng" },
+      { "wrong": "besvärjelse", "correct": "besvärjelse" },
+      { "wrong": "Svardskonst", "correct": "Svärdkonst" },
+      { "wrong": "aventyr", "correct": "äventyr" },
+      { "wrong": "halvling", "correct": "halvling" },
+      { "wrong": "dvarg", "correct": "dvärg" },
+      { "wrong": "trollkarl", "correct": "trollkarl" }
+    ],
+    "wordSplitting": "Ihopslagna ord vanliga vid smala kolumner"
+  },
+  "layoutTerms": {
+    "tvåkolumnslayout": "Vänster kolumn först, sedan höger",
+    "inramade_textrutor": "Äventyrsintroduktioner, boxade texter",
+    "kursiv_text": "Berättartext / flavor text",
+    "fet_text": "Viktiga termer och namn"
+  }
+}

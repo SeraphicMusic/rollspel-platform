@@ -1,0 +1,37 @@
+{
+  "description": "Mutant-specifik terminologi och vanliga OCR-fel",
+  "terminology": {
+    "STY": "Styrka",
+    "KYL": "Kyla",
+    "SMI": "Smidighet",
+    "SKP": "Skärpa",
+    "MP": "Mutationspoäng",
+    "KS": "Kritisk skada",
+    "RP": "Rotpoäng",
+    "SP": "Skadepoäng",
+    "SL": "Spelledare",
+    "Arken": "Spelarnas bostadsark",
+    "Zon": "Utforskningsområde",
+    "Artefakt": "Teknik från Förr",
+    "Skrot": "Valuta/resurser",
+    "Rot": "Förruttnelse/mutation",
+    "Push": "Slå om misslyckade tärningar"
+  },
+  "commonOcrErrors": {
+    "description": "Vanliga OCR-fel vid skanning av Mutant-böcker",
+    "characterSubstitutions": {
+      "ö": ["o"],
+      "å": ["a"],
+      "ä": ["a"],
+      "1": ["l", "I"],
+      "0": ["O"]
+    },
+    "commonMisreads": [
+      { "wrong": "Skarpa", "correct": "Skärpa" },
+      { "wrong": "Smabarnsalder", "correct": "Småbarnsålder" },
+      { "wrong": "Forr", "correct": "Förr" },
+      { "wrong": "artefakt", "correct": "artefakt" },
+      { "wrong": "Zonskarta", "correct": "Zonskarta" }
+    ]
+  }
+}
