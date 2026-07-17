@@ -1,0 +1,27 @@
+{
+  "id": "SYSTEM-ID",
+  "name": "Systemets fullständiga namn",
+  "aliases": ["SYSTEM-ID", "kortnamn"],
+  "genre": "Genre",
+  "publisher": "Förlag",
+  "editions": [
+    {"name": "Utgåvans namn", "year": 1990, "default": true}
+  ],
+  "default_edition": "1990",
+  "attributes": {
+    "names": ["ATTR1", "ATTR2"],
+    "labels": {"ATTR1": "Fullt namn", "ATTR2": "Fullt namn"},
+    "range": {"min": 1, "max": 40, "typical_min": 3, "typical_max": 18}
+  },
+  "derived_labels": {"KP": "Kroppspoäng"},
+  "derived_checks": [
+    {"field": "KP", "formula": "ATTR1 + ATTR2",
+     "note": "Aritmetisk korsvalidering; utelämna om formeln inte är exakt"}
+  ],
+  "skill_value": {
+    "style": "percent | fv | dice-pool",
+    "min": 0,
+    "max": 100,
+    "divisible_by": null
+  }
+}

@@ -1,0 +1,80 @@
+{
+  "aliases": [
+    "mutant",
+    "mutant2089",
+    "mutant 2089",
+    "mutant2",
+    "mutant 2"
+  ],
+  "attributes": {
+    "labels": {
+      "FYS": "Fysik",
+      "INT": "Intelligens",
+      "MST": "Mental Styrka",
+      "PER": "Personlighet",
+      "SMI": "Smidighet",
+      "STO": "Storlek",
+      "STY": "Styrka"
+    },
+    "names": [
+      "STY",
+      "STO",
+      "INT",
+      "FYS",
+      "PER",
+      "MST",
+      "SMI"
+    ],
+    "range": {
+      "max": 40,
+      "min": 1,
+      "typical_max": 18,
+      "typical_min": 3
+    }
+  },
+  "classes": [
+    "NOM",
+    "PSI",
+    "ROB",
+    "MUT"
+  ],
+  "default_edition": "2089",
+  "derived_checks": [
+    {
+      "field": "KP",
+      "formula": "STO + FYS"
+    },
+    {
+      "field": "Förflyttning",
+      "formula": "FYS + SMI"
+    }
+  ],
+  "derived_labels": {
+    "BGP": "Bakgrundspoäng",
+    "CL": "Chansläge",
+    "EP": "Erfarenhetspoäng",
+    "EV": "Eldavbrott",
+    "GCL": "Grundchansläge",
+    "KP": "Kroppspoäng",
+    "SB": "Skadebonus",
+    "SR": "Stridsrunda"
+  },
+  "editions": [
+    {
+      "default": true,
+      "name": "Mutant 2089",
+      "year": 1989
+    }
+  ],
+  "genre": "Cyberpunk/postapokalyps",
+  "id": "mutant2089",
+  "name": "Mutant 2089",
+  "publisher": "Äventyrsspel / Target Games",
+  "skill_value": {
+    "divisible_by": 5,
+    "max": 200,
+    "min": 0,
+    "note": "GCL/CL avrundas alltid till närmaste 5 %",
+    "style": "percent"
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "attribute_signature": [
+    "STY",
+    "STO",
+    "INT",
+    "FYS",
+    "PER",
+    "MST",
+    "SMI"
+  ],
+  "filename_tokens": [
+    "mutant",
+    "2089",
+    "svot",
+    "krim",
+    "techno",
+    "berlin"
+  ],
+  "strong_terms": [
+    "Mutant",
+    "Berlin City",
+    "EuroDollar",
+    "korporation",
+    "Mental Styrka",
+    "Grundchansläge",
+    "cybernetik",
+    "mutation"
+  ],
+  "weak_terms": [
+    "GCL",
+    "CL",
+    "KP",
+    "EV",
+    "PSI",
+    "MST",
+    "PER"
+  ]
+}

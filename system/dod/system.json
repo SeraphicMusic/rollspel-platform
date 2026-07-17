@@ -1,0 +1,137 @@
+{
+  "aliases": [
+    "dod",
+    "drakar",
+    "dod1991",
+    "drakar och demoner"
+  ],
+  "attributes": {
+    "labels": {
+      "FYS": "Fysik",
+      "INT": "Intelligens",
+      "KAR": "Karisma",
+      "PSY": "Psyke",
+      "SMI": "Smidighet",
+      "STO": "Storlek",
+      "STY": "Styrka"
+    },
+    "names": [
+      "STY",
+      "FYS",
+      "SMI",
+      "INT",
+      "PSY",
+      "KAR",
+      "STO"
+    ],
+    "range": {
+      "max": 40,
+      "min": 1,
+      "typical_max": 18,
+      "typical_min": 3
+    }
+  },
+  "default_edition": "1991",
+  "derived_checks": [
+    {
+      "editions": [
+        "1991"
+      ],
+      "field": "KP",
+      "formula": "ceil((FYS + STO) / 2)",
+      "note": "DoD 1991; äldre utgåvor använder andra formler"
+    }
+  ],
+  "derived_labels": {
+    "BV": "Brytvärde",
+    "CL": "Chansläge",
+    "FV": "Färdighetsvärde",
+    "KP": "Kroppspoäng",
+    "SB": "Skadebonus",
+    "SV": "Skyddsvärde"
+  },
+  "editions": [
+    {
+      "name": "Drakar och Demoner (1982)",
+      "year": 1982
+    },
+    {
+      "name": "Drakar och Demoner (1984, andra utgåvan)",
+      "year": 1984
+    },
+    {
+      "name": "Drakar och Demoner Expert (1985)",
+      "year": 1985
+    },
+    {
+      "default": true,
+      "name": "Drakar och Demoner (1991)",
+      "year": 1991
+    }
+  ],
+  "genre": "Fantasy",
+  "id": "dod",
+  "name": "Drakar och Demoner",
+  "publisher": "Äventyrsspel / Riot Minds",
+  "sb_table": {
+    "input": "STY + STO",
+    "rows": [
+      {
+        "bonus": "0",
+        "max": 26,
+        "min": 1
+      },
+      {
+        "bonus": "+1",
+        "max": 29,
+        "min": 27
+      },
+      {
+        "bonus": "+1T2",
+        "max": 32,
+        "min": 30
+      },
+      {
+        "bonus": "+1T4",
+        "max": 40,
+        "min": 33
+      },
+      {
+        "bonus": "+1T6",
+        "max": 50,
+        "min": 41
+      },
+      {
+        "bonus": "+1T10",
+        "max": 60,
+        "min": 51
+      },
+      {
+        "bonus": "+2T6",
+        "max": 80,
+        "min": 61
+      },
+      {
+        "bonus": "+3T6",
+        "max": 100,
+        "min": 81
+      },
+      {
+        "bonus": "+4T6",
+        "max": 140,
+        "min": 101
+      },
+      {
+        "bonus": "+5T6",
+        "max": 180,
+        "min": 141
+      }
+    ]
+  },
+  "skill_value": {
+    "max": 25,
+    "min": 1,
+    "note": "FV 1-20+ (1991); 1984 använder T100-procent",
+    "style": "fv"
+  }
+}

@@ -3,3 +3,6 @@ node_modules/
 .claude/settings.local.json
 temp/
 nul
+arbete/
+__pycache__/
+*.pyc

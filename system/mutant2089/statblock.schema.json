@@ -1,0 +1,46 @@
+{
+  "field_labels": {
+    "fys": "FYS",
+    "fysik": "FYS",
+    "förflyttning": "Förflyttning",
+    "huvudhand": "Huvudhand",
+    "int": "INT",
+    "intelligens": "INT",
+    "klass": "Klass",
+    "kp": "KP",
+    "kroppspoäng": "KP",
+    "mental styrka": "MST",
+    "mst": "MST",
+    "per": "PER",
+    "personlighet": "PER",
+    "sb": "SB",
+    "skadebonus": "SB",
+    "smi": "SMI",
+    "smidighet": "SMI",
+    "sto": "STO",
+    "storlek": "STO",
+    "sty": "STY",
+    "styrka": "STY",
+    "ålder": "Ålder"
+  },
+  "required_fields": [
+    "name",
+    "stats"
+  ],
+  "skills_value_range": [
+    0,
+    200
+  ],
+  "stats_allowed": [
+    "STY",
+    "STO",
+    "INT",
+    "FYS",
+    "PER",
+    "MST",
+    "SMI",
+    "KP",
+    "SB"
+  ],
+  "stats_required": []
+}

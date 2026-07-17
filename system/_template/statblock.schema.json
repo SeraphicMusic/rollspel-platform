@@ -1,0 +1,12 @@
+{
+  "required_fields": ["name", "stats"],
+  "stats_required": [],
+  "stats_allowed": ["ATTR1", "ATTR2", "KP"],
+  "skills_value_range": [0, 200],
+  "field_labels": {
+    "attr1": "ATTR1",
+    "fullt namn": "ATTR1",
+    "kp": "KP",
+    "kroppspoäng": "KP"
+  }
+}

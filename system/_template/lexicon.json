@@ -1,0 +1,22 @@
+{
+  "terms": {
+    "ATTR1": "Fullt namn",
+    "SL": "Spelledare"
+  },
+  "words": [
+    "Systemspecifika ord som ska kännas igen och skyddas/rättas"
+  ],
+  "categories": {
+    "skills": [],
+    "weapons": [],
+    "creatures": [],
+    "proper_nouns": []
+  },
+  "aliases": {
+    "kand-felstavning-eller-variant": "Kanonisk form"
+  },
+  "diacritic_confusions": {
+    "a": ["å", "ä"], "o": ["ö"], "e": ["é"], "u": ["ü"],
+    "à": ["å", "ä"], "á": ["å", "ä"], "6": ["ö"]
+  }
+}

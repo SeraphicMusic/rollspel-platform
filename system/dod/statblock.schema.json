@@ -1,0 +1,51 @@
+{
+  "field_labels": {
+    "antal": "Antal",
+    "farlighet": "Farlighet",
+    "fys": "FYS",
+    "fysik": "FYS",
+    "förflyttning": "Förflyttning",
+    "hemvist": "Hemvist",
+    "int": "INT",
+    "intelligens": "INT",
+    "kar": "KAR",
+    "karisma": "KAR",
+    "kp": "KP",
+    "kroppspoäng": "KP",
+    "psy": "PSY",
+    "psyke": "PSY",
+    "sb": "SB",
+    "skadebonus": "SB",
+    "skräck": "Skräck",
+    "skyddsvärde": "SV",
+    "smi": "SMI",
+    "smidighet": "SMI",
+    "sto": "STO",
+    "storlek": "STO",
+    "sty": "STY",
+    "styrka": "STY",
+    "sv": "SV"
+  },
+  "required_fields": [
+    "name",
+    "stats"
+  ],
+  "skills_value_range": [
+    1,
+    150
+  ],
+  "stats_allowed": [
+    "STY",
+    "FYS",
+    "SMI",
+    "INT",
+    "PSY",
+    "KAR",
+    "STO",
+    "KP",
+    "SB",
+    "SV",
+    "Farlighet"
+  ],
+  "stats_required": []
+}

@@ -2,54 +2,71 @@
 
 Verktyg för att extrahera, bearbeta, korrekturläsa och skapa innehåll för svenska bordsrollspel (Drakar och Demoner, Mutant m.fl.).
 
-## Stödda system
+## Extraktionspipeline (kärnan)
 
-| System | Kort | Genre |
-|--------|------|-------|
-| Drakar och Demoner | `dod` | Fantasy |
-| Mutant (År Noll) | `mutant` | Postapokalyps |
+Deterministisk Python-pipeline i `pipeline/` — kör `python3 -m pipeline --help`.
+Allt state per bok ligger i `arbete/<slug>/` (manifest + per-sida-filer + export).
+Kommandon: `analysera`, `rendera`, `extrahera-text`, `identifiera-system`, `jobb`,
+`bokfor`, `validera`, `sammanfoga`, `rapport`, `exportera`, `status`, `system`.
 
-Systemkunskap finns under `.claude/systems/<system>/`. Nya system läggs till med mallen i `_template/`.
+Principer (bindande):
+
+- Alla steg är idempotenta — färdiga sidor körs aldrig om; avbrott återupptas med samma kommando.
+- Inga tysta korrigeringar — varje rättning är en korrektionspost (original, förslag, confidence, orsak, källa, applied).
+- Osäkert innehåll flaggas (`needs_review`) och hamnar i granskningsrapporten i stället för att gissas.
+- Radera aldrig `arbete/`-kataloger — de är pipelinens state.
+
+Dokumentation: [README.md](README.md), design i [docs/](docs/).
+Tester: `python3 -m unittest discover -s tests -t .`
+
+## Stödda system (extraktion)
+
+| System | Adapter-id | Alias |
+| --- | --- | --- |
+| Drakar och Demoner (1991/1984) | `dod` | drakar |
+| Mutant 2089 | `mutant2089` | mutant |
+
+Adaptrar ligger i `system/<id>/` (ren data: system.json, lexicon.json, dice.json,
+statblock.schema.json, detection.json). Nya system: kopiera `system/_template/`.
+Regenerera från referensrepon: `python3 scripts/bygg_adapter.py <id> --ref <sökväg>`.
+
+OBS: `.claude/systems/` (används av de kreativa skillsen nedan) beskriver för
+`mutant` fortfarande Mutant: År Noll — inte samma spel som `mutant2089`.
 
 ## Skills
 
 | Skill | Purpose |
-|-------|---------|
-| `extrahera` | OCR-like text extraction from scanned PDFs to structured JSON |
+| --- | --- |
+| `extrahera` | Driver pipelinen + agerar vision-transkriberare för skannade sidor |
+| `korrekturlas` | Agentbaserad korrektur mot pipelinens state (korrektionsposter) |
 | `extrahera-konst` | Illustration extraction and reimagining in Swedish illustrator styles |
-| `korrekturlas` | Proofreading exported JSON against source PDF |
 | `aventyr` | Interactive adventure construction with NPC:er, encounters and statblocks |
 | `konvertera` | System conversion (e.g. DoD → Mutant) of material, NPCs and adventures |
 | `karaktarsskapare` | Character creation with attributes, skills, equipment and backstory |
 
-## Systemkunskap
+Korrektur-agenter (`.claude/agents/`): sprakgranskare, layoutverifierare,
+djavulens-advokat. Kontrakt: alla ändringar uttrycks som korrektionsposter med
+`applied: false`; endast advokaten applicerar, efter verifiering mot PNG:n
+(sanningskällan). Advokaten äger även domänkontrollen (statblocks/terminologi)
+och forensiken (svårlästa `[?]`-partier, omrendering i hög DPI).
 
-```
-.claude/systems/
-├── dod/           # Drakar och Demoner
-├── mutant/        # Mutant: År Noll
-└── _template/     # Mall för nya system
-```
-
-Varje system innehåller:
-- `system.json` — Attribut, utgåvor, genre
-- `statblock-format.json` — Format för statblocks
-- `terms.json` — Terminologi och OCR-fel
-- `aventyr-guide.md` — Äventyrskonventioner
-- `konvertering.md` — Konverteringsguider
+**[AGENTER.md](AGENTER.md) — läs den och följ den SLAVISKT** varje gång du kör
+eller delegerar till agenter (transkription, korrektur, allt via `Task`/`Agent`).
+Den är inte en sammanfattning att skumma — modell-tiering, max 3 parallella
+agenter, ingen nästling, snäva per-sida-uppdrag och läsdisciplin är bindande
+regler, inte förslag. Detta repo bränner tokens fort (dussintals sidor × flera
+agenter per sida) och en lös tolkning av reglerna är precis det som äter kvoten.
 
 ## Dependencies
 
-- Node.js (pdf-lib for PDF splitting, docx for DOCX generation)
-- Poppler (pdftoppm for page rendering)
-- Python (PyMuPDF/fitz for PDF preprocessing)
-- PowerShell (Gemini image generation scripts)
-- Gemini API key (`$env:GEMINI_API_KEY`)
+- Python 3.9+ med PyMuPDF (`python3 -m pip install --user pymupdf`)
+- Node.js (DOCX-export via `.claude/skills/extrahera/create-docx.js`; `npm install` i den katalogen)
+- Gemini API key (`GEMINI_API_KEY`) — endast för `extrahera-konst`
 
 ## Output
 
-- Extracted text: JSON with page-level structure
+- `arbete/<slug>/export/`: `bok.json` (kanoniskt, med proveniens/confidence/korrektioner),
+  `bok.md`, `bok.docx`, `tabeller/*.csv`, `granskningsrapport.md`
 - Illustrations: Reimagined in styles of Ackegard, Bergting, Egerkrans
 - Adventures: Structured JSON + DOCX
 - Characters: JSON character sheets + DOCX
-- DOCX exports via `extrahera/create-docx.js`
