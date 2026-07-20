@@ -16,6 +16,9 @@ Lägg käll-PDF:er som ska rippas/extraheras **här**. En fil = en bok.
 5. **Claude** flyttar då PDF:en hit → [`../arkiv/`](../arkiv/) och döper om den
    enligt [NAMNSTANDARD.md](../NAMNSTANDARD.md) (`SYSTEM-TYP-titel.pdf`).
    Filen **raderas aldrig**, bara flyttas.
+6. **Claude** döper i samma steg om `arbete/<slug>/` till standardnamnet och
+   kopierar `export/bok.md` → [`../bibliotek/`](../bibliotek/)`SYSTEM-TYP-titel.md`
+   (en fil per äventyr om boken splittats i `export/aventyr/`).
 
 ## Resultatet hamnar i
 

@@ -36,7 +36,8 @@ skilja dem åt.
 | `ART` | Tidningsartikel (Sinkadus-material o.dyl. som inte är någon av ovanstående) |
 
 Innehållet styr, inte källan: en slumptabell ur Sinkadus är `TAB`, inte `ART`.
-Inga fler koder utan att uppdatera den här filen.
+Vid blandat innehåll väljs den dominerande typen — en regelmodul som även
+innehåller tabeller är `REG`. Inga fler koder utan att uppdatera den här filen.
 
 ## Formregler
 
@@ -46,9 +47,22 @@ Inga fler koder utan att uppdatera den här filen.
 - Konverterat material får **målsystemets** prefix. Ursprunget kan anges sist:
   `MUT-AVE-den-vita-duvan-fran-dod`.
 
-## Vad som INTE döps om
+## bibliotek/ — läskopior
 
-- `arbete/<slug>/` — pipelinens state, röres aldrig (sluggen behåller det namn
-  den skapades med, även om det skiljer sig från arkivnamnet).
-- Filer i `import/` — de behåller sitt originalnamn tills extraktionen är klar
-  och verifierad; standardnamnet sätts när filen flyttas till `arkiv/`.
+`bibliotek/` innehåller namnstandardade kopior av `arbete/<mapp>/export/bok.md`
+(`SYSTEM-TYP-titel.md`) — självbärande slutdokument avsedda att matas till
+andra agenter/verktyg. De är härledda och kan alltid kopieras om från exporten.
+Böcker som pipelinen splittat i flera äventyr (`export/aventyr/`) får en
+biblioteksfil per äventyr i stället för samlingsdokumentet.
+
+## Omdöpningsregler
+
+- `arbete/<mapp>/` döps om till standardnamnet **när extraktionen är klar och
+  verifierad** (samtidigt som PDF:en arkiveras och bok.md kopieras till
+  `bibliotek/`). Innehållet i mappen är pipelinens state och röres aldrig.
+- Pågående extraktioner behåller sin ursprungliga slug tills de är klara —
+  döp aldrig om en arbete-mapp mitt i en körning.
+- Filer i `import/` behåller sitt originalnamn tills extraktionen är klar;
+  standardnamnet sätts när filen flyttas till `arkiv/`.
+- Filerna **inuti** `export/` (`bok.md`, `bok.json` osv.) behåller sina
+  pipeline-namn — standardnamnet bärs av mappen och bibliotekskopian.
