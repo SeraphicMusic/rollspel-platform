@@ -65,6 +65,8 @@ agenter per sida) och en lös tolkning av reglerna är precis det som äter kvot
 
 ## Output
 
+- Namngivning av arkiverade PDF:er och skapat/konverterat material:
+  [NAMNSTANDARD.md](NAMNSTANDARD.md) (`SYSTEM-TYP-titel`, t.ex. `DOD-AVE-den-vita-duvan`)
 - `arbete/<slug>/export/`: `bok.json` (kanoniskt, med proveniens/confidence/korrektioner),
   `bok.md`, `bok.docx`, `tabeller/*.csv`, `granskningsrapport.md`
 - Illustrations: Reimagined in styles of Ackegard, Bergting, Egerkrans

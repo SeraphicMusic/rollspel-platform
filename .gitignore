@@ -6,3 +6,9 @@ nul
 arbete/
 __pycache__/
 *.pyc
+
+# Käll-PDF:er (in-/ut-mappar) versionshanteras inte — bara mapparnas README behålls
+import/*
+!import/README.md
+arkiv/*
+!arkiv/README.md
