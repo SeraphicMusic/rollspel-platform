@@ -38,6 +38,7 @@ python3 -m pipeline bokfor --workdir "arbete/min-bok"   # bokför inkomna transk
 python3 -m pipeline validera --workdir "arbete/min-bok"
 
 # 5a. Förbesiktning: deterministiska korrekturkandidater (ingen LLM)
+python3 -m pipeline radboxar "<pdf>" --workdir "arbete/min-bok"   # mät radboxar (ger source.bbox)
 python3 -m pipeline forbesikta --workdir "arbete/min-bok"
 
 # 5b. Korrektur med agent-team (körs i Claude Code): /korrekturläs

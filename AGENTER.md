@@ -61,12 +61,14 @@ export, rapport. En modell tittar ENDAST på sidor som saknar textlager (`jobb`
 listar dessa) och på korrektur mot PNG:n.
 
 Detta gäller även **inne i** korrekturen. Kör `python3 -m pipeline forbesikta`
-före agenterna: fem felmönster som återkom på varje sida i DoD-grundreglerna är
-rent mekaniska och hittas gratis — linjeregel-prefix (`- LYSSNA`), raka
-citattecken, `±0`-garbel (`t0`/`I0`/`*0`), kolumnsammanslagning (bbox-bredd mot
-spaltbredden) och läsordningsfel (arrayordning mot bbox-y, samt högerspaltsrader
-inklämda före vänsterspalten). Agenterna ska **verifiera** kandidatlistan, inte
-leta upp mönstren igen. En layoutverifierare brände 105k tokens på att korrekt
+före agenterna: felmönstren som återkom på varje sida i DoD-grundreglerna är
+rent mekaniska och hittas gratis — linjeregel-prefix och -suffix (`- LYSSNA`),
+raka citattecken, `±0`-garbel (`t0`/`I0`/`*0`), kolumnsammanslagning (bbox-bredd
+mot spaltbredden), vertikal radsammanslagning (bbox-höjd mot medianradhöjden,
+med normal glyfbredd), läsordningsfel (arrayordning mot bbox-y, samt
+högerspaltsrader inklämda före vänsterspalten) och tabellkandidat (rutnät av
+korta `paragraph` som borde ha varit ett `table`). Agenterna ska **verifiera**
+kandidatlistan, inte leta upp mönstren igen. En layoutverifierare brände 105k tokens på att korrekt
 konstatera noll strukturfel på en sida — det svaret ger skriptet på en sekund. Hitta aldrig på egna tempmappar eller
 batchindelningar — pipelinen äger allt state i `arbete/<slug>/`.
 

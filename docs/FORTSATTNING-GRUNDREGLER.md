@@ -491,6 +491,101 @@ Kvar: 12 stycken som börjar med gemen, på s. 44, 48, 49, 56, 64 och 68. De är
 tabellceller typade som `paragraph` och hör till den öppna elementtypningsfrågan,
 inte till exporten.
 
+## Tabellstöd inför bok 2 (2026-07-31)
+
+Bok 2 är enligt användaren betydligt mer tabelltung. Det dyraste felet i bok 1
+var att **alla 25 maskinläsbara tabeller kommer från sidorna 11–39** — från
+sida 40 typade transkriptionen tabeller som `paragraph`, och då är rad- och
+kolumnstrukturen borta för gott. Fem deterministiska åtgärder, inga agenter:
+
+1. **Bindande tabellkontrakt** i `.claude/skills/extrahera/SKILL.md`. Två eller
+   flera kolumner med korta, radvis parade värden MÅSTE typas `table` med
+   `data.headers`/`data.rows`. `table_header`/`table_cell` dokumenteras som
+   tillåten reservform, och `table_caption`/`table_note`/`list`/`list_item`/
+   `requirement` är nu med i vokabulärlistan — de fanns i produktionsdata men
+   inte i kontraktet, vilket i sig var en orsak till driften.
+2. **Ny regel `tabellkandidat`** i `pipeline/preflight.py`. Korta
+   `paragraph`/`boxed_text` vars vänsterkanter faller i två eller flera täta
+   x-kluster som återkommer radvis, i sammanhängande rader. Utfallet är alltid
+   `needs_review` — fel elementtyp är ett typningsfel, aldrig en korrektionspost.
+3. **Ny regel `radsammanslagning`.** Höjden ensam räcker inte (en rubrik i stor
+   grad är också hög); avgörande är att glyfbredden per tecken är NORMAL medan
+   boxen är dubbelt så hög. Uppmätt över hela boken: sammanslagningen på s. 60
+   ligger på 1,03× sidans median, rubrikerna på 1,7–9,2× och skanningsgarblet i
+   illustrationerna på 0,06–0,5×.
+4. **Sidtypsmedveten läsordning.** `classify_page` klassificerar sidan
+   geometriskt (löptext / tabellsida / blankett / annat) och
+   `rule_reading_order` + `rule_column_interleaving` körs bara på löptext.
+   Dessutom bedöms inte längre element som inte renderar något (tömda av
+   advokaten, `removed`) — deras plats i arrayen kan inte vara ett läsordningsfel.
+5. **`tables.assemble` pekar ut raden.** I stället för "33 celler går inte
+   jämnt upp på 9 kolumner" läses raderna ur bbox-geometrin och varje avvikande
+   rad namnges: *rad 4 ’Lärd man’ har 2 av 9 celler (p012_e40, p012_e98)*.
+
+Sviten: 166 → **188 tester, OK.**
+
+### Revision över alla 68 färdiga sidor
+
+Kört som `preflight.scan_page` direkt på `page_NNN.final.json`; ingenting under
+`arbete/` skrevs eller ändrades.
+
+| Regel | Före | Efter |
+|---|---|---|
+| lasordning | 54 | **9** |
+| radsammanslagning | — | 1 |
+| tabellkandidat | — | 16 block på 11 sidor |
+
+**45 falska läsordningspositiver försvann** (83 %). De fördelar sig på två
+orsaker: sidtypsvakten tog s. 34 (11), s. 61 (15), s. 37 (2), s. 43 (1),
+s. 67 (4) och s. 68 (4), och `_renders`-filtret tog åtta larm på element som
+advokaten tömt (s. 24, 26, 49, 64, 65). Kvar är 9 på s. 24, 26 och 30 — alla i
+den tidiga tredjedelen, och s. 30:s fem ser ut att vara äkta: `p030_e03/e04/e05`
+är märkta `högerkolumn` men ligger inklämda mitt bland vänsterkolumnens element.
+
+`tabellkandidat` slår ut på alla fyra kända fallen (s. 48, 56, 58, 61) och
+hittar därutöver **sju sidor till** med tabeller typade som `paragraph`:
+s. 41 (mörkermodifikationer), 42 (Lyssna-tabellen, 29 rader), 43 (två tabeller),
+44 (tre), 45 (två), 51 (rykten) och 65 (hjältedåd). Samtliga verifierade för
+hand mot geometrin — inga falska positiver. Regeln är tyst på all ren löptext
+(s. 46, 47, 49, 50, 52–55, 57, 59, 60, 62–64), på blanketterna (s. 67, 68) och
+på de tolv sidorna som redan har riktiga `table`-element.
+
+`radsammanslagning` ger en enda träff på den färdiga boken (s. 29, `p029_e60`)
+och fångar på draftsidorna det ursprungliga fallet s. 60 `p060_e39` (2,09×).
+
+## Radboxar: `source.bbox` mäts nu fram (2026-07-31)
+
+Bok 2 saknade `source.bbox` helt, och det visade sig att INGET i pipelinen
+producerade den — bok 1:s boxar kom från transkriptionen. Båda böckernas
+PDF:er har bara vattenstämpeln i textlagret (verifierat med PyMuPDF). Utan
+bbox är fyra av `forbesikta`s åtta regler verkningslösa.
+
+Nytt kommando: `python3 -m pipeline radboxar <pdf> --workdir WD`. Det mäter
+tryckta radboxar ur sidbilden med ren projektion (`pipeline/rows.py`, ingen
+OCR) och `jobb` levererar filen till transkriberaren.
+
+Tre naiva mått uteslöts genom mätning, alla värda att minnas:
+
+1. **Per-pixel-tröskling (Otsu) faller.** Skanningen är rastrerad: 27 % av
+   pixlarna i ett TOMT radmellanrum ligger under varje rimlig gråtröskel.
+2. **Medelsvärta faller på gråtonade tabellrader.** Fyllningen mätte 85–90
+   med OCH utan text; hela tabellen blev ett band. **Kontrasten** (spridningen
+   längs raden) skilde dem: 19–25 mot 65–69.
+3. **Global tröskel faller.** Raderna hakar i varandra via staplar och
+   diakriter, så dalen mellan två rader ligger på ~66 av 140, inte på noll.
+   Tröskeln sätts lokalt, mitt emellan lokalt golv och lokal topp.
+
+Dessutom: spalterna måste mätas **per lodrätt avsnitt** (s. 61 är tvåspaltig
+upptill och fullbredds tabell nedtill), och kantzonerna **fönstervis** (annars
+dränker linjeregeln varje foliosiffra — alla 13 föll bort). Fönstervis mätning
+i kroppen är däremot klart sämre: 84 % mot 98,5 %.
+
+**Kalibrering mot alla 67 sidor med facit, 4107 element: 98,5 % täckning.**
+46 sidor på exakt 100 %, 62 på minst 95 %. Av 62 missar ligger 25 på
+blanketterna s. 67–68 och 6 på sidor som mätningen själv flaggar som
+grafikdominerade. Blanketter förblir svagheten: linjalerna i fältrutorna blir
+sidans vanligaste band och förgiftar radhöjdsmedianen.
+
 ## Kvarstående — boken är korrekturläst, men detta är inte gjort
 
 1. **Raka citattecken kvarstår på nio redan korrekturlästa sidor** — 6, 20, 22,
@@ -506,7 +601,9 @@ inte till exporten.
 3. **Sida 12: gles tabell med rubrikgrupp.** 9 rubriker men 33 celler —
    "Grundegenskapskrav" spänner över STY–STO och varje yrke har krav i bara
    några kolumner. `pipeline.tables.assemble` vägrar korrekt att gissa. Kräver
-   en advokatkörning eller att en människa läser PNG:n.
+   en advokatkörning eller att en människa läser PNG:n. Rapporten namnger
+   numera varje rad (`rad 4 ’Lärd man’ har 2 av 9 celler`), så arbetet går att
+   göra utan att räkna celler för hand — men det är fortfarande inte gjort.
 4. **Sidorna 7 och 10: monterade tabeller flaggade `needs_review`.** Cellernas
    text är oförändrad, men rad-/kolumnplaceringen bygger på läsordning och bör
    stickprovskontrolleras mot PNG:n.
@@ -566,12 +663,12 @@ inte till exporten.
    Utöver dessa ligger ~40 `needs_review` på s. 37–45 som nästan alla rör den
    ÖPPNA elementtypningsfrågan (rubriknivåer, `Typ:`/`Grundegenskap:`-fält,
    exempelrutor) — de avgörs i ett svep för hela boken, inte per post.
-9. **`forbesikta` fångar inte vertikal radsammanslagning.** Mönstret hittades
-   först på s. 60 och återkom på s. 68 (`]0• Abs-`, bbox 27 % högre än
-   syskonens): ett element vars bbox-HÖJD är ~2× medianradhöjden spänner över
-   två tryckrader och återger bara den ena. Regeln är lika deterministisk som
-   de befintliga fem (jämför `source.bbox[3]` mot sidans medianhöjd). Den kom
-   för sent för den här boken men skulle löna sig direkt på nästa.
+9. ~~**`forbesikta` fångar inte vertikal radsammanslagning.**~~ **ÅTGÄRDAD
+   2026-07-31** — regeln `radsammanslagning` finns, se avsnittet *Tabellstöd
+   inför bok 2*. Observera att tröskeln (1,8× medianhöjden) medvetet ligger
+   högt: s. 60:s fall (2,09×) fångas, men s. 68:s `]0• Abs-` låg bara 27 % över
+   syskonens och gör det inte. En regel som larmar vid 1,3× larmar på varje
+   rubrik och varje diakritband, och kostar då mer agenttid än den sparar.
 10. **1755 korrektionsposter saknar fältet `kind`** — samtliga på sidorna 1–36,
    korrekturlästa innan konventionen infördes. Sidorna 37–68 är kompletta.
    Posterna är inte fel, bara otypade: det går inte att skilja "återställde
@@ -581,8 +678,20 @@ inte till exporten.
    i praktiken en advokatkörning per sida (~36 sidor). Alternativt kan de
    markeras `kind: "okänd"` deterministiskt så att luckan syns i rapporten i
    stället för att tyst se ut som `ocr`.
-11. **Läsordningsheuristiken bygger på tvåspaltig löptext** och är otillförlitlig
-   på blanketter (s. 67, 68) och på sidor där hela block bytt plats (s. 61).
-   Den ger falska larm och pekar ut fel destination. Överväg att låta
-   `forbesikta` klassificera sidtyp först (löptext / blankett / tabellsida) och
-   stänga av regeln där den inte gäller.
+11. ~~**Läsordningsheuristiken bygger på tvåspaltig löptext.**~~ **ÅTGÄRDAD
+   2026-07-31** — `classify_page` stänger av reglerna utanför löptext, och
+   revisionen gick från 54 till 9 träffar. Kvar av grundproblemet: regeln ser
+   fortfarande inte **blocköverkastning** (s. 61 — två hela block som bytt
+   plats), den jämför bara granne mot granne. Sidtypsvakten gör numera att
+   s. 61 är tyst i stället för att larma fel, vilket är bättre men inte samma
+   sak som att felet hittas.
+
+12. **11 sidor i bok 1 har tabeller typade som `paragraph`** — s. 41, 42, 43,
+   44, 45, 48, 51, 56, 58, 61, 65, sammanlagt 16 tabellblock. Det är
+   `tabellkandidat` som listat dem (se avsnittet ovan). Cellernas TEXT är
+   korrekturläst och verifierad, så ingenting är fel i sak — men strukturen
+   saknas, tabellerna renderas som lösa stycken i `bok.md` och de kommer aldrig
+   ut i `export/tabeller/*.csv`. Att typa om dem är mekaniskt arbete mot PNG:n,
+   inte omkorrektur. Det hör ihop med den öppna elementtypningsfrågan i punkt 8
+   och med de 12 styckena som börjar med gemen (s. 44, 48, 49, 56, 64, 68).
+   Blockerar inte bok 2.

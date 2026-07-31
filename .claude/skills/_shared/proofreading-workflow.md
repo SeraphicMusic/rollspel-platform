@@ -10,10 +10,24 @@ python3 -m pipeline forbesikta --workdir "WD" [--sidor 40-44]
 ```
 
 Skriver `page_NNN.review/heuristik.json` per väntande sida med kandidater
-(`applied: false`, `source: "heuristik:<regel>"`) för fem mönster som är rent
-mekaniska: `linjeregel-prefix` (`- LYSSNA` där strecket är sidgrafik), 
+(`applied: false`, `source: "heuristik:<regel>"`) för mönster som är rent
+mekaniska: `linjeregel-prefix`/`-suffix` (`- LYSSNA` där strecket är sidgrafik),
 `raka-citattecken`, `plusminus` (`t0`/`I0`/`*0` → `±0`), `kolumnsammanslagning`
 (bbox-bredd mot spaltmedianen) och `lasordning` (arrayordning mot bbox-y).
+
+Två regler ger `needs_review`-flaggor i stället för korrektionsposter, eftersom
+de gäller struktur och inte text:
+
+- `radsammanslagning` — bbox-HÖJDEN är ~2× medianradhöjden medan glyfbredden är
+  normal: elementet spänner över två tryckrader och återger bara den ena, så en
+  hel rad saknas i draften.
+- `tabellkandidat` — korta `paragraph`-element bildar ett rutnät som borde ha
+  typats `table`. **Det är ett typningsfel, inte ett textfel** — rätta
+  elementtypen, skriv aldrig en korrektionspost för det.
+
+Filen har också `sidtyp` (löptext / tabellsida / blankett / annat). Läsordnings-
+reglerna körs bara på löptext: på tabellsidor läses raderna tvärs över
+spalterna och på blanketter fältgrupp för fältgrupp, så där larmade de falskt.
 Skapar också `beslut.md` i arbetskatalogen om den saknas.
 
 Agenterna ska **verifiera** kandidatlistan, inte leta upp mönstren igen — det är

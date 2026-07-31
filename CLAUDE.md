@@ -6,19 +6,21 @@ Verktyg för att extrahera, bearbeta, korrekturläsa och skapa innehåll för sv
 
 Deterministisk Python-pipeline i `pipeline/` — kör `python3 -m pipeline --help`.
 Allt state per bok ligger i `arbete/<slug>/` (manifest + per-sida-filer + export).
-Kommandon: `analysera`, `rendera`, `extrahera-text`, `identifiera-system`, `jobb`,
-`bokfor`, `validera`, `forbesikta`, `sammanfoga`, `rapport`, `exportera`, `status`,
-`system`.
+Kommandon: `analysera`, `rendera`, `extrahera-text`, `radboxar`,
+`identifiera-system`, `jobb`, `bokfor`, `validera`, `forbesikta`, `sammanfoga`,
+`rapport`, `exportera`, `status`, `system`.
 
 Principer (bindande):
 
 - Alla steg är idempotenta — färdiga sidor körs aldrig om; avbrott återupptas med samma kommando.
 - Inga tysta korrigeringar — varje rättning är en korrektionspost (original, förslag, confidence, orsak, källa, kind, applied).
 - Valideringens **härledda** lexikonmatchningar är förslag (`applied: false`) — bara handkurerade alias appliceras direkt. En böjningsform som står korrekt i trycket får aldrig "rättas" tyst; advokaten dömer mot PNG:n.
-- `forbesikta` hittar de mekaniska felmönstren deterministiskt (linjeregel-prefix, raka citattecken, `±0`-garbel, kolumnsammanslagning, läsordning) och skriver kandidater till `page_NNN.review/heuristik.json`. Kör det FÖRE korrekturen — agenterna ska verifiera listan, inte leta upp mönstren igen.
+- `forbesikta` hittar de mekaniska felmönstren deterministiskt (linjeregel-prefix/-suffix, raka citattecken, `±0`-garbel, kolumnsammanslagning, vertikal radsammanslagning, läsordning, tabellkandidat) och skriver kandidater till `page_NNN.review/heuristik.json`. Kör det FÖRE korrekturen — agenterna ska verifiera listan, inte leta upp mönstren igen. Läsordningsreglerna körs bara på sidor som klassificerats som tvåspaltig löptext; sidans typ står i `heuristik.json` under `sidtyp`.
+- En tryckt tabell MÅSTE typas `table` (eller reservformen `table_header`/`table_cell`) — aldrig som en följd av `paragraph`. Kontraktet står i [.claude/skills/extrahera/SKILL.md](.claude/skills/extrahera/SKILL.md) §Tabeller och är bindande: typas en tabell som löptext är rad- och kolumnstrukturen förlorad för gott, och ingenting nedströms kan återskapa den. `forbesikta`-regeln `tabellkandidat` flaggar misstänkta fall som `needs_review` — fel elementtyp är ett typningsfel, aldrig en korrektionspost.
 - Boknivåbeslut samlas i `arbete/<slug>/beslut.md` och delas ut av `jobb`. Bara advokaten skriver dit; alla läser den. Samma fråga ska inte utredas om på varje sida.
 - Uppenbara sättningsfel emenderas automatiskt (`kind: "emendering"`); trycket bevaras i postens `original` och rättningen listas i granskningsrapporten. Gränsen är bindande och står i [AGENTER.md](AGENTER.md) Regel 8a — siffror, spelvärden, dialekt och arkaismer rättas aldrig.
 - Osäkert innehåll flaggas (`needs_review`) och hamnar i granskningsrapporten i stället för att gissas.
+- `source.bbox` mäts fram deterministiskt av `radboxar` (`pipeline/rows.py`) ur sidbilden — de inskannade PDF:erna har inget textlager utöver vattenstämpeln. Kör det för varje skannad bok: utan bbox är fyra av `forbesikta`s åtta regler verkningslösa. Transkriptionen hämtar bbox ur mätningen och **gissar aldrig koordinater**; saknas en rad utelämnas bbox.
 - Radera aldrig `arbete/`-kataloger — de är pipelinens state.
 
 Dokumentation: [README.md](README.md), design i [docs/](docs/).

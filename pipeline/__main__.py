@@ -3,6 +3,7 @@
     python3 -m pipeline analysera <pdf> [--workdir DIR] [--system ID]
     python3 -m pipeline rendera <pdf> [--workdir DIR] [--sidor 3,5-9] [--alla] [--dpi N]
     python3 -m pipeline extrahera-text <pdf> [--workdir DIR]
+    python3 -m pipeline radboxar <pdf> [--workdir DIR] [--sidor 27-29] [--force]
     python3 -m pipeline identifiera-system <pdf> [--workdir DIR]
     python3 -m pipeline jobb --workdir DIR [--typ transkription|korrektur] [--max N]
     python3 -m pipeline bokfor --workdir DIR
@@ -68,6 +69,12 @@ def main(argv=None):
     p.add_argument("--graskala", action="store_true")
 
     add("extrahera-text", pdf_arg=True, help="extrahera inbäddat textlager")
+
+    p = add("radboxar", pdf_arg=True,
+            help="mät tryckta radboxar ur sidbilden (ger source.bbox)")
+    p.add_argument("--sidor", help="t.ex. 27-29 (default: alla)")
+    p.add_argument("--force", action="store_true",
+                   help="mät om även sidor som redan har radboxar.json")
 
     add("identifiera-system", pdf_arg=True, help="gissa regelsystem")
 
@@ -168,6 +175,22 @@ def main(argv=None):
         from .extract_text import extract_text
         workdir = resolve_workdir(args, args.pdf)
         extract_text(args.pdf, workdir)
+        return
+
+    if args.cmd == "radboxar":
+        from .rows import measure
+        workdir = resolve_workdir(args, args.pdf)
+        for no, summering in measure(args.pdf, workdir,
+                                     pages=parse_pages(args.sidor),
+                                     force=args.force):
+            if summering is None:
+                print("sida %3d: radboxar.json finns redan (--force mäter om)"
+                      % no)
+            else:
+                print("sida %3d: %3d rader, %2d grafikband%s"
+                      % (no, summering["rader"], summering["grafik"],
+                         "  VARNING: grafik dominerar, mätningen är opålitlig"
+                         if summering["dominerande_grafik"] else ""))
         return
 
     if args.cmd == "identifiera-system":

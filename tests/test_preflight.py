@@ -9,11 +9,14 @@ import unittest
 from pathlib import Path
 
 from pipeline.manifest import Manifest, page_file, read_json
-from pipeline.preflight import (decisions_file, ensure_decisions_file,
-                                preflight, rule_column_interleaving,
-                                rule_column_merge, rule_heading_dash,
-                                rule_plusminus, rule_reading_order,
-                                rule_straight_quotes, scan_page)
+from pipeline.preflight import (PAGE_FORM, PAGE_PROSE, PAGE_TABLE,
+                                classify_page, decisions_file,
+                                ensure_decisions_file, preflight,
+                                rule_column_interleaving, rule_column_merge,
+                                rule_heading_dash, rule_plusminus,
+                                rule_reading_order, rule_row_merge,
+                                rule_straight_quotes, rule_table_candidate,
+                                scan_page, table_blocks)
 
 
 def el(id_, text, bbox=None, region=None, **extra):
@@ -241,6 +244,202 @@ class TestColumnInterleaving(unittest.TestCase):
         elements = [el("e%d" % i, LANG_RAD, bbox=[0.04, 0.9 - i * 0.02, 0.86, 0.018],
                        region="text") for i in range(10)]
         self.assertEqual(rule_column_interleaving(elements), [])
+
+
+def rutnat(prefix, rows, xs, y0=0.70, dy=0.0155, h=0.0145,
+           region="vänsterkolumn", regions=None):
+    """Bygg ett tabellrutnät med uppmätt geometri ur DoD-grundreglerna.
+
+    `regions` kan ge en egen region per kolumn — tabellen på s. 61 har sina
+    två första kolumner i vänsterkolumnen och den tredje i högerkolumnen.
+    """
+    elements = []
+    for r, cells in enumerate(rows):
+        for c, text in enumerate(cells):
+            elements.append(el("%s_r%dc%d" % (prefix, r, c), text,
+                               bbox=[xs[c], y0 - r * dy, 0.09, h],
+                               region=regions[c] if regions else region))
+    return elements
+
+
+TEKNIKLISTAN = [("Teknik", "Grundkostnad"), ("Avväpning", "1,0"),
+                ("Bakåtspark", "0,5"), ("Bedövningsslag†", "1,0"),
+                ("Blind strid", "2,0")]
+
+
+def loptext(prefix, n=10, x=0.067, y0=0.90, region="vänsterkolumn"):
+    return [el("%s%d" % (prefix, i), LANG_RAD + " ytterligare ord här",
+               bbox=[x, y0 - i * 0.016, 0.435, 0.016], region=region)
+            for i in range(n)]
+
+
+class TestTableCandidate(unittest.TestCase):
+    def test_tekniklistan_flaggas(self):
+        # Sida 58: 22 rader × 2 celler typade `paragraph`. Strukturen gick
+        # förlorad och ingenting nedströms kunde återskapa den.
+        hits = rule_table_candidate(rutnat("t", TEKNIKLISTAN, [0.112, 0.373]))
+        self.assertEqual(len(hits), 1)
+        el_, reason = hits[0]
+        self.assertEqual(el_["id"], "t_r0c0")
+        self.assertIn("tabellkandidat", reason)
+        self.assertIn("2 kolumner × 5 rader", reason)
+
+    def test_kolumn_i_annan_region_racker_med_de_ovriga(self):
+        # Sida 61: vapengruppstabellens tredje kolumn ligger i högerkolumnen.
+        # De två första räcker för att slå ut.
+        rows = [("Dolkar", "SMI", "Dolk, Parerdolk"),
+                ("Enhandssvärd", "STY", "Alla svärd med en hand"),
+                ("Enhandsyxor", "STY", "Alla yxor med en hand"),
+                ("Stickvapen", "STY", "Kortspjut, Långspjut")]
+        elements = rutnat("v", rows, [0.115, 0.350, 0.467], y0=0.42,
+                          regions=["vänsterkolumn", "vänsterkolumn",
+                                   "högerkolumn"])
+        blocks = table_blocks(elements)
+        self.assertEqual([b["region"] for b in blocks], ["vänsterkolumn"])
+        self.assertEqual(blocks[0]["columns"], 2)
+        self.assertEqual(blocks[0]["rows"], 4)
+
+    def test_ren_loptext_ar_tyst(self):
+        # Sidorna 46, 47, 49–55: rena löptextsidor får inte ge ett larm.
+        self.assertEqual(rule_table_candidate(loptext("v")), [])
+
+    def test_styckens_korta_slutrader_ar_inte_kolumner(self):
+        """Korta rader i EN vänsterkant bildar ingen tabell."""
+        elements = loptext("v", n=8)
+        elements += [el("k%d" % i, "och marginaler.",
+                        bbox=[0.067, 0.70 - i * 0.05, 0.13, 0.016])
+                     for i in range(5)]
+        self.assertEqual(rule_table_candidate(elements), [])
+
+    def test_blankettens_faltgrupper_parar_inte_ihop_sig(self):
+        # Sidorna 67–68: två rutor kan råka börja på samma y-höjd utan att
+        # höra ihop (beslut s. 67). Raderna ligger 0,06 isär, inte 0,015.
+        rows = [("Skadebonus", "Tot. KP"), ("Bärförmåga", "PSY"),
+                ("Vapen/Sköld", "BV"), ("Utrustning", "Vikt")]
+        elements = rutnat("b", rows, [0.057, 0.335], y0=0.584, dy=0.061,
+                          h=0.016)
+        self.assertEqual(rule_table_candidate(elements), [])
+
+    def test_for_fa_rader_racker_inte(self):
+        elements = rutnat("t", TEKNIKLISTAN[:2], [0.112, 0.373])
+        self.assertEqual(rule_table_candidate(elements), [])
+
+    def test_reservformen_flaggas_inte(self):
+        """`table_cell` är RÄTT reservform — den monteras, inte klandras."""
+        elements = rutnat("t", TEKNIKLISTAN, [0.112, 0.373])
+        for e in elements:
+            e["type"] = "table_cell"
+        self.assertEqual(rule_table_candidate(elements), [])
+
+    def test_element_utan_bbox_kraschar_inte(self):
+        self.assertEqual(rule_table_candidate([el("e1", "kort")]), [])
+
+    def test_typningsfel_ger_flagga_inte_korrektionspost(self):
+        """Fel elementtyp är ett typningsfel, inte ett textfel."""
+        data = {"page": 58, "elements": rutnat("t", TEKNIKLISTAN,
+                                               [0.112, 0.373])}
+        out, counts = scan_page(data)
+        self.assertEqual(counts["tabellkandidat"], 1)
+        flaggade = [e for e in out["elements"] if e.get("needs_review")]
+        self.assertEqual([e["id"] for e in flaggade], ["t_r0c0"])
+        self.assertEqual([e.get("corrections") for e in out["elements"]],
+                         [None] * len(out["elements"]))
+
+
+LANG_RUBRIK = "PRIMÄRA FÄRDIGHETER"
+
+
+class TestRowMerge(unittest.TestCase):
+    def _sida(self, n=12):
+        return [el("e%d" % i, LANG_RAD,
+                   bbox=[0.067, 0.90 - i * 0.016, 0.435, 0.016])
+                for i in range(n)]
+
+    def test_dubbelhog_bbox_med_normala_glyfer_flaggas(self):
+        # Sida 60: elementet spände över två tryckrader och återgav bara den
+        # undre — raden ovanför saknades helt i draften. Glyfbredden är
+        # normal (1,03× sidans median), bara boxen är dubbelt så hög.
+        elements = self._sida()
+        elements.append(el("e99", "Genma Frigke a Vands for at lara sig slas",
+                           bbox=[0.067, 0.60, 0.325, 0.0336]))
+        hits = rule_row_merge(elements)
+        self.assertEqual([e["id"] for e, _ in hits], ["e99"])
+        self.assertIn("radsammanslagning", hits[0][1])
+
+    def test_normala_rader_ger_inget(self):
+        self.assertEqual(rule_row_merge(self._sida()), [])
+
+    def test_rubrik_i_stor_grad_ar_inte_sammanslagning(self):
+        """Rubriken är hög för att GLYFERNA är stora — bbox är inte för hög."""
+        elements = self._sida()
+        elements.append(el("e99", LANG_RUBRIK,
+                           bbox=[0.134, 0.95, 0.30, 0.0336]))
+        self.assertEqual(rule_row_merge(elements), [])
+
+    def test_kolumnsammanslagning_agas_av_sin_egen_regel(self):
+        """Samma element ska inte flaggas av två regler."""
+        elements = self._sida()
+        elements.append(el("e99", (LANG_RAD + " ") * 2,
+                           bbox=[0.067, 0.60, 0.89, 0.0336]))
+        self.assertEqual(rule_row_merge(elements), [])
+        self.assertEqual([e["id"] for e, _ in rule_column_merge(elements)],
+                         ["e99"])
+
+    def test_liten_sida_kraschar_inte(self):
+        self.assertEqual(rule_row_merge([el("e1", "text", bbox=[0, 0, 1, 1])]),
+                         [])
+
+
+class TestClassifyPage(unittest.TestCase):
+    def test_tvaspaltig_loptext(self):
+        elements = loptext("v", n=10)
+        elements += loptext("h", n=10, x=0.517, region="högerkolumn")
+        self.assertEqual(classify_page(elements), PAGE_PROSE)
+
+    def test_tabellsida(self):
+        elements = rutnat("t", TEKNIKLISTAN, [0.112, 0.373])
+        elements += loptext("v", n=6, y0=0.95)
+        self.assertEqual(classify_page(elements), PAGE_TABLE)
+
+    def test_blankett(self):
+        # Sida 68: bara korta fältetiketter, utspridda över flera x-lägen.
+        elements = []
+        for i, x in enumerate((0.057, 0.335, 0.62)):
+            elements += [el("f%d_%d" % (i, r), "Bärförmåga",
+                            bbox=[x, 0.80 - r * 0.061, 0.10, 0.016])
+                         for r in range(5)]
+        self.assertEqual(classify_page(elements), PAGE_FORM)
+
+    def test_for_liten_sida_klassas_inte(self):
+        self.assertNotEqual(classify_page(loptext("v", n=3)), PAGE_PROSE)
+
+
+class TestLasordningKorsBaraPaLoptext(unittest.TestCase):
+    def test_loptextsida_ger_lasordningstraff(self):
+        vanster = loptext("v", n=8)
+        # Ett element vars y hör långt senare i spalten, inklämt på plats 3.
+        vanster.insert(3, el("x1", LANG_RAD + " ytterligare ord här",
+                             bbox=[0.067, 0.40, 0.435, 0.016]))
+        elements = vanster + loptext("h", n=8, x=0.517, region="högerkolumn")
+        out, counts = scan_page({"page": 1, "elements": elements})
+        self.assertEqual(out["sidtyp"], PAGE_PROSE)
+        self.assertGreater(counts["lasordning"], 0)
+
+    def test_tabellsida_tystar_lasordningen(self):
+        """Tabellrader läses tvärs över spalterna, inte spaltvis.
+
+        Sidorna 61, 67 och 68 gav 23 läsordningslarm på en FÄRDIGKORREKTURLÄST
+        bok — alla falska, alla skapade av advokatens korrekta omordning.
+        """
+        elements = rutnat("t", TEKNIKLISTAN, [0.112, 0.373])
+        elements += loptext("v", n=6, y0=0.95)
+        # Arrayordningen bryter mot y-ordningen: tabellen (y 0,70 och nedåt)
+        # ligger före brödtexten (y 0,95 och nedåt). Regeln SKULLE larma.
+        self.assertTrue(rule_reading_order(elements))
+        out, counts = scan_page({"page": 58, "elements": elements})
+        self.assertEqual(out["sidtyp"], PAGE_TABLE)
+        self.assertEqual(counts["lasordning"], 0)
+        self.assertEqual(counts["tabellkandidat"], 1)
 
 
 class TestScanPageOchKorning(unittest.TestCase):

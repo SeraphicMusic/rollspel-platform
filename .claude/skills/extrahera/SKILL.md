@@ -57,9 +57,25 @@ Om systemdetekteringen misslyckas: fråga användaren med AskUserQuestion
 ```bash
 python3 -m pipeline rendera "<pdf>" --workdir "WD" [--sidor 10-25]
 python3 -m pipeline extrahera-text "<pdf>" --workdir "WD"
+python3 -m pipeline radboxar "<pdf>" --workdir "WD" [--sidor 10-25]
 ```
 
-Bägge är idempotenta — avbrutna körningar återupptas med samma kommando.
+Alla tre är idempotenta — avbrutna körningar återupptas med samma kommando.
+
+**`radboxar` är obligatoriskt för skannade böcker.** De inskannade PDF:erna har
+inget användbart textlager (bara vattenstämpeln), så `extrahera-text` ger noll
+sidor — och utan `source.bbox` är fyra av `forbesikta`s åtta regler
+verkningslösa: `kolumnsammanslagning`, `radsammanslagning`, `lasordning` och
+`tabellkandidat`. `radboxar` mäter i stället fram de tryckta radernas boxar ur
+sidbilden med ren bläckprojektion (`pipeline/rows.py`, ingen OCR, ingen modell)
+och skriver `page_NNN.radboxar.json`. Kalibrerat mot den färdigkorrekturlästa
+del I — alla 67 sidor med facit, 4107 element — träffas **98,5 %** av de kända
+elementen av ett uppmätt band, och 46 sidor ligger på exakt 100 %. Blanketter
+är den kända svagheten (s. 67 på 58 %): fältetiketter i streckade rutor är
+inte rader, och de sidorna serialiseras fältgrupp för fältgrupp mot PNG:n.
+
+Kommandot varnar när grafiken dominerar en sida (pärmar, helsidesbilder) — då
+är mätningen opålitlig och PNG:n gäller.
 
 ### Steg 3: Transkribera (du är vision-modellen)
 
@@ -168,13 +184,104 @@ En ren illustrationssida får ha tom `elements` endast tillsammans med
 `"skipped": {"reason": "illustration_only"}`.
 
 Elementtyper: `heading` (med `level` 1–3), `paragraph` (ev. `"style": "italic"`),
-`boxed_text`, `list` (`data.items`), `table` (`data.headers` + `data.rows`),
-`statblock`, `toc_entry`, `index_entry`, `page_artifact`. Typen `illustration`
+`boxed_text`, `list` (`data.items`), `list_item`, `table` (`data.headers` +
+`data.rows`), `table_header`, `table_cell`, `table_caption`, `table_note`,
+`requirement`, `statblock`, `toc_entry`, `index_entry`, `page_artifact`.
+Typen `illustration`
 är äldre bakåtkompatibilitet och får inte skapas i nya transkript.
 
-Varje element: `text` (utom table/statblock/list), `confidence` (0–1), gärna
-`source.region` (t.ex. "vänsterkolumn"). Osäkra ord markeras `[?]` i texten och
-listas i `uncertain`.
+Varje element: `text` (utom table/statblock/list), `confidence` (0–1),
+`source.region` (t.ex. "vänsterkolumn") och `source.bbox`. Osäkra ord markeras
+`[?]` i texten och listas i `uncertain`.
+
+### `source.bbox` — hämtas ur mätningen, gissas aldrig
+
+`bbox` är `[x, y, bredd, höjd]`, normaliserat mot sidans mått, med **y räknat
+från sidans NEDERKANT** till boxens underkant. Värdena tas ur jobbets
+`radboxar`-fil (`page_NNN.radboxar.json`), som listar varje tryckt rad med
+uppmätt box och region i läsordning.
+
+Radboxarna är ett **stöd, inte en mall för elementindelningen**:
+
+- En brödtextrad blir ett element med radens box rakt av.
+- En tabell blir ETT `table`-element vars bbox är unionen av de rader den
+  täcker — dela aldrig upp en tabell i ett element per rad bara för att
+  mätningen listar dem var för sig. Tabellkontraktet ovan går före.
+- Samma sak för `statblock` och `list`: ett element, unionens box.
+- Hittar du text i PNG:n som saknar uppmätt rad: transkribera den ändå och
+  utelämna `bbox` hellre än att hitta på koordinater. En saknad box är en
+  lucka i en heuristik; en påhittad box är ett fel som ser ut som data.
+
+Regionnamnen i mätningen (`vänsterkolumn`, `högerkolumn`, `sidbredd`,
+`sidhuvud`, `sidfot`) används som `source.region`.
+
+### Tabeller (bindande regel)
+
+**Ser sidan ut att ha två eller flera kolumner med korta, radvis parade värden
+är det en tabell.** Den MÅSTE typas `table` med `data.headers` och `data.rows`
+— aldrig som en följd av `paragraph`.
+
+Detta är kontraktets viktigaste punkt. En tabell som typas `paragraph` förlorar
+sin struktur **för gott**: texten är riktig, men ingenting nedströms kan
+återskapa vilken cell som hörde till vilken rad och kolumn. I DoD-grundreglerna
+drev typningen bort efter sida 39 och varje tabell därefter blev lösa stycken —
+det enskilt dyraste felet i hela boken.
+
+Kriterier, i den ordningen:
+
+1. Korta element (under ~40 tecken) vars **vänsterkanter återkommer** i två
+   eller flera fasta x-lägen, rad efter rad → tabell.
+2. En rubrikrad överst (`Teknik` / `Grundkostnad`) → dess celler blir `headers`.
+   Saknas tryckt rubrikrad: skriv tomma strängar i `headers`, inte påhittade.
+3. Celler transkriberas EXAKT som de står, tomma celler som `""`. Gissa aldrig
+   ett värde för att raden ska gå jämnt ut — saknas en cell i trycket är det
+   ett fynd, och sidan flaggas `needs_review`.
+
+```json
+{"type": "table",
+ "data": {"headers": ["Teknik", "Grundkostnad"],
+          "rows": [["Avväpning", "1,0"],
+                   ["Bakåtspark", "0,5"],
+                   ["Bedövningsslag†", "1,0"]]},
+ "confidence": 0.9,
+ "source": {"region": "vänsterkolumn"}}
+```
+
+Kring tabellen:
+
+- `table_note` — allt som står under tabellen och förklarar den: fotnoter
+  (`† kan endast användas mot människoliknande motståndare`), teckenförklaringar
+  (`—: Automatisk framgång`) och förklarande löptext som hör till just den
+  tabellen. Det hör aldrig in i `rows`.
+- `table_caption` — tryckt tabellrubrik ovanför tabellen
+  (`TABELL ÖVER GRUNDEGENSKAPSKRAV`). Är rubriken satt som ett vanligt
+  kapitelavsnitt i löptexten är den `heading`.
+
+**Reservform när raderna inte går att para ihop säkert.** Är tabellen gles,
+har sammanslagna rubrikgrupper eller celler som spänner över flera kolumner:
+lägg cellerna som en följd av `table_header`- och `table_cell`-element i
+läsordning, en cell per element. `pipeline/tables.py` monterar dem
+deterministiskt — kolumnantalet tas ur antalet `table_header` i följd och
+cellerna fylls radvis. Går det inte jämnt ut monteras ingenting, och rapporten
+pekar ut vilken rad som är kort. Reservformen är alltid bättre än `paragraph`;
+den bevarar åtminstone att cellerna ÄR celler.
+
+**Aldrig `paragraph`** för något av detta. `python3 -m pipeline forbesikta`
+har en deterministisk regel (`tabellkandidat`) som letar upp rutnät av korta
+`paragraph`-element och flaggar dem `needs_review` — men den flaggan är en
+sista utväg, inte en ursäkt för att typa fel från början.
+
+### Listor och krav
+
+- `list` med `data.items` — en sammanhållen punktlista transkriberad i ett
+  svep. Elementet har ingen `text`.
+- `list_item` — en enskild punkt som eget element, med punkttecknet kvar i
+  texten (`• Köpa ras`). Använd den när punkterna har egen bbox eller ligger
+  utspridda i läsordningen; annars `list`.
+- `requirement` — tryckt grundegenskapskrav som står för sig självt intill en
+  rubrik, typiskt inom parentes: `(INT 12, PSY 12)`, `(SMI 16)`. Det är ett
+  spelvärde, inte löptext, och ska aldrig slås ihop med rubriken eller med
+  stycket under.
 
 Statblock:
 

@@ -93,6 +93,44 @@ class TestAssemble(unittest.TestCase):
         self.assertTrue(table["needs_review"])
         self.assertTrue(table["review_reasons"])
 
+    def test_short_row_is_named_in_the_report(self):
+        """"33 celler går inte upp på 9 kolumner" går inte att åtgärda.
+
+        Sida 12: rapporten sa hur många celler som fattades men inte VAR, så
+        felet fick räknas fram cell för cell. Med bbox läses raderna direkt ur
+        geometrin och varje avvikande rad pekas ut med sin egen etikett.
+        """
+        def c(eid, text, x, y, kind="table_cell"):
+            e = cell(eid, text, kind)
+            e["source"] = {"bbox": [x, y, 0.06, 0.014]}
+            return e
+
+        elements = [c("h1", "Yrke", 0.195, 0.308, "table_header"),
+                    c("h2", "STY", 0.320, 0.308, "table_header"),
+                    c("h3", "FYS", 0.396, 0.308, "table_header"),
+                    c("r1a", "Krigare", 0.195, 0.260),
+                    c("r1b", "14", 0.326, 0.262),
+                    c("r1c", "12", 0.400, 0.263),
+                    c("r2a", "Lärd man", 0.195, 0.245),
+                    c("r2b", "16", 0.326, 0.246)]
+        out, report = tables.assemble(elements, page=12)
+        self.assertEqual([e["type"] for e in out if e["type"] == "table"], [])
+        self.assertEqual(report[0]["status"], "skipped")
+        self.assertIn("rad 2 ’Lärd man’ har 2 av 3 celler", report[0]["reason"])
+        self.assertNotIn("rad 1", report[0]["reason"])
+        self.assertEqual(report[0]["rows"],
+                         [{"row": 2, "cells": 2, "label": "Lärd man",
+                           "ids": ["r2a", "r2b"]}])
+        self.assertFalse(any(e.get("removed") for e in out))
+
+    def test_short_row_without_bbox_falls_back_to_sequence(self):
+        """Utan bbox går bara den sista, ofullständiga gruppen att namnge."""
+        elements = [header("h1", "Ras"), header("h2", "Kostnad"),
+                    cell("c1", "Alv"), cell("c2", "25"),
+                    cell("c3", "Dvärg")]
+        _, report = tables.assemble(elements)
+        self.assertIn("rad 2 ’Dvärg’ har 1 av 2 celler", report[0]["reason"])
+
     def test_book_without_cells_is_untouched(self):
         elements = [{"id": "e01", "type": "paragraph", "text": "Bara text."}]
         out, report = tables.assemble(elements)

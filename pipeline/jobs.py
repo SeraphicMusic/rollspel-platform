@@ -33,6 +33,12 @@ def transcription_jobs(workdir, limit=None):
         embedded = page_file(workdir, no, "embedded.json")
         if embedded.is_file():
             job["embedded_hint"] = str(embedded)
+        # Uppmätta radboxar (pipeline/rows.py). De är inget facit för texten,
+        # men de ger transkriberaren `source.bbox` utan att den behöver gissa
+        # koordinater — och utan bbox är halva förbesiktningen verkningslös.
+        radboxar = page_file(workdir, no, "radboxar.json")
+        if radboxar.is_file():
+            job["radboxar"] = str(radboxar)
         jobs.append(job)
         if limit and len(jobs) >= limit:
             break

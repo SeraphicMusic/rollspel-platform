@@ -1,7 +1,7 @@
 """Deterministisk förbesiktning av validerade sidor (AGENTER.md Regel 5).
 
-Fem mönster återkom på varje sida i korrekturen av DoD-grundreglerna och är
-rent mekaniska — de ska inte kosta hundratusentals tokens per sida i en
+Mönstren nedan återkom sida efter sida i korrekturen av DoD-grundreglerna och
+är rent mekaniska — de ska inte kosta hundratusentals tokens per sida i en
 språkmodell:
 
   1. `linjeregel-prefix` — kapitälrubriker sätts mellan två tunna linjeregler,
@@ -13,11 +13,22 @@ språkmodell:
      rader på samma y-höjd; bbox blir då markant bredare än spaltmedianen.
   5. `lasordning` — elementlistans ordning avviker från bbox-y inom en spalt.
      Exporten följer arrayordningen literalt, så det är ett verkligt fel.
+  6. `radsammanslagning` — ett element spänner över TVÅ tryckta rader vertikalt
+     men återger bara den ena; bbox-höjden blir ~2× sidans medianradhöjd.
+  7. `tabellkandidat` — en tryckt tabell som transkriberats som en följd av
+     `paragraph` i stället för ett `table`-element. Strukturen går då förlorad
+     för gott: ingenting nedströms kan återskapa rad- och kolumnindelningen.
 
 Utfallet är **kandidater, aldrig ändringar**: korrektionsposter med
 `applied: false` och `source: "heuristik:<regel>"`, plus `review_reasons` för
-strukturfynden. Specialisterna och advokaten börjar från listan i stället för
-att leta, och advokaten avgör som alltid mot PNG:n.
+strukturfynden. En feltypad tabell är ett TYPNINGSfel, inte ett textfel, och
+flaggas därför alltid som `needs_review` — aldrig som korrektionspost.
+Specialisterna och advokaten börjar från listan i stället för att leta, och
+advokaten avgör som alltid mot PNG:n.
+
+Läsordningsreglerna (4 nedan) förutsätter tvåspaltig löptext och ger falska
+larm på tabellsidor och blanketter. `classify_page` klassificerar därför sidan
+geometriskt först, och de reglerna körs bara på löptextsidor.
 
 Geometrifakta (verifierat): bbox ligger under `source.bbox` som
 `[x, y, bredd, höjd]`, normaliserat, med y räknat från sidans NEDERKANT.
@@ -67,8 +78,64 @@ ORDER_TOLERANCE = 0.05
 # vanlig spaltväxling mitt på sidan.
 INTERLEAVE_SHARE = 0.8
 
+# Vertikal radsammanslagning: ett element som spänner över två tryckta rader
+# men bara återger den ena. Uppmätt på s. 60 (0,0336 mot medianen 0,0161 =
+# 2,09×) och bekräftat som mönster på s. 68. Faktorn ligger med avsikt högt:
+# rubriker, diakritband och spärrad sats gör 1,2–1,4× helt normalt, och en
+# regel som larmar där kostar mer agenttid än den sparar.
+ROW_MERGE_FACTOR = 1.8
+MIN_HEIGHT_ELEMENTS = 8
+# Höjden ensam räcker inte: en rubrik satt i stor grad är också hög. Skillnaden
+# är att rubrikens GLYFER är stora medan en sammanslagen rad har normalstora
+# glyfer — bara bboxen är för hög. Måttet är bbox-bredd per tecken, jämförd med
+# sidans median. Uppmätt på hela boken: sammanslagningen på s. 60 ligger på
+# 1,03×, rubrikerna på 1,7–9,2× och skanningsgarblet i illustrationerna
+# (s. 31, 37, 39) på 0,06–0,5×. Bandet nedan släpper bara igenom det första.
+ROW_MERGE_GLYPH_MIN = 0.7
+ROW_MERGE_GLYPH_MAX = 1.4
+# Elementtyper som per definition rymmer flera rader och därför aldrig kan
+# vara en "sammanslagen rad".
+MULTIROW_TYPES = ("table", "statblock", "list")
+
+# Tabellkandidat. En tabellcell är kort; en brödtextrad är det inte. 40 tecken
+# skiljer dem i DoD-grundreglerna (spaltrader ligger på 45–55 tecken).
+TABLE_CELL_MAX_TEXT = 40
+# Hur tätt två vänsterkanter måste ligga för att räknas till samma kolumn.
+# Uppmätt: kolumn 1 på s. 61 sprider sig 0,111–0,117, kolumn 2 ligger på 0,348.
+TABLE_X_TOLERANCE = 0.03
+# Andelen av medianradhöjden som två celler får skilja i y och ändå räknas till
+# samma rad. Uppmätt spridning inom en rad: 0,002–0,005 mot radavstånd 0,015.
+TABLE_ROW_TOLERANCE = 0.6
+# En tabells rader följer tätt på varandra. Fältgrupperna i en blankett gör det
+# inte: teckenrutorna på s. 67–68 ligger 0,06–0,38 isär trots att två av dem
+# råkar börja på samma y-höjd. Att två rutor delar y betyder INTE att de hör
+# ihop (beslut s. 67) — så rader räknas bara i sammanhängande följd, med
+# högst tre radhöjders lucka mellan två rader. Tre räcker för en tabell vars
+# celler radbryts till två rader (2× radhöjd) men stänger ute blankettens
+# fältgrupper (4× och uppåt). Bryts en tabell på mitten rapporteras den som
+# två block, vilket är rätt: en lucka den storleken är oftast två tabeller.
+TABLE_ROW_GAP_FACTOR = 3.0
+TABLE_MIN_ROWS = 3
+TABLE_MIN_COLUMNS = 2
+# Typer som transkriptionen felaktigt kan ha valt för en tabellcell. `table_cell`
+# är INTE med: den är rätt reservform och monteras av pipeline.tables.assemble.
+TABLE_SUSPECT_TYPES = ("paragraph", "boxed_text")
+
+# Sidtyper (geometrisk klassificering, se classify_page).
+PAGE_PROSE = "löptext"
+PAGE_TABLE = "tabellsida"
+PAGE_FORM = "blankett"
+PAGE_OTHER = "annat"
+# Hur stor andel av sidans element som måste ingå i ett tabellblock för att
+# sidan ska räknas som tabellsida och inte som löptext med en liten tabell i.
+PAGE_TABLE_SHARE = 0.30
+# Blankett: nästan bara korta element, utspridda över många x-lägen.
+PAGE_FORM_SHORT_SHARE = 0.60
+PAGE_FORM_MIN_CLUSTERS = 3
+
 RULES = ("linjeregel-prefix", "linjeregel-suffix", "raka-citattecken",
-         "plusminus", "kolumnsammanslagning", "lasordning")
+         "plusminus", "kolumnsammanslagning", "lasordning",
+         "radsammanslagning", "tabellkandidat")
 
 
 def _bbox(el):
@@ -279,13 +346,27 @@ def rule_column_interleaving(elements):
     return hits
 
 
+def _renders(el):
+    """Bidrar elementet med något till exporten?
+
+    Ett element som tömts och typats om (sidgrafik, konsumerad halva av en
+    kolumnsammanslagning) har kvar sin gamla bbox men skriver ingenting. Dess
+    plats i arrayen kan därför inte vara ett läsordningsfel — och på de
+    färdiga sidorna 24, 26, 49, 64 och 65 var det precis sådana element som
+    stod för larmen.
+    """
+    if el.get("removed"):
+        return False
+    return bool((el.get("text") or "").strip() or el.get("data"))
+
+
 def rule_reading_order(elements):
     """Arrayordning mot bbox-y inom varje spalt (y minskar framåt)."""
     hits = []
     by_region = {}
     for idx, el in enumerate(elements):
         box = _bbox(el)
-        if box:
+        if box and _renders(el):
             by_region.setdefault(_region(el), []).append((idx, el, box[1]))
     for region, items in by_region.items():
         if len(items) < 3:
@@ -319,6 +400,242 @@ def rule_reading_order(elements):
     return hits
 
 
+def rule_row_merge(elements):
+    """Element vars bbox-HÖJD är ~2× sidans medianradhöjd.
+
+    `rule_column_merge` mäter bara bredd och missar därför den vertikala
+    varianten: elementet spänner över två tryckta rader men återger bara den
+    ena, så en hel rad boktext saknas i draften utan att något ser tomt ut.
+    Hittad på s. 60 (`Genma Frigke a Vands…`, 2,09× medianen — raden ovanför
+    var helt borta) och bekräftad som mönster på s. 68.
+
+    Glyfstorleken avgör om höjden är misstänkt: en rubrik i stor grad är hög
+    för att bokstäverna är stora, en sammanslagen rad har normalstora
+    bokstäver i en för hög box. Se ROW_MERGE_GLYPH_MIN/MAX.
+    """
+    boxes = [(el, _bbox(el)) for el in elements
+             if _bbox(el) and not el.get("removed")
+             and el.get("type") not in MULTIROW_TYPES
+             and (el.get("text") or "").strip()]
+    if len(boxes) < MIN_HEIGHT_ELEMENTS:
+        return []
+    med_h = _median([box[3] for _, box in boxes])
+    med_glyph = _median([box[2] / len((el.get("text") or "").strip())
+                         for el, box in boxes])
+    colw = column_width(elements)
+    if not med_h or not med_glyph:
+        return []
+    hits = []
+    for el, box in boxes:
+        if box[3] < med_h * ROW_MERGE_FACTOR:
+            continue
+        # Ett element som också är för BRETT är en kolumnsammanslagning och
+        # ägs av rule_column_merge — flagga inte samma element två gånger.
+        if colw and box[2] > colw * MERGE_FACTOR:
+            continue
+        glyph = box[2] / len((el.get("text") or "").strip())
+        if not (ROW_MERGE_GLYPH_MIN <= glyph / med_glyph
+                <= ROW_MERGE_GLYPH_MAX):
+            continue
+        hits.append((el,
+                     "Heuristik (radsammanslagning): bbox-höjd %.4f mot sidans "
+                     "medianradhöjd %.4f (faktor %.2f), men glyfbredden är "
+                     "normal (%.2f× sidans median) — elementet är alltså inte "
+                     "satt i större grad. Det spänner sannolikt över TVÅ "
+                     "tryckta rader och återger bara den ena; den andra saknas "
+                     "då helt i draften utan att något ser tomt ut. Räkna "
+                     "bläckband i PNG:n över elementets y-intervall (dra bort "
+                     "diakritband för ä/ö/å) och lägg till den saknade raden "
+                     "med uppmätt bbox."
+                     % (box[3], med_h, box[3] / med_h, glyph / med_glyph)))
+    return hits
+
+
+# ---------------------------------------------------------------------------
+# Tabellkandidat och sidtypsklassificering
+# ---------------------------------------------------------------------------
+
+def _x_clusters(values, tolerance=TABLE_X_TOLERANCE):
+    """Enkellänksklustring av vänsterkanter -> lista av (lo, hi)."""
+    groups = []
+    for v in sorted(values):
+        if groups and v - groups[-1][1] <= tolerance:
+            groups[-1][1] = v
+        else:
+            groups.append([v, v])
+    return [tuple(g) for g in groups]
+
+
+def _cluster_of(clusters, value):
+    for i, (lo, hi) in enumerate(clusters):
+        if lo <= value <= hi:
+            return i
+    return None
+
+
+def _y_rows(items, tolerance):
+    """Gruppera (y, ...)-poster till rader uppifrån och ned.
+
+    Radens referens är dess ÖVERSTA element; nästa element hör till samma rad
+    så länge det ligger inom toleransen därifrån. Enkellänkning duger inte —
+    den kedjar ihop hela spalten när radavståndet är litet.
+    """
+    rows = []
+    ref = None
+    for item in sorted(items, key=lambda t: -t[0]):
+        if ref is None or ref - item[0] > tolerance:
+            rows.append([])
+            ref = item[0]
+        rows[-1].append(item)
+    return rows
+
+
+def table_blocks(elements):
+    """Följder av korta `paragraph`/`boxed_text` som bildar ett radvist rutnät.
+
+    Detta är felet som kostade mest i DoD-grundreglerna: från sida 40 typade
+    transkriptionen varje tabell som en följd av `paragraph`, och då är
+    rad-/kolumnstrukturen borta för gott — `tables.assemble` har inget att
+    montera och exporten skriver lösa stycken.
+
+    Signalen är rent geometrisk: korta element vars vänsterkanter faller i två
+    eller flera täta x-kluster som ÅTERKOMMER radvis. Ett block räknas först
+    när minst TABLE_MIN_ROWS rader parar ihop minst TABLE_MIN_COLUMNS sådana
+    kolumner — en enstaka etikett med sitt värde bredvid räcker inte.
+
+    Bedömningen görs per region: på s. 61 ligger tabellens tredje kolumn i
+    `högerkolumn` medan de två första ligger i `vänsterkolumn`, och de två
+    första räcker gott för att slå ut.
+
+    Returnerar en lista av dict: {region, columns, rows, ids, anchor}.
+    """
+    order = {id(el): i for i, el in enumerate(elements)}
+    by_region = {}
+    for el in elements:
+        if el.get("type") not in TABLE_SUSPECT_TYPES or el.get("removed"):
+            continue
+        box = _bbox(el)
+        text = (el.get("text") or "").strip()
+        if not box or not text or len(text) > TABLE_CELL_MAX_TEXT:
+            continue
+        by_region.setdefault(_region(el), []).append((el, box))
+
+    blocks = []
+    for region, items in by_region.items():
+        if len(items) < TABLE_MIN_ROWS * TABLE_MIN_COLUMNS:
+            continue
+        clusters = _x_clusters([box[0] for _, box in items])
+        if len(clusters) < TABLE_MIN_COLUMNS:
+            continue
+        med_h = _median([box[3] for _, box in items])
+        rows = _y_rows([(box[1], el, _cluster_of(clusters, box[0]))
+                        for el, box in items],
+                       max(med_h * TABLE_ROW_TOLERANCE, 0.004))
+        # En kolumn räknas bara om den återkommer radvis; en enstaka
+        # indragen rubrik bildar annars sin egen "kolumn".
+        per_cluster = {}
+        for row in rows:
+            for _, _, ci in row:
+                per_cluster[ci] = per_cluster.get(ci, 0) + 1
+        recurring = {ci for ci, n in per_cluster.items()
+                     if n >= TABLE_MIN_ROWS}
+        if len(recurring) < TABLE_MIN_COLUMNS:
+            continue
+        paired = []
+        for row in rows:
+            cells = [(el, ci) for _, el, ci in row if ci in recurring]
+            if len({ci for _, ci in cells}) < TABLE_MIN_COLUMNS:
+                continue
+            paired.append((row[0][0], cells))
+        # Bara rader i sammanhängande följd bildar en tabell — se
+        # TABLE_ROW_GAP_FACTOR. En blankett faller isär här.
+        gap = max(med_h * TABLE_ROW_GAP_FACTOR, 0.02)
+        runs, prev = [], None
+        for y, cells in paired:
+            if prev is None or prev - y > gap:
+                runs.append([])
+            runs[-1].append(cells)
+            prev = y
+        for run in runs:
+            if len(run) < TABLE_MIN_ROWS:
+                continue
+            members = [el for cells in run for el, _ in cells]
+            members.sort(key=lambda el: order[id(el)])
+            used = {ci for cells in run for _, ci in cells}
+            blocks.append({"region": region, "columns": len(used),
+                           "rows": len(run),
+                           "ids": [el.get("id") for el in members],
+                           "anchor": members[0]})
+    blocks.sort(key=lambda b: order[id(b["anchor"])])
+    return blocks
+
+
+def rule_table_candidate(elements):
+    """Tryckt tabell som typats `paragraph` -> needs_review, aldrig korrektion.
+
+    Att elementtypen är fel är ett TYPNINGSfel, inte ett textfel: texten är
+    riktig, det är strukturen som saknas. Det finns därför ingen `corrected`
+    att föreslå — utfallet är en flagga med gissat kolumnantal och de
+    deltagande elementens id:n, och advokaten avgör mot PNG:n.
+    """
+    hits = []
+    for block in table_blocks(elements):
+        ids = block["ids"]
+        visade = ", ".join(ids[:12]) + (" …" if len(ids) > 12 else "")
+        hits.append((block["anchor"],
+                     "Heuristik (tabellkandidat): %d korta element i %s bildar "
+                     "ett rutnät på %d kolumner × %d rader — det ser ut som en "
+                     "tryckt tabell som typats `paragraph` i stället för "
+                     "`table` med `data.headers`/`data.rows`. Strukturen går "
+                     "inte att återskapa nedströms, så detta måste rättas i "
+                     "elementtypningen, inte i exporten. Deltagande element: "
+                     "%s. Verifiera mot PNG:n: är det en tabell, typa om till "
+                     "`table` (eller till `table_header`/`table_cell` om "
+                     "raderna inte går att para ihop säkert — "
+                     "`pipeline.tables.assemble` monterar dem). Detta är ett "
+                     "typningsfel och ska aldrig bli en korrektionspost."
+                     % (len(ids), block["region"], block["columns"],
+                        block["rows"], visade)))
+    return hits
+
+
+def classify_page(elements):
+    """Sidtyp ur ren geometri: löptext, tabellsida, blankett eller annat.
+
+    Läsordningsreglerna bygger på att sidan är tvåspaltig löptext med hela
+    vänsterspalten före hela högerspalten. På tabellsidor är den ordningen
+    radvis i stället för spaltvis, och på blanketter går den fältgrupp för
+    fältgrupp — där ger reglerna falska larm som kostar ren agenttid
+    (s. 61, 64, 65, 67, 68 i DoD-grundreglerna).
+    """
+    body = [el for el in elements
+            if el.get("type") != "page_artifact" and not el.get("removed")
+            and _bbox(el) and (el.get("text") or "").strip()]
+    if len(body) < MIN_COLUMN_ELEMENTS * 2:
+        return PAGE_OTHER
+
+    i_tabell = set()
+    for block in table_blocks(elements):
+        i_tabell.update(block["ids"])
+    if len(i_tabell) >= PAGE_TABLE_SHARE * len(body):
+        return PAGE_TABLE
+
+    korta = [el for el in body
+             if len((el.get("text") or "").strip()) <= TABLE_CELL_MAX_TEXT]
+    clusters = _x_clusters([_bbox(el)[0] for el in body])
+    if (len(korta) >= PAGE_FORM_SHORT_SHARE * len(body)
+            and len(clusters) >= PAGE_FORM_MIN_CLUSTERS):
+        return PAGE_FORM
+
+    regions = {}
+    for el in body:
+        regions[_region(el)] = regions.get(_region(el), 0) + 1
+    if (regions.get("vänsterkolumn", 0) >= MIN_COLUMN_ELEMENTS
+            and regions.get("högerkolumn", 0) >= MIN_COLUMN_ELEMENTS):
+        return PAGE_PROSE
+    return PAGE_OTHER
+
+
 # ---------------------------------------------------------------------------
 # Sida och körning
 # ---------------------------------------------------------------------------
@@ -348,14 +665,24 @@ def scan_page(data):
             _add_flag(el, flag)
             counts["plusminus"] += 1
 
-    for rule, fn in (("kolumnsammanslagning", rule_column_merge),
-                     ("lasordning", rule_reading_order),
-                     ("lasordning", rule_column_interleaving)):
+    sidtyp = classify_page(elements)
+    sidnivå = [("kolumnsammanslagning", rule_column_merge),
+               ("radsammanslagning", rule_row_merge),
+               ("tabellkandidat", rule_table_candidate)]
+    # Läsordningsreglerna gäller bara tvåspaltig löptext. På tabellsidor läses
+    # raderna tvärs över spalterna och på blanketter fältgrupp för fältgrupp,
+    # så där pekar de ut fel destination och kostar bara agenttid att avfärda.
+    if sidtyp == PAGE_PROSE:
+        sidnivå += [("lasordning", rule_reading_order),
+                    ("lasordning", rule_column_interleaving)]
+
+    for rule, fn in sidnivå:
         for el, reason in fn(elements):
             _add_flag(el, reason)
             counts[rule] += 1
 
     out["source"] = "heuristik"
+    out["sidtyp"] = sidtyp
     out["regler"] = counts
     return out, counts
 
