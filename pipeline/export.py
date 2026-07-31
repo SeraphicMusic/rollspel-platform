@@ -158,6 +158,9 @@ def _table_md(el):
 _REFLOW_TYPES = ("paragraph", "boxed_text") + _BULLET_TYPES
 _INDENT_MIN = 0.018
 _FULL_LINE = 0.92
+# Andel av sidans löptextbredd under vilken en rad inte kan vara löptext alls.
+# Uppmätt: brödtextrader 0,35–0,44, tabellceller under 0,22.
+_MIN_PROSE_LINE = 0.5
 # Rader inom så här långt avstånd i sidled räknas till samma spalt. Fönstret
 # måste rymma indraget (0,020–0,030) men utesluta grannspalter — på de sidor som
 # blandar tabell och brödtext ligger närmaste andra kolumn 0,05 bort.
@@ -216,6 +219,19 @@ def _local_column(bb, boxes):
     return left, _median([b[2] for b in near])
 
 
+def _prose_width(boxes):
+    """Sidans typiska radbredd för löptext, som 75:e percentilen.
+
+    Medianen duger inte: på en tabelltung sida är den dominerad av celler
+    (s. 61 har median 0,126 mot brödtextens 0,42). 75:e percentilen ligger
+    stabilt på 0,40–0,44 även där.
+    """
+    widths = sorted(b[2] for b in boxes)
+    if not widths:
+        return None
+    return widths[min(len(widths) - 1, int(len(widths) * 0.75))]
+
+
 def _starts_paragraph(el, prev, nxt, boxes, prev_boxes):
     """Inleder `el` ett nytt stycke, eller fortsätter det föregående raden?
 
@@ -227,7 +243,16 @@ def _starts_paragraph(el, prev, nxt, boxes, prev_boxes):
     if bb is None or pbb is None:
         # Utan geometri finns inget facit — då fogas ingenting ihop.
         return True
-    # 1. Utsluten sats: fyllde föregående rad inte spalten tog stycket slut.
+    # 1a. En rad som är MYCKET kortare än sidans löptext är ingen löptextrad —
+    #     den är en tabellcell. Utan detta fogas celler som ligger som
+    #     `paragraph` ihop till cellsoppa (`Hyfsad simmare 2 3`, s. 56), för då
+    #     räknas breddreferensen ur cellerna själva och blir meningslös.
+    #     Regeln gäller bara framåt: en kort SISTA rad i ett stycke får
+    #     fortfarande fogas till raden före sig.
+    prose = _prose_width(prev_boxes)
+    if prose and pbb[2] < _MIN_PROSE_LINE * prose:
+        return True
+    # 1b. Utsluten sats: fyllde föregående rad inte spalten tog stycket slut.
     pcol = _local_column(pbb, prev_boxes)
     if pcol and pbb[2] < _FULL_LINE * pcol[1]:
         return True

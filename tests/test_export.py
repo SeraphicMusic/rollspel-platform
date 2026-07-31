@@ -180,6 +180,33 @@ class TestReflow(unittest.TestCase):
                           line("e02", "Färdigheter 40", etype="toc_entry")])
         self.assertIn("Rollpersonen 5\n\nFärdigheter 40", md)
 
+    def test_table_cells_typed_as_paragraphs_are_not_glued_together(self):
+        """Celler som ligger som `paragraph` får inte bli cellsoppa.
+
+        Simtabellen på s. 56 blev `Hyfsad simmare 2 3` när breddreferensen
+        räknades ur cellerna själva. En rad som är mycket kortare än sidans
+        löptext är ingen löptextrad.
+        """
+        md = self.render([
+            line("e01", "Simning delas in i följande FN, vilket innebär:"),
+            line("e02", "Hyfsad simmare", w=0.14),
+            line("e03", "2", w=0.02),
+            line("e04", "3", w=0.02),
+            line("e05", "God simmare", w=0.13),
+            line("e06", "En full rad löptext som fyller hela spalten här."),
+        ])
+        self.assertNotIn("Hyfsad simmare 2", md)
+        self.assertIn("Hyfsad simmare\n\n2\n\n3\n\nGod simmare", md)
+
+    def test_a_short_final_line_still_joins_backwards(self):
+        """Kortregeln gäller bara framåt — styckets sista rad hör till stycket."""
+        md = self.render([
+            line("e01", "En rad som fyller hela spalten med löptext."),
+            line("e02", "tion.", w=0.05),
+            line("e03", "Ett nytt stycke tar vid och fyller spalten igen."),
+        ])
+        self.assertIn("En rad som fyller hela spalten med löptext. tion.", md)
+
     def test_lines_without_geometry_are_left_alone(self):
         """Utan bbox finns inget facit — då fogas ingenting ihop."""
         md = self.render([{"id": "e01", "type": "paragraph", "text": "Ett."},
