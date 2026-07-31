@@ -447,6 +447,50 @@ cp "$WD/export/bok.md" bibliotek/DOD-REG-grundregler-1991-del1-rollpersonen.md
 
 DOCX är avvecklad — markdown är läsformatet. Läskopian är skapad.
 
+## Exportfixarna (steg 1, gjorda 2026-07-31)
+
+Läsexporten renderade **en tryckt rad per markdown-stycke** — hela boken, 3150
+brödtextrader med tomrad emellan. Elementdatan var riktig; felet låg i
+`export.py`, som skrev `[text, ""]` per element. Fyra fixar:
+
+1. **Återflödning av rader till stycken.** Två oberoende signaler, båda uppmätta
+   på boken (3510 rader): **indrag** (bbox-brus ≤0,015, styckeindrag 0,020–0,030)
+   och **kort rad** (satsen är utsluten, så bara styckets sista rad understiger
+   spaltbredden). Gäller `paragraph`, `boxed_text` och `list_item`; **aldrig**
+   `toc_entry`/`index_entry`, där en rad är en post.
+2. **Avstavningar läks** vid radslut (341 st). Ett hängande bindestreck i en
+   samordning (`djur-` + `växt- och`) undantas.
+3. **Tabeller fogas ihop över sidbrytning.** `tables.assemble` arbetar per sida,
+   så *Särskilda förmågor* bröts mitt i rad 78 och raderna 79–81 föll ut som
+   listpunkter. Tabeller med identiska rubriker slås nu ihop, och en `list` som
+   fortsätter en tabell viks in — men bara om varje punkt har radens form,
+   annars lämnas den orörd (hellre ful lista än tappad text).
+4. **Sidmarkörerna** följer nu det block de tillhör i stället för följdens
+   första sida.
+
+Tre fällor som kostade tid och som är värda att minnas:
+
+- **Statistiken måste vara robust.** Med `min`/`max` förgiftade ett enda
+  avvikande element hela spaltens baslinje och sprängde s. 5:s högerspalt.
+  Median och typvärde i stället.
+- **Spaltmåtten måste räknas lokalt.** En global spaltindelning slog ihop
+  tabellens högerkolumn (x≈0,49) med brödtextens (x≈0,518) på s. 61, så varje
+  prosarad såg indragen ut. Baslinjen tas nu ur raderna närmast i sidled.
+- **Hängande indrag har omvänd polaritet.** `Rundspark:` står i marginalen med
+  fortsättningsraderna indragna (s. 59, 65). Skillnaden mot ett styckeindrag är
+  att ett hängande indrag DELAS av flera rader i följd.
+
+Utfall: 8198 → 3092 rader, 3150 enradiga stycken → 1001 riktiga stycken, noll
+kvarvarande avstavningar, noll tabellrader utanför sin tabell.
+**Verifierat med ordinvariant:** 30 266 ord före, 30 262 efter, och hela
+skillnaden redovisad — en dubblerad tabellrubrik som försvann vid hopfogningen
+(3 ord) och `INT-basera-`+`de` som läktes till `INT-baserade` (1 ord).
+Testsviten: 153 → **164 tester**.
+
+Kvar: 12 stycken som börjar med gemen, på s. 44, 48, 49, 56, 64 och 68. De är
+tabellceller typade som `paragraph` och hör till den öppna elementtypningsfrågan,
+inte till exporten.
+
 ## Kvarstående — boken är korrekturläst, men detta är inte gjort
 
 1. **Raka citattecken kvarstår på nio redan korrekturlästa sidor** — 6, 20, 22,

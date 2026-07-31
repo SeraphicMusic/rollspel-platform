@@ -105,5 +105,149 @@ class TestExportMarkdown(unittest.TestCase):
         self.assertIn("Viktigt värde", md)
 
 
+def line(eid, text, x=0.06, w=0.43, y=0.9, etype="paragraph"):
+    """Ett element = EN tryckt rad, som i transkriptionen."""
+    return {"id": eid, "type": etype, "text": text,
+            "source": {"bbox": [x, y, w, 0.016]}}
+
+
+class TestReflow(unittest.TestCase):
+    """Rader ska fogas ihop till stycken igen.
+
+    Utan detta blev varje tryckt rad ett eget markdown-stycke — hela
+    DoD-grundregelboken föll ut med 3150 enradiga stycken.
+    """
+
+    def render(self, elements):
+        with tempfile.TemporaryDirectory() as tmp:
+            workdir = Path(tmp)
+            (workdir / "export").mkdir()
+            (workdir / "export" / "bok.json").write_text(
+                json.dumps(book(elements), ensure_ascii=False),
+                encoding="utf-8")
+            return export_markdown(workdir).read_text(encoding="utf-8")
+
+    def test_lines_of_one_paragraph_are_joined(self):
+        md = self.render([line("e01", "Den hand som du normalt använder"),
+                          line("e02", "kallas för svärdshand.")])
+        self.assertIn("Den hand som du normalt använder kallas för "
+                      "svärdshand.", md)
+
+    def test_indent_starts_a_new_paragraph(self):
+        md = self.render([line("e01", "Slutet på första stycket."),
+                          line("e02", "Nytt stycke börjar här.", x=0.085),
+                          line("e03", "och fortsätter här.")])
+        self.assertIn("Slutet på första stycket.\n\nNytt stycke börjar här. "
+                      "och fortsätter här.", md)
+
+    def test_hanging_indent_is_not_a_paragraph_break(self):
+        """`Rundspark:` i marginalen med indragna fortsättningsrader (s. 59).
+
+        Polariteten är omvänd mot ett styckeindrag: här är det FORTSÄTTNINGEN
+        som är indragen. Läses indraget som styckestart delas varje sådant
+        stycke i en rad per stycke.
+        """
+        md = self.render([line("e01", "Rundspark: För att få fart"),
+                          line("e02", "snurrar man ett varv.", x=0.09),
+                          line("e03", "Sparken gör 1T8 i skada.", x=0.09)])
+        self.assertIn("Rundspark: För att få fart snurrar man ett varv. "
+                      "Sparken gör 1T8 i skada.", md)
+
+    def test_short_line_ends_the_paragraph(self):
+        """Satsen är utsluten: bara styckets sista rad fyller inte spalten."""
+        md = self.render([line("e01", "En rad som fyller hela spalten."),
+                          line("e02", "Sista raden.", w=0.18),
+                          line("e03", "Ett nytt stycke tar vid.")])
+        self.assertIn("En rad som fyller hela spalten. Sista raden.\n\n"
+                      "Ett nytt stycke tar vid.", md)
+
+    def test_hyphenation_at_line_break_is_healed(self):
+        md = self.render([line("e01", "Texten korrigerades och komplette-"),
+                          line("e02", "rades inför utgåvan.")])
+        self.assertIn("korrigerades och kompletterades inför utgåvan.", md)
+        self.assertNotIn("komplette-", md)
+
+    def test_hanging_hyphen_in_a_coordination_is_kept(self):
+        """`djur-` + `växt- och mineralriket` är ingen avstavning."""
+        md = self.render([line("e01", "gifter, både från djur-"),
+                          line("e02", "växt- och mineralriket.")])
+        self.assertIn("från djur- växt- och mineralriket.", md)
+        self.assertNotIn("djurväxt", md)
+
+    def test_toc_entries_are_never_reflowed(self):
+        """En innehållspost är en rad; fogas de ihop förstörs uppställningen."""
+        md = self.render([line("e01", "Rollpersonen 5", etype="toc_entry"),
+                          line("e02", "Färdigheter 40", etype="toc_entry")])
+        self.assertIn("Rollpersonen 5\n\nFärdigheter 40", md)
+
+    def test_lines_without_geometry_are_left_alone(self):
+        """Utan bbox finns inget facit — då fogas ingenting ihop."""
+        md = self.render([{"id": "e01", "type": "paragraph", "text": "Ett."},
+                          {"id": "e02", "type": "paragraph", "text": "Två."}])
+        self.assertIn("Ett.\n\nTvå.", md)
+
+
+class TestCrossPageTables(unittest.TestCase):
+    """En tabell som löper över en sidbrytning ska fogas ihop.
+
+    `tables.assemble` arbetar per sida. Särskilda förmågor-tabellen bröts därför
+    mitt i rad 78 (`INT-basera-`) och raderna 79–81 föll ut som listpunkter
+    utanför tabellen.
+    """
+
+    def render(self, pages):
+        with tempfile.TemporaryDirectory() as tmp:
+            workdir = Path(tmp)
+            (workdir / "export").mkdir()
+            data = book([])
+            data["pages"] = pages
+            (workdir / "export" / "bok.json").write_text(
+                json.dumps(data, ensure_ascii=False), encoding="utf-8")
+            return export_markdown(workdir).read_text(encoding="utf-8")
+
+    def test_tables_with_identical_headers_are_merged(self):
+        md = self.render([
+            {"page": 1, "elements": [{
+                "id": "e01", "type": "table", "text": "",
+                "data": {"headers": ["2T20+BP", "Förmåga"],
+                         "rows": [["19-20", "SEGHET."]]}}]},
+            {"page": 2, "elements": [{
+                "id": "e02", "type": "table", "text": "",
+                "data": {"headers": ["2T20+BP", "Förmåga"],
+                         "rows": [["21-22", "STARKA NYPOR."]]}}]},
+        ])
+        self.assertEqual(md.count("| 2T20+BP | Förmåga |"), 1)
+        self.assertIn("| 19-20 | SEGHET. |", md)
+        self.assertIn("| 21-22 | STARKA NYPOR. |", md)
+
+    def test_list_continuing_a_table_is_folded_back_in(self):
+        md = self.render([
+            {"page": 1, "elements": [{
+                "id": "e01", "type": "table", "text": "",
+                "data": {"headers": ["2T20+BP", "Förmåga"],
+                         "rows": [["78", "HAMNBYTARE. Utom INT-basera-"]]}}]},
+            {"page": 2, "elements": [{
+                "id": "e02", "type": "list", "text": "",
+                "data": {"items": ["de färdigheter.",
+                                   "79 — SNABB UPPFATTNING."]}}]},
+        ])
+        self.assertIn("| 78 | HAMNBYTARE. Utom INT-baserade färdigheter. |", md)
+        self.assertIn("| 79 | SNABB UPPFATTNING. |", md)
+        self.assertNotIn("- 79 —", md)
+
+    def test_unexpected_list_shape_leaves_the_table_alone(self):
+        """Hellre en ful lista än tappad text."""
+        md = self.render([
+            {"page": 1, "elements": [{
+                "id": "e01", "type": "table", "text": "",
+                "data": {"headers": ["A", "B"], "rows": [["1", "ett"]]}}]},
+            {"page": 2, "elements": [{
+                "id": "e02", "type": "list", "text": "",
+                "data": {"items": ["Helt annan text utan radform"]}}]},
+        ])
+        self.assertIn("- Helt annan text utan radform", md)
+        self.assertIn("| 1 | ett |", md)
+
+
 if __name__ == "__main__":
     unittest.main()

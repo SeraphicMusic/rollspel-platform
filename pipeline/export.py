@@ -5,7 +5,9 @@ DOCX återanvänder befintliga .claude/skills/extrahera/create-docx.js.
 """
 import csv
 import json
+import re
 import subprocess
+from collections import Counter
 from pathlib import Path
 
 from . import tables
@@ -136,6 +138,233 @@ def _table_md(el):
     return lines
 
 
+# ---------------------------------------------------------------------------
+# Återflödning: ett element är EN tryckt rad
+# ---------------------------------------------------------------------------
+
+# Transkriptionen ger ett element per tryckt rad. Renderas raderna var för sig
+# blir varje rad ett eget markdown-stycke — hela DoD-grundregelboken föll ut så,
+# 3150 brödtextrader med tomrad emellan. Raderna fogas därför ihop till stycken
+# igen, med tryckets egen geometri som facit i stället för gissningar om språket.
+#
+# Två signaler, båda uppmätta på grundregelboken (68 sidor, 3510 rader):
+#   1. INDRAG. bbox-bruset inom en spalt ligger på ≤0,015 medan styckeindraget
+#      ligger på 0,020–0,030. Tröskeln sätts däremellan.
+#   2. KORT RAD. Satsen är utsluten, så varje rad utom styckets sista fyller
+#      spalten (0,43–0,44 av sidbredden). En kortare rad avslutar ett stycke.
+# Signalerna är oberoende och ORas — endera räcker för att bryta stycket.
+# Listpunkter flödas om av samma skäl: en punkt som räknar upp färdigheter
+# löper över åtta tryckta rader och blev åtta punkter (s. 17).
+_REFLOW_TYPES = ("paragraph", "boxed_text") + _BULLET_TYPES
+_INDENT_MIN = 0.018
+_FULL_LINE = 0.92
+# Rader inom så här långt avstånd i sidled räknas till samma spalt. Fönstret
+# måste rymma indraget (0,020–0,030) men utesluta grannspalter — på de sidor som
+# blandar tabell och brödtext ligger närmaste andra kolumn 0,05 bort.
+_COLUMN_WINDOW = 0.04
+_X_BUCKET = 0.005
+
+# Ett hängande bindestreck i en samordning (`djur-` + `växt- och mineralriket`)
+# ser ut som en avstavning men får inte fogas ihop.
+_HANGING_HYPHEN = re.compile(r"^\S*-(?:\s|$)")
+
+
+def _bbox(el):
+    return (el.get("source") or {}).get("bbox")
+
+
+def _join_text(prev, nxt):
+    """Foga ihop två tryckta rader och läk avstavningen vid radslutet."""
+    prev, nxt = (prev or "").rstrip(), (nxt or "").lstrip()
+    if not prev or not nxt:
+        return prev or nxt
+    if (prev.endswith("-") and not prev.endswith((" -", "--"))
+            and nxt[:1].islower() and not _HANGING_HYPHEN.match(nxt)):
+        return prev[:-1] + nxt
+    return prev + " " + nxt
+
+
+def _median(values):
+    values = sorted(values)
+    if not values:
+        return None
+    mid = len(values) // 2
+    if len(values) % 2:
+        return values[mid]
+    return (values[mid - 1] + values[mid]) / 2.0
+
+
+def _local_column(bb, boxes):
+    """(vänsterkant, radbredd) för spalten som raden `bb` tillhör.
+
+    Måtten räknas ur de rader som ligger NÄRMAST i sidled, inte ur en global
+    spaltindelning av sidan. Skälet är uppmätt: en sida som blandar tabell och
+    brödtext har kolumner bara några hundradelar isär (s. 61: tabellens
+    högerkolumn på 0,49 mot brödtextens 0,518). En global indelning slår ihop
+    dem, och då ser varenda brödtextrad indragen ut mot tabellkolumnens
+    vänsterkant — stycket sprängs vid varje rad.
+
+    Vänsterkanten är det VANLIGASTE x-värdet, inte det minsta: i en spalt börjar
+    de allra flesta rader vid marginalen, medan indragen och enstaka avvikande
+    element är minoriteten. Bredden är medianen av samma skäl.
+    """
+    near = [b for b in boxes if abs(b[0] - bb[0]) <= _COLUMN_WINDOW]
+    if not near:
+        return None
+    counts = Counter(int(round(b[0] / _X_BUCKET)) for b in near)
+    left = min(counts, key=lambda bucket: (-counts[bucket], bucket)) * _X_BUCKET
+    return left, _median([b[2] for b in near])
+
+
+def _starts_paragraph(el, prev, nxt, boxes, prev_boxes):
+    """Inleder `el` ett nytt stycke, eller fortsätter det föregående raden?
+
+    Raden och dess föregångare mäts mot SIN EGEN sidas rader — ett stycke som
+    löper över en sidbrytning har en rad på var sida, och sidorna kan ha olika
+    spaltgeometri.
+    """
+    bb, pbb = _bbox(el), _bbox(prev)
+    if bb is None or pbb is None:
+        # Utan geometri finns inget facit — då fogas ingenting ihop.
+        return True
+    # 1. Utsluten sats: fyllde föregående rad inte spalten tog stycket slut.
+    pcol = _local_column(pbb, prev_boxes)
+    if pcol and pbb[2] < _FULL_LINE * pcol[1]:
+        return True
+    # 2. Indrag inleder ett stycke — men bara ett ENSAMT indrag.
+    #    Boken sätter också HÄNGANDE indrag (`Rundspark:` i marginalen med
+    #    fortsättningsraderna indragna, s. 59; punktlistor på s. 65). Där är
+    #    polariteten den omvända, och att läsa indraget som styckestart delar
+    #    varje sådant stycke i en rad per stycke. Skillnaden är att ett hängande
+    #    indrag DELAS av flera rader i följd, medan ett styckeindrag står ensamt.
+    col = _local_column(bb, boxes)
+    if col and bb[0] - col[0] >= _INDENT_MIN:
+        if abs(bb[0] - pbb[0]) < _INDENT_MIN:
+            return False
+        nbb = _bbox(nxt) if nxt is not None else None
+        if nbb is not None and abs(nbb[0] - bb[0]) < _INDENT_MIN:
+            return False
+        return True
+    return False
+
+
+def _reflow(run):
+    """Dela en rad-följd i stycken och foga ihop varje styckes rader.
+
+    `run` är (sida, element)-par och får spänna över en sidbrytning — det är
+    just så ett stycke som fortsätter på nästa sida fogas ihop. Varje returnerat
+    stycke bär därför sidan för sin EGEN första rad, inte följdens: annars
+    tappas sidmarkören för varje sida som ett stycke råkar sträcka sig in i.
+
+    Spaltmåtten räknas fram PER SIDA ur följdens egna rader. Båda avgränsningarna
+    är nödvändiga: tas de ur sidan i stort mäts en smal exempelruta mot
+    brödtextspalten och sprängs vid varje rad, och tas de ur hela följden blandas
+    flera sidors spalter och tabellceller ihop till en obrukbar median.
+    """
+    per_page = {}
+    for page, el in run:
+        if _bbox(el):
+            per_page.setdefault(page, []).append(_bbox(el))
+    filled = [(page, el) for page, el in run
+              if (el.get("text") or "").strip()]
+    blocks = []
+    for position, (page, el) in enumerate(filled):
+        if blocks:
+            ppage, pel = blocks[-1][-1]
+            nxt = filled[position + 1][1] \
+                if position + 1 < len(filled) else None
+            fresh = _starts_paragraph(el, pel, nxt, per_page.get(page) or [],
+                                      per_page.get(ppage) or [])
+        else:
+            fresh = True
+        if fresh:
+            blocks.append([(page, el)])
+        else:
+            blocks[-1].append((page, el))
+    out = []
+    for block in blocks:
+        text = ""
+        for _, el in block:
+            text = _join_text(text, (el.get("text") or "").strip())
+        out.append((block[0][0], text))
+    return out
+
+
+# ---------------------------------------------------------------------------
+# Hopfogning av tabeller över sidbrytning
+# ---------------------------------------------------------------------------
+
+# `tables.assemble` arbetar per sida och kan därför inte se att en tabell
+# fortsätter på nästa. I grundregelboken bröts Särskilda förmågor-tabellen mitt
+# i rad 78 (`INT-basera-`) och raderna 79–81 föll ut som listpunkter utanför
+# tabellen.
+_ROW_SPLIT = re.compile(r"^(\S+)\s+—\s+(.+)$", re.S)
+
+
+def _same_table(a, b):
+    ha = (a.get("data") or {}).get("headers") or []
+    hb = (b.get("data") or {}).get("headers") or []
+    return bool(ha) and ha == hb
+
+
+def _stitch_list(table, lst):
+    """Foga in en lista som i själva verket är tabellens fortsättning.
+
+    Returnerar False och rör ingenting om någon punkt inte har radens form —
+    att tappa text vore värre än en ful lista.
+    """
+    data = table.get("data") or {}
+    rows = data.get("rows") or []
+    items = [i.strip() for i in ((lst.get("data") or {}).get("items") or [])
+             if i and i.strip()]
+    if len(data.get("headers") or []) != 2 or not rows or not items:
+        return False
+    continuation, new_rows = None, []
+    for idx, item in enumerate(items):
+        match = _ROW_SPLIT.match(item)
+        if match:
+            new_rows.append([match.group(1), match.group(2)])
+        elif idx == 0 and item[:1].islower():
+            continuation = item
+        else:
+            return False
+    if continuation:
+        rows[-1] = list(rows[-1])
+        rows[-1][-1] = _join_text(rows[-1][-1], continuation)
+    data["rows"] = rows + new_rows
+    table["data"] = data
+    return True
+
+
+def _stitch(items):
+    """Slå ihop tabeller som löper över en sidbrytning."""
+    out = []
+    for page, el in items:
+        prev = out[-1][1] if out else None
+        if prev is not None and prev.get("type") == "table":
+            if el.get("type") == "table" and _same_table(prev, el):
+                prev_data = prev.setdefault("data", {})
+                prev_data["rows"] = (prev_data.get("rows") or []) + \
+                    ((el.get("data") or {}).get("rows") or [])
+                continue
+            if el.get("type") == "list" and _stitch_list(prev, el):
+                continue
+        out.append((page, el))
+    return out
+
+
+def _stream(book, include_artifacts):
+    """(sida, element) för hela boken, med cellblock monterade."""
+    for page in book["pages"]:
+        elements, _ = tables.assemble(page["elements"], page["page"])
+        for el in elements:
+            if el.get("removed"):
+                continue
+            if el.get("type") == "page_artifact" and not include_artifacts:
+                continue
+            yield page["page"], el
+
+
 def export_markdown(workdir, include_artifacts=False):
     log = setup_logging(workdir)
     book = _load_book(workdir)
@@ -143,45 +372,71 @@ def export_markdown(workdir, include_artifacts=False):
     title = (book["source"].get("metadata") or {}).get("title") \
         or Path(book["source"]["path"]).stem
     lines += ["# %s" % title, ""]
-    for page in book["pages"]:
-        lines.append("<!-- sida %d -->" % page["page"])
-        elements, _ = tables.assemble(page["elements"], page["page"])
-        for el in elements:
-            etype = el.get("type")
-            text = (el.get("text") or "").strip()
-            if el.get("removed"):
-                continue
-            if etype == "page_artifact" and not include_artifacts:
-                continue
-            if etype == "heading":
-                level = min(int(el.get("level", 2)) + 1, 6)
-                lines += ["#" * level + " " + text, ""]
-            elif etype in ("paragraph", "toc_entry", "index_entry"):
-                if el.get("style") == "italic":
+    items = _stitch(list(_stream(book, include_artifacts)))
+    last_page = None
+    index = 0
+    while index < len(items):
+        page, el = items[index]
+        etype = el.get("type")
+        # En rad-följd samlas ihop och flödas om till stycken. Följden bryts av
+        # varje annan elementtyp, och av att stilen växlar (kursiv exempelruta).
+        if etype in _REFLOW_TYPES:
+            run, style = [], el.get("style")
+            while index < len(items):
+                nxt_page, nxt = items[index]
+                if nxt.get("type") != etype or nxt.get("style") != style:
+                    break
+                run.append((nxt_page, nxt))
+                index += 1
+            blocks = _reflow(run)
+            for blk_page, text in blocks:
+                if blk_page != last_page:
+                    lines += ["<!-- sida %d -->" % blk_page, ""]
+                    last_page = blk_page
+                if etype in _BULLET_TYPES:
+                    # Punkterna hålls ihop utan tomrad emellan, annars blir
+                    # varje punkt en egen lista i markdown.
+                    lines += ["- %s" % text]
+                elif etype == "boxed_text":
+                    lines += ["> " + text.replace("\n", "\n> "), ""]
+                elif style == "italic":
                     lines += ["*%s*" % text, ""]
                 else:
                     lines += [text, ""]
-            elif etype == "boxed_text":
-                lines += ["> " + text.replace("\n", "\n> "), ""]
-            elif etype == "list":
-                items = (el.get("data") or {}).get("items") or []
-                lines += ["- %s" % i for i in items] + [""]
-            elif etype == "table":
-                lines += _table_md(el)
-            elif etype == "statblock":
-                lines += _statblock_md(el)
-            elif etype in _BULLET_TYPES:
-                lines += ["- %s" % text]
-            elif etype in _CAPTION_TYPES:
-                # Bildtext/tabellnot är inte brödtext; kursiv skiljer den åt.
-                lines += ["*%s*" % text, ""] if text else []
-            elif etype in tables.CELL_TYPES:
-                # Cellblock som monteringen inte kunde tyda (ojämnt antal
-                # celler). Att tappa värdena är värre än en ful rad, så de
-                # skrivs ut — och sidan syns i varningsloggen.
-                lines += ["| %s |" % text] if text else []
-            elif text:
-                lines += [text, ""]
+            if blocks and etype in _BULLET_TYPES:
+                lines += [""]
+            continue
+        index += 1
+        text = (el.get("text") or "").strip()
+        if page != last_page:
+            lines += ["<!-- sida %d -->" % page, ""]
+            last_page = page
+        if etype == "heading":
+            level = min(int(el.get("level", 2)) + 1, 6)
+            lines += ["#" * level + " " + text, ""]
+        elif etype in ("toc_entry", "index_entry"):
+            # Flödas ALDRIG om: en innehålls- eller registerpost är en rad,
+            # och att foga ihop dem skulle förstöra uppställningen.
+            lines += ["*%s*" % text, ""] if el.get("style") == "italic" \
+                else [text, ""]
+        elif etype == "list":
+            lines += ["- %s" % i
+                      for i in ((el.get("data") or {}).get("items") or [])]
+            lines += [""]
+        elif etype == "table":
+            lines += _table_md(el)
+        elif etype == "statblock":
+            lines += _statblock_md(el)
+        elif etype in _CAPTION_TYPES:
+            # Bildtext/tabellnot är inte brödtext; kursiv skiljer den åt.
+            lines += ["*%s*" % text, ""] if text else []
+        elif etype in tables.CELL_TYPES:
+            # Cellblock som monteringen inte kunde tyda (ojämnt antal
+            # celler). Att tappa värdena är värre än en ful rad, så de
+            # skrivs ut — och sidan syns i varningsloggen.
+            lines += ["| %s |" % text] if text else []
+        elif text:
+            lines += [text, ""]
     _warn_unknown_types(book, log)
     out = export_dir(workdir) / "bok.md"
     out.write_text("\n".join(lines), encoding="utf-8")
