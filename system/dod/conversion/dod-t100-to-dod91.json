@@ -1,0 +1,41 @@
+{
+  "id": "dod-t100-to-dod91",
+  "version": 7,
+  "source": "dod-t100",
+  "target": "dod91",
+  "fv": {
+    "formula": "round(value / 5)",
+    "minimum": 3,
+    "maximum": 18
+  },
+  "skill_aliases": {
+    "Finna dolda": "Finna dolda ting",
+    "Gömma": "Gömma sig",
+    "Övertalning": "Övertala",
+    "Värdering": "Värdera",
+    "Värdesätta": "Värdera",
+    "Gatuslagsmål": "Slagsmål",
+    "Obeväpnad strid": "Slagsmål"
+  },
+  "skill_splits": {
+    "Spela och sjunga": [
+      "Spela stränginstrument",
+      "Sjunga"
+    ]
+  },
+  "weapon_aliases": {
+    "Kort svärd": "Kortsvärd",
+    "Korstvärd": "Kortsvärd",
+    "Slagsvärd": "Bastardsvärd",
+    "Lång båge": "Långbåge",
+    "Kort båge": "Kortbåge"
+  },
+  "shield_aliases": {
+    "Stor sköld": "Rundsköld, stor",
+    "Liten sköld": "Rundsköld, liten"
+  },
+  "armor_aliases": {
+    "Ringbrynja": "Ringbrynja"
+  },
+  "monster_aliases": {}
+}

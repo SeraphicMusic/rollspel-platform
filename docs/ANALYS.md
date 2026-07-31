@@ -96,9 +96,9 @@ Slutsats: **återanvänd disciplinen och felhanteringsmönstren, men lyft dem in
 pipeline med strukturerad datamodell** — rollspelsböcker är tryckt text med komplex layout,
 vilket motiverar mer automation än kyrkböckernas handstil.
 
-## 3. Referensrepo: Drakar och Demoner (DoD RPG)
+## 3. Referensrepo: Drakar och Demoner 1991
 
-En Next.js-app ("AI Spelledare") vars värde för Ripparen ligger i domänmodellen, inte appen:
+Det auktoritativa DoD91-repot vars värde för Ripparen ligger i domänmodellen:
 
 - **`src/data/dod91/`** — handverifierade regelkataloger i TypeScript med trohetskommentarer
   per bokvärde: 7 raser, 9 yrken, ~90 färdigheter, 72 besvärjelser, ~150 föremål,
@@ -146,7 +146,7 @@ och `ocr_osaker`-flaggor) och en Python-regelmotor (`motor/`).
 
 ### 5.1 Vad referensrepona tillsammans visar
 
-| Egenskap | RPG Ripparen i dag | Släktforskaren | DoD RPG | Mutant 2089 |
+| Egenskap | RPG Ripparen i dag | Släktforskaren | Drakar och Demoner 1991 | Mutant 2089 |
 | --- | --- | --- | --- | --- |
 | Deterministisk kod för det deterministiska | Nej (prompt-enradare) | Ja | Ja | Ja |
 | Idempotens/återupptagning | Nej | Ja (atomisk skrivning + skip) | — | — |
@@ -178,7 +178,7 @@ och `ocr_osaker`-flaggor) och en Python-regelmotor (`motor/`).
   `create-docx.js`, innehållstypsmodellen (utbyggd), systemkatalog-idén.
 - **Från Släktforskaren:** idempotens-/atomicitetsmönstret, retry/backoff, felisolering per
   enhet, manifest-driven identitet, statusnivåer, kostnadsdisciplin, läsdisciplin-prompter.
-- **Från DoD RPG:** lexikondata (färdigheter, vapen, besvärjelser, monster), formeltabeller,
+- **Från Drakar och Demoner 1991:** lexikondata (färdigheter, vapen, besvärjelser, monster), formeltabeller,
   `ATTR_FIELDS`-mappningen, tärningsregex, alias-/normaliseringsmönstret, `unresolved`-rapporter.
 - **Från Mutant 2089:** LATHUND:s OCR-felkatalog, formlerna (KP/SB/GCL-delbarhet),
   SLP-schemat, `ocr_osaker`-semantiken ("tysta aldrig en flagga"), golden-testmönstret.

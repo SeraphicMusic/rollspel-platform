@@ -1,0 +1,70 @@
+{
+  "ruleset": "dod91",
+  "shields": [
+    {
+      "bv": 9,
+      "name": "Targ (bucklare)",
+      "price": 500,
+      "styKrav": 1,
+      "weight": 1
+    },
+    {
+      "bv": 9,
+      "name": "Rundsköld, liten",
+      "price": 650,
+      "styKrav": 3,
+      "weight": 2
+    },
+    {
+      "bv": 11,
+      "name": "Rundsköld, stor",
+      "price": 900,
+      "styKrav": 7,
+      "weight": 6
+    },
+    {
+      "bv": 11,
+      "name": "Långsköld (normandisk)",
+      "price": 900,
+      "styKrav": 7,
+      "weight": 7
+    },
+    {
+      "bv": 11,
+      "name": "Vanlig sköld (trekantig)",
+      "price": 850,
+      "styKrav": 7,
+      "weight": 6
+    },
+    {
+      "bv": 13,
+      "name": "Scutata (romersk sköld)",
+      "price": 1100,
+      "styKrav": 7,
+      "weight": 8
+    },
+    {
+      "bv": 13,
+      "name": "Pavise (bågskyttesköld)",
+      "price": 900,
+      "styKrav": 11,
+      "weight": 10
+    },
+    {
+      "bv": 2,
+      "isUpgrade": true,
+      "name": "Läderöverdrag",
+      "price": 250,
+      "styKrav": 2,
+      "weight": 2
+    },
+    {
+      "bv": 3,
+      "isUpgrade": true,
+      "name": "Metallskoning",
+      "price": 500,
+      "styKrav": 3,
+      "weight": 3
+    }
+  ]
+}

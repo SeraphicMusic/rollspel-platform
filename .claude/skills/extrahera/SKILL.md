@@ -31,6 +31,9 @@ transkriptionskontrakt: se §Transkriptionskontrakt nedan.
   - Haiku-varning: duger för ren löptext i bra skanning, men tabeller, statblocks
     och blek text ger fler fel — plausibla fellästa ord som inte finns i lexikonet
     passerar valideringen. Kör ALLTID `/korrekturläs` efter Haiku-transkription.
+- **Illustrationer hoppas över helt.** Modellen ska bara använda sidbilden för att
+  läsa bokens typografiska text; den ska aldrig beskriva, sammanfatta eller
+  katalogisera bildmotiv.
 - **Korrektur-agenterna** har explicita modeller i sin frontmatter
   (specialister: Sonnet; advokaten: Opus — den bärande sista bedömningen) —
   sätt aldrig `model:` i Task-anropen.
@@ -84,6 +87,25 @@ Avvisade transkript (schemafel) rapporteras och sidan dyker upp i `jobb` igen.
 - Tvåkolumnssidor: vänster kolumn i sin helhet före höger.
 - Sidhuvud, sidfot, sidnummer och vattenstämplar transkriberas som `page_artifact`.
 - Sätt `confidence` ärligt per element (1.0 = kristallklart).
+
+**Bildpolicy (obligatorisk och tokenbesparande):**
+- Hoppa över alla illustrationer, fotografier, kartbilder, dekorativa vinjetter,
+  bakgrundsbilder och andra bildmotiv. Skapa aldrig element av typen
+  `illustration`.
+- Beskriv eller sammanfatta inte vad en bild föreställer. Ange inte motiv, stil,
+  personer, föremål, miljö, färg eller komposition.
+- Transkribera inte text som är en del av själva bildmotivet, till exempel text
+  på skyltar, föremål, vapensköldar, dekorativa inskriptioner eller etiketter
+  inne i en karta. En typografiskt separat bildtext eller vanlig brödtext bredvid
+  eller ovanpå en illustration är däremot boktext och ska transkriberas.
+- Gör ingen detaljerad bildanalys för att leta efter dold eller svårläst text.
+  Identifiera bara sidans vanliga boktext och transkribera den.
+- Om sidan enbart består av en illustration och saknar vanlig boktext, skriv:
+  `{"page": N, "layout": {"columns": 0}, "elements": [],
+  "skipped": {"reason": "illustration_only"}}`.
+- Sidklassen `image_only` betyder bara att PDF-sidan saknar textlager. Den kan
+  fortfarande vara en skannad textsida och får därför inte hoppas över utan en
+  snabb kontroll av PNG:n.
 
 #### Delegerad transkription (endast med `modell=`)
 
@@ -142,10 +164,13 @@ och var exporterna ligger. Radera INTE arbetskatalogen — den är pipelinens st
 ## Transkriptionskontrakt
 
 En fil per sida: `{"page": <nr>, "layout": {"columns": <n>}, "elements": [...]}`.
+En ren illustrationssida får ha tom `elements` endast tillsammans med
+`"skipped": {"reason": "illustration_only"}`.
 
 Elementtyper: `heading` (med `level` 1–3), `paragraph` (ev. `"style": "italic"`),
 `boxed_text`, `list` (`data.items`), `table` (`data.headers` + `data.rows`),
-`statblock`, `toc_entry`, `index_entry`, `page_artifact`, `illustration`.
+`statblock`, `toc_entry`, `index_entry`, `page_artifact`. Typen `illustration`
+är äldre bakåtkompatibilitet och får inte skapas i nya transkript.
 
 Varje element: `text` (utom table/statblock/list), `confidence` (0–1), gärna
 `source.region` (t.ex. "vänsterkolumn"). Osäkra ord markeras `[?]` i texten och

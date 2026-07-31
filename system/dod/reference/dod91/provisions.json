@@ -1,0 +1,89 @@
+{
+  "provisions": [
+    {
+      "category": "dryck",
+      "name": "Svagdricka (1 liter)",
+      "price": 8,
+      "weight": 0
+    },
+    {
+      "category": "dryck",
+      "name": "Öl (1 liter)",
+      "price": 10,
+      "weight": 0
+    },
+    {
+      "category": "dryck",
+      "name": "Cider (1 liter)",
+      "price": 12,
+      "weight": 0
+    },
+    {
+      "category": "dryck",
+      "name": "Mjöd (1 liter)",
+      "price": 15,
+      "weight": 0
+    },
+    {
+      "category": "dryck",
+      "name": "Vin (1 liter)",
+      "price": 20,
+      "weight": 0
+    },
+    {
+      "category": "dryck",
+      "name": "Brännvin (1 liter)",
+      "price": 40,
+      "weight": 0
+    },
+    {
+      "category": "maltid",
+      "name": "Färsk grönsaksstuvning",
+      "price": 8,
+      "weight": 0
+    },
+    {
+      "category": "maltid",
+      "name": "Köttsoppa och rovor",
+      "price": 12,
+      "weight": 0
+    },
+    {
+      "category": "maltid",
+      "name": "Grönsakspaj",
+      "price": 10,
+      "weight": 0
+    },
+    {
+      "category": "maltid",
+      "name": "Fågel",
+      "price": 40,
+      "weight": 0
+    },
+    {
+      "category": "maltid",
+      "name": "Hel vildsvin",
+      "price": 350,
+      "weight": 0
+    },
+    {
+      "category": "fardkost",
+      "name": "Limpa",
+      "price": 5,
+      "weight": 0
+    },
+    {
+      "category": "fardkost",
+      "name": "Skeppskorpor (1 dagranson)",
+      "price": 8,
+      "weight": 0
+    },
+    {
+      "category": "fardkost",
+      "name": "Torkat kött (1 dagranson)",
+      "price": 12,
+      "weight": 0
+    }
+  ],
+  "ruleset": "dod91"
+}

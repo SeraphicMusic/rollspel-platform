@@ -7,6 +7,8 @@
     "kortssvard": "Kortsvärd",
     "kroppspoang": "Kroppspoäng",
     "svardskonst": "Svärdskonst",
+    "svarighetsgrad": "svårighetsgrad",
+    "svarighetsgraden": "svårighetsgraden",
     "vattar": "vättar"
   },
   "categories": {
@@ -247,6 +249,11 @@
       "Halvorch",
       "Halvalv"
     ],
+    "ritual_terms": [
+      "SIGILL",
+      "PERMANENS",
+      "NEXUS"
+    ],
     "skills": [
       "Bluffa",
       "Finna dolda ting",
@@ -411,6 +418,8 @@
       "Mentalism"
     ],
     "weapons": [
+      "Knytnäve",
+      "Spark",
       "Knogjärn",
       "Parerdolk",
       "Dolk",
@@ -605,9 +614,10 @@
     ]
   },
   "terms": {
+    "BC": "Baschans",
     "BP": "Bakgrundspoäng",
     "BV": "Brytvärde",
-    "CL": "Chansläge",
+    "CL": "Chans att lyckas",
     "EP": "Erfarenhetspoäng",
     "FV": "Färdighetsvärde",
     "FYS": "Fysik",
@@ -618,6 +628,7 @@
     "PSY": "Psyke",
     "RP": "Rollperson",
     "SB": "Skadebonus",
+    "SG": "Svårighetsgrad",
     "SL": "Spelledare",
     "SLP": "Spelledarperson",
     "SMI": "Smidighet",
@@ -648,6 +659,16 @@
     "Baschans",
     "Hemvist",
     "Vanlighet",
-    "Naturligt skydd"
+    "Naturligt skydd",
+    "färdighetsslag",
+    "differensvärde",
+    "fummel",
+    "fumlar",
+    "perfekt slag",
+    "Primär",
+    "Sekundär",
+    "Stridskonst",
+    "Halvlängdsmän",
+    "orcher"
   ]
 }

@@ -1,0 +1,1523 @@
+{
+  "age_modifiers": {
+    "gammal": {
+      "attributeMods": {
+        "FYS": -3,
+        "INT": 1,
+        "KAR": 1,
+        "PSY": 4,
+        "SMI": -3,
+        "STY": -5
+      },
+      "bonusEP": 300,
+      "label": "Gammal",
+      "maxFV": 19,
+      "startkapitalMultiplier": 2.5
+    },
+    "medelalder": {
+      "attributeMods": {
+        "FYS": -1,
+        "INT": 1,
+        "KAR": 1,
+        "PSY": 2,
+        "SMI": -1,
+        "STY": -2
+      },
+      "bonusEP": 250,
+      "label": "Medelålder",
+      "maxFV": 17,
+      "startkapitalMultiplier": 2
+    },
+    "mogen": {
+      "attributeMods": {
+        "FYS": 0,
+        "INT": 0,
+        "KAR": 0,
+        "PSY": 0,
+        "SMI": 0,
+        "STY": 0
+      },
+      "bonusEP": 200,
+      "label": "Mogen",
+      "maxFV": 15,
+      "startkapitalMultiplier": 1.5
+    },
+    "ung": {
+      "attributeMods": {
+        "FYS": 1,
+        "INT": 0,
+        "KAR": 0,
+        "PSY": -1,
+        "SMI": 1,
+        "STY": -1
+      },
+      "bonusEP": 150,
+      "label": "Ung",
+      "maxFV": 13,
+      "startkapitalMultiplier": 1
+    }
+  },
+  "age_ranges": {
+    "alv": {
+      "gammal": {
+        "max": 5000,
+        "min": 1001
+      },
+      "medelalder": {
+        "max": 1000,
+        "min": 501
+      },
+      "mogen": {
+        "max": 500,
+        "min": 201
+      },
+      "ung": {
+        "max": 200,
+        "min": 50
+      }
+    },
+    "anka": {
+      "gammal": {
+        "max": 80,
+        "min": 61
+      },
+      "medelalder": {
+        "max": 60,
+        "min": 41
+      },
+      "mogen": {
+        "max": 40,
+        "min": 21
+      },
+      "ung": {
+        "max": 20,
+        "min": 16
+      }
+    },
+    "dvarg": {
+      "gammal": {
+        "max": 400,
+        "min": 251
+      },
+      "medelalder": {
+        "max": 250,
+        "min": 156
+      },
+      "mogen": {
+        "max": 155,
+        "min": 41
+      },
+      "ung": {
+        "max": 40,
+        "min": 21
+      }
+    },
+    "halvalv": {
+      "gammal": {
+        "max": 130,
+        "min": 101
+      },
+      "medelalder": {
+        "max": 100,
+        "min": 71
+      },
+      "mogen": {
+        "max": 70,
+        "min": 41
+      },
+      "ung": {
+        "max": 40,
+        "min": 30
+      }
+    },
+    "halvlangdsman": {
+      "gammal": {
+        "max": 100,
+        "min": 76
+      },
+      "medelalder": {
+        "max": 75,
+        "min": 61
+      },
+      "mogen": {
+        "max": 60,
+        "min": 31
+      },
+      "ung": {
+        "max": 30,
+        "min": 20
+      }
+    },
+    "halvorch": {
+      "gammal": {
+        "max": 55,
+        "min": 46
+      },
+      "medelalder": {
+        "max": 45,
+        "min": 31
+      },
+      "mogen": {
+        "max": 30,
+        "min": 19
+      },
+      "ung": {
+        "max": 18,
+        "min": 12
+      }
+    },
+    "manniska": {
+      "gammal": {
+        "max": 80,
+        "min": 61
+      },
+      "medelalder": {
+        "max": 60,
+        "min": 46
+      },
+      "mogen": {
+        "max": 45,
+        "min": 21
+      },
+      "ung": {
+        "max": 20,
+        "min": 16
+      }
+    }
+  },
+  "attribute_bp_cost": {
+    "10": 10,
+    "11": 11,
+    "12": 12,
+    "13": 14,
+    "14": 17,
+    "15": 20,
+    "16": 25,
+    "17": 30,
+    "18": 40,
+    "3": 0,
+    "4": 1,
+    "5": 2,
+    "6": 3,
+    "7": 5,
+    "8": 7,
+    "9": 9
+  },
+  "kp_locations": [
+    {
+      "arm": 2,
+      "ben": 3,
+      "brostkorg": 4,
+      "huvud": 3,
+      "mage": 3,
+      "maxTotal": 7
+    },
+    {
+      "arm": 3,
+      "ben": 4,
+      "brostkorg": 5,
+      "huvud": 4,
+      "mage": 4,
+      "maxTotal": 11
+    },
+    {
+      "arm": 4,
+      "ben": 5,
+      "brostkorg": 6,
+      "huvud": 5,
+      "mage": 5,
+      "maxTotal": 15
+    },
+    {
+      "arm": 5,
+      "ben": 6,
+      "brostkorg": 7,
+      "huvud": 6,
+      "mage": 6,
+      "maxTotal": 20
+    },
+    {
+      "arm": 6,
+      "ben": 7,
+      "brostkorg": 8,
+      "huvud": 7,
+      "mage": 7,
+      "maxTotal": 25
+    },
+    {
+      "arm": 7,
+      "ben": 8,
+      "brostkorg": 9,
+      "huvud": 8,
+      "mage": 8,
+      "maxTotal": 30
+    },
+    {
+      "arm": 8,
+      "ben": 9,
+      "brostkorg": 10,
+      "huvud": 9,
+      "mage": 9,
+      "maxTotal": 35
+    },
+    {
+      "arm": 9,
+      "ben": 10,
+      "brostkorg": 11,
+      "huvud": 10,
+      "mage": 10,
+      "maxTotal": 40
+    }
+  ],
+  "movement": [
+    {
+      "max": 11,
+      "min": 0,
+      "movement": 7
+    },
+    {
+      "max": 20,
+      "min": 12,
+      "movement": 8
+    },
+    {
+      "max": 29,
+      "min": 21,
+      "movement": 9
+    },
+    {
+      "max": 38,
+      "min": 30,
+      "movement": 10
+    },
+    {
+      "max": 47,
+      "min": 39,
+      "movement": 11
+    },
+    {
+      "max": 56,
+      "min": 48,
+      "movement": 12
+    },
+    {
+      "max": 65,
+      "min": 57,
+      "movement": 13
+    },
+    {
+      "max": 74,
+      "min": 66,
+      "movement": 14
+    },
+    {
+      "max": 83,
+      "min": 75,
+      "movement": 15
+    },
+    {
+      "max": 92,
+      "min": 84,
+      "movement": 16
+    }
+  ],
+  "resistance_table": {
+    "active_values": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21
+    ],
+    "die": "1T20",
+    "rows": [
+      {
+        "chances": [
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19,
+          "automatic_success",
+          "automatic_success",
+          "automatic_success",
+          "automatic_success",
+          "automatic_success",
+          "automatic_success",
+          "automatic_success",
+          "automatic_success",
+          "automatic_success",
+          "automatic_success",
+          "automatic_success"
+        ],
+        "resistance": 1
+      },
+      {
+        "chances": [
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19,
+          "automatic_success",
+          "automatic_success",
+          "automatic_success",
+          "automatic_success",
+          "automatic_success",
+          "automatic_success",
+          "automatic_success",
+          "automatic_success",
+          "automatic_success",
+          "automatic_success"
+        ],
+        "resistance": 2
+      },
+      {
+        "chances": [
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19,
+          "automatic_success",
+          "automatic_success",
+          "automatic_success",
+          "automatic_success",
+          "automatic_success",
+          "automatic_success",
+          "automatic_success",
+          "automatic_success",
+          "automatic_success"
+        ],
+        "resistance": 3
+      },
+      {
+        "chances": [
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19,
+          "automatic_success",
+          "automatic_success",
+          "automatic_success",
+          "automatic_success",
+          "automatic_success",
+          "automatic_success",
+          "automatic_success",
+          "automatic_success"
+        ],
+        "resistance": 4
+      },
+      {
+        "chances": [
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19,
+          "automatic_success",
+          "automatic_success",
+          "automatic_success",
+          "automatic_success",
+          "automatic_success",
+          "automatic_success",
+          "automatic_success"
+        ],
+        "resistance": 5
+      },
+      {
+        "chances": [
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19,
+          "automatic_success",
+          "automatic_success",
+          "automatic_success",
+          "automatic_success",
+          "automatic_success",
+          "automatic_success"
+        ],
+        "resistance": 6
+      },
+      {
+        "chances": [
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19,
+          "automatic_success",
+          "automatic_success",
+          "automatic_success",
+          "automatic_success",
+          "automatic_success"
+        ],
+        "resistance": 7
+      },
+      {
+        "chances": [
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19,
+          "automatic_success",
+          "automatic_success",
+          "automatic_success",
+          "automatic_success"
+        ],
+        "resistance": 8
+      },
+      {
+        "chances": [
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19,
+          "automatic_success",
+          "automatic_success",
+          "automatic_success"
+        ],
+        "resistance": 9
+      },
+      {
+        "chances": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19,
+          "automatic_success",
+          "automatic_success"
+        ],
+        "resistance": 10
+      },
+      {
+        "chances": [
+          "automatic_failure",
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19,
+          "automatic_success"
+        ],
+        "resistance": 11
+      },
+      {
+        "chances": [
+          "automatic_failure",
+          "automatic_failure",
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19
+        ],
+        "resistance": 12
+      },
+      {
+        "chances": [
+          "automatic_failure",
+          "automatic_failure",
+          "automatic_failure",
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18
+        ],
+        "resistance": 13
+      },
+      {
+        "chances": [
+          "automatic_failure",
+          "automatic_failure",
+          "automatic_failure",
+          "automatic_failure",
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17
+        ],
+        "resistance": 14
+      },
+      {
+        "chances": [
+          "automatic_failure",
+          "automatic_failure",
+          "automatic_failure",
+          "automatic_failure",
+          "automatic_failure",
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16
+        ],
+        "resistance": 15
+      },
+      {
+        "chances": [
+          "automatic_failure",
+          "automatic_failure",
+          "automatic_failure",
+          "automatic_failure",
+          "automatic_failure",
+          "automatic_failure",
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15
+        ],
+        "resistance": 16
+      },
+      {
+        "chances": [
+          "automatic_failure",
+          "automatic_failure",
+          "automatic_failure",
+          "automatic_failure",
+          "automatic_failure",
+          "automatic_failure",
+          "automatic_failure",
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14
+        ],
+        "resistance": 17
+      },
+      {
+        "chances": [
+          "automatic_failure",
+          "automatic_failure",
+          "automatic_failure",
+          "automatic_failure",
+          "automatic_failure",
+          "automatic_failure",
+          "automatic_failure",
+          "automatic_failure",
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13
+        ],
+        "resistance": 18
+      },
+      {
+        "chances": [
+          "automatic_failure",
+          "automatic_failure",
+          "automatic_failure",
+          "automatic_failure",
+          "automatic_failure",
+          "automatic_failure",
+          "automatic_failure",
+          "automatic_failure",
+          "automatic_failure",
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12
+        ],
+        "resistance": 19
+      },
+      {
+        "chances": [
+          "automatic_failure",
+          "automatic_failure",
+          "automatic_failure",
+          "automatic_failure",
+          "automatic_failure",
+          "automatic_failure",
+          "automatic_failure",
+          "automatic_failure",
+          "automatic_failure",
+          "automatic_failure",
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11
+        ],
+        "resistance": 20
+      },
+      {
+        "chances": [
+          "automatic_failure",
+          "automatic_failure",
+          "automatic_failure",
+          "automatic_failure",
+          "automatic_failure",
+          "automatic_failure",
+          "automatic_failure",
+          "automatic_failure",
+          "automatic_failure",
+          "automatic_failure",
+          "automatic_failure",
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10
+        ],
+        "resistance": 21
+      }
+    ],
+    "success": "roll <= chance"
+  },
+  "ruleset": "dod91",
+  "skadebonus": [
+    {
+      "bonus": "0",
+      "max": 26,
+      "min": 1
+    },
+    {
+      "bonus": "+1",
+      "max": 29,
+      "min": 27
+    },
+    {
+      "bonus": "+1T2",
+      "max": 32,
+      "min": 30
+    },
+    {
+      "bonus": "+1T4",
+      "max": 40,
+      "min": 33
+    },
+    {
+      "bonus": "+1T6",
+      "max": 50,
+      "min": 41
+    },
+    {
+      "bonus": "+1T10",
+      "max": 60,
+      "min": 51
+    },
+    {
+      "bonus": "+2T6",
+      "max": 80,
+      "min": 61
+    },
+    {
+      "bonus": "+3T6",
+      "max": 100,
+      "min": 81
+    },
+    {
+      "bonus": "+4T6",
+      "max": 140,
+      "min": 101
+    },
+    {
+      "bonus": "+5T6",
+      "max": 180,
+      "min": 141
+    }
+  ],
+  "special_abilities": [
+    {
+      "choiceType": "skill_secondary",
+      "description": "+1 FV på valfri sekundär färdighet (ej förbjudna).",
+      "max": 4,
+      "min": 3,
+      "modValue": 1,
+      "name": "Valfri sekundär färdighet"
+    },
+    {
+      "description": "+2 FV i Sjökunnighet och Navigera.",
+      "excludeRaces": [
+        "dvarg"
+      ],
+      "fixedSkillMods": [
+        {
+          "skillId": "sjokunnighet",
+          "value": 2
+        },
+        {
+          "skillId": "navigation",
+          "value": 2
+        }
+      ],
+      "max": 6,
+      "min": 5,
+      "name": "Sjöfararbakgrund"
+    },
+    {
+      "description": "+3 FV på Hoppa.",
+      "fixedSkillMods": [
+        {
+          "skillId": "hoppa",
+          "value": 3
+        }
+      ],
+      "max": 8,
+      "min": 7,
+      "name": "Starka vrister"
+    },
+    {
+      "description": "+3 FV i Slagsmål.",
+      "fixedSkillMods": [
+        {
+          "skillId": "slagsmal",
+          "value": 3
+        }
+      ],
+      "max": 10,
+      "min": 9,
+      "name": "Bråkig uppväxt"
+    },
+    {
+      "choiceType": "skill_craft",
+      "description": "+3 FV i valfri hantverksfärdighet (läder, smide, trä, etc.).",
+      "max": 12,
+      "min": 11,
+      "modValue": 3,
+      "name": "Hantverkarbakgrund"
+    },
+    {
+      "description": "+3 FV i Akrobatik.",
+      "fixedSkillMods": [
+        {
+          "skillId": "akrobatik",
+          "value": 3
+        }
+      ],
+      "max": 14,
+      "min": 13,
+      "name": "Smidig kropp"
+    },
+    {
+      "description": "+3 FV i Värdering.",
+      "fixedSkillMods": [
+        {
+          "skillId": "vardera",
+          "value": 3
+        }
+      ],
+      "max": 16,
+      "min": 15,
+      "name": "Köpmannabakgrund"
+    },
+    {
+      "description": "+3 FV i Två vapen.",
+      "excludeProfessions": [
+        "magiker",
+        "lard_man"
+      ],
+      "fixedSkillMods": [
+        {
+          "skillId": "tva_vapen",
+          "value": 3
+        }
+      ],
+      "max": 18,
+      "min": 17,
+      "name": "God koordinationsförmåga"
+    },
+    {
+      "choiceType": "skill_secondary",
+      "description": "FV 3 i en valfri sekundär färdighet (ej förbjudna).",
+      "max": 20,
+      "min": 19,
+      "modType": "set",
+      "modValue": 3,
+      "name": "Hobbist"
+    },
+    {
+      "description": "+3 CL i Klättra.",
+      "max": 22,
+      "min": 21,
+      "name": "Starka nypor"
+    },
+    {
+      "description": "+5 CL i Magisk kanalisering (som passiv part).",
+      "max": 24,
+      "min": 23,
+      "name": "Mottagligt medium",
+      "onlyProfessions": [
+        "magiker",
+        "utbygdsjagare"
+      ]
+    },
+    {
+      "choiceType": "skill_any",
+      "description": "+2 på valfritt FV (höjer även maxgränsen med 2).",
+      "max": 26,
+      "min": 25,
+      "modValue": 2,
+      "name": "Hängiven student"
+    },
+    {
+      "description": "+3 CL i Övertala och Muta.",
+      "max": 28,
+      "min": 27,
+      "name": "Övertygande tonfall"
+    },
+    {
+      "description": "+1 FV i Upptäcka fara och Finna dolda ting.",
+      "fixedSkillMods": [
+        {
+          "skillId": "upptacka_fara",
+          "value": 1
+        },
+        {
+          "skillId": "finna_dolda_ting",
+          "value": 1
+        }
+      ],
+      "max": 30,
+      "min": 29,
+      "name": "Skarpt sinne"
+    },
+    {
+      "description": "+5 CL i Hypnotisera.",
+      "max": 32,
+      "min": 31,
+      "name": "Stirrande blick",
+      "onlyProfessions": [
+        "bard",
+        "lonnmordare",
+        "tjuv"
+      ]
+    },
+    {
+      "description": "+5 CL i Känna magi.",
+      "max": 34,
+      "min": 33,
+      "name": "Magikänsla",
+      "onlyProfessions": [
+        "magiker",
+        "lard_man",
+        "utbygdsjagare"
+      ]
+    },
+    {
+      "choiceCount": 2,
+      "choiceType": "skills_secondary_x2",
+      "description": "Välj ytterligare två valfria sekundära färdigheter som yrkesfärdigheter.",
+      "max": 38,
+      "min": 35,
+      "name": "Stort kunskapsområde"
+    },
+    {
+      "description": "Alla räckvidder för projektilvapen ökas med 25%.",
+      "excludeProfessions": [
+        "magiker",
+        "lard_man"
+      ],
+      "max": 40,
+      "min": 39,
+      "name": "God bågskytt"
+    },
+    {
+      "description": "Grundkostnad för Spela instrument och Sjunga är alltid 1.",
+      "max": 42,
+      "min": 41,
+      "name": "Absolut gehör"
+    },
+    {
+      "description": "CL +1 på alla vapenfärdigheter.",
+      "excludeProfessions": [
+        "magiker",
+        "lard_man"
+      ],
+      "max": 44,
+      "min": 43,
+      "name": "Precisionssinne"
+    },
+    {
+      "description": "Kan använda båda händerna lika bra (se specialregler).",
+      "max": 46,
+      "min": 45,
+      "name": "Dubbelhänt"
+    },
+    {
+      "description": "Kan bedöma tid på 5-10 minuter/2 minuter när.",
+      "max": 48,
+      "min": 47,
+      "name": "God tidskänsla"
+    },
+    {
+      "description": "Kan bedöma avstånd med 5% felmarginal.",
+      "max": 51,
+      "min": 49,
+      "name": "Absolut ögonmått"
+    },
+    {
+      "description": "+2 CL i Finna dolda ting och Upptäcka fara.",
+      "max": 54,
+      "min": 52,
+      "name": "Mycket uppmärksam"
+    },
+    {
+      "description": "+3 på alla initiativslag.",
+      "max": 55,
+      "min": 55,
+      "name": "Blixtrande reflexer"
+    },
+    {
+      "description": "+5 FV i Bärsärkagång.",
+      "fixedSkillMods": [
+        {
+          "skillId": "barsarkagang",
+          "value": 5
+        }
+      ],
+      "max": 56,
+      "min": 56,
+      "name": "Barsk",
+      "onlyProfessions": [
+        "krigare"
+      ]
+    },
+    {
+      "description": "+5 på SMV vid balansgång och landning efter fall.",
+      "max": 57,
+      "min": 57,
+      "name": "Gott balanssinne"
+    },
+    {
+      "description": "+10 FV i Rida; kan ej bli avkastad (men kan trilla av).",
+      "excludeRaces": [
+        "anka"
+      ],
+      "fixedSkillMods": [
+        {
+          "skillId": "rida",
+          "value": 10
+        }
+      ],
+      "max": 58,
+      "min": 58,
+      "name": "Hästars herre"
+    },
+    {
+      "description": "Full kontroll över båda händerna (se specialregler).",
+      "max": 59,
+      "min": 59,
+      "name": "Ambidextriös"
+    },
+    {
+      "description": "Blir aldrig anfallen av vanliga djur (vilda eller tama).",
+      "max": 60,
+      "min": 60,
+      "name": "Djurvän"
+    },
+    {
+      "description": "Kan spendera 1 PSY-poäng för att slå om tärningsslag (med +1 på CL).",
+      "max": 61,
+      "min": 61,
+      "name": "Turgubbe"
+    },
+    {
+      "description": "Kan identifiera magiska föremål automatiskt via PSY-motståndsslag.",
+      "max": 62,
+      "min": 62,
+      "name": "Magisk empati",
+      "onlyProfessions": [
+        "magiker",
+        "lard_man",
+        "utbygdsjagare"
+      ]
+    },
+    {
+      "description": "25% chans vid 0 KP att en gud återställer alla KP (ej kritiska skador).",
+      "max": 63,
+      "min": 63,
+      "name": "Gudarnas gunstling"
+    },
+    {
+      "description": "Grundkostnad för alla sekundära färdigheter minskas med 1.",
+      "max": 64,
+      "min": 64,
+      "name": "Lättlärd"
+    },
+    {
+      "description": "Totala KP multipliceras med 1,5 (justerar även träffområden).",
+      "max": 65,
+      "min": 65,
+      "name": "Extremt smärttålig"
+    },
+    {
+      "description": "Anländer först i varje Stridsrond (SR).",
+      "max": 66,
+      "min": 66,
+      "name": "Snabbresande"
+    },
+    {
+      "choiceType": "race_target",
+      "description": "+5 CL vid alla attacker mot en specifik ras/folkslag.",
+      "max": 67,
+      "min": 67,
+      "name": "Baneman"
+    },
+    {
+      "description": "Lyckat PSY-slag ger +5 STY och STY-färdigheter i 3 SR (max 2 ggr/dag).",
+      "max": 68,
+      "min": 68,
+      "name": "God kroppskontroll"
+    },
+    {
+      "description": "Gör alltid maximal skada i obeväpnad strid.",
+      "max": 69,
+      "min": 69,
+      "name": "Järnnäve"
+    },
+    {
+      "description": "CL -5 på alla slag på Skräcktabellen.",
+      "max": 70,
+      "min": 70,
+      "name": "Extremt orädd"
+    },
+    {
+      "description": "+5 på PSY vid alla motståndsslag (PSY mot PSY).",
+      "max": 71,
+      "min": 71,
+      "name": "Orubblig vilja"
+    },
+    {
+      "description": "+5 på PSY vid motståndsslag mot elementarskador (eld, kyla, etc.).",
+      "max": 72,
+      "min": 72,
+      "name": "Harmoni med element"
+    },
+    {
+      "description": "Läker fysiska skador dubbelt så fort.",
+      "max": 73,
+      "min": 73,
+      "name": "Gott läkekött"
+    },
+    {
+      "description": "Återfår PSY-poäng på hälften av normal tid.",
+      "max": 74,
+      "min": 74,
+      "name": "God mental kontroll",
+      "onlyProfessions": [
+        "magiker",
+        "utbygdsjagare"
+      ]
+    },
+    {
+      "choiceType": "skill_weapon",
+      "description": "+5 FV på en valfri vapenfärdighet.",
+      "excludeProfessions": [
+        "magiker",
+        "lard_man"
+      ],
+      "max": 75,
+      "min": 75,
+      "modValue": 5,
+      "name": "Naturlig färdighet med vapen"
+    },
+    {
+      "choiceType": "profession",
+      "description": "Får välja en extra yrkesförmåga från ett annat yrke.",
+      "max": 76,
+      "min": 76,
+      "name": "Kluven personlighet"
+    },
+    {
+      "description": "Halverad grundkostnad för nya vapenfärdigheter/yrkesfärdigheter.",
+      "excludeProfessions": [
+        "magiker",
+        "lard_man"
+      ],
+      "max": 77,
+      "min": 77,
+      "name": "God känsla för tyngd"
+    },
+    {
+      "choiceType": "animal",
+      "description": "Kan förvandlas till ett djur (Varg, Björn, Hök, Hjort, Svan, Katt). Kräver PSY-slag över tid.",
+      "max": 78,
+      "min": 78,
+      "name": "Hamnskiftare"
+    },
+    {
+      "description": "+5 CL på vapenpareringar; kan parera projektiler med närstridsvapen.",
+      "excludeProfessions": [
+        "magiker",
+        "lard_man"
+      ],
+      "max": 79,
+      "min": 79,
+      "name": "Snabb uppfattningsförmåga"
+    },
+    {
+      "description": "-5 på tärningsslaget när man försöker höja PSY.",
+      "max": 80,
+      "min": 80,
+      "name": "God PSY-potential"
+    },
+    {
+      "choiceType": "attribute_boost",
+      "description": "+1 på tre valfria grundegenskaper ELLER +2 på en valfri grundegenskap.",
+      "max": 99,
+      "min": 81,
+      "name": "Höjd grundegenskap"
+    }
+  ],
+  "startkapital": [
+    {
+      "max": 2,
+      "min": 2,
+      "silver": 200
+    },
+    {
+      "max": 4,
+      "min": 3,
+      "silver": 400
+    },
+    {
+      "max": 7,
+      "min": 5,
+      "silver": 600
+    },
+    {
+      "max": 11,
+      "min": 8,
+      "silver": 1000
+    },
+    {
+      "max": 16,
+      "min": 12,
+      "silver": 2000
+    },
+    {
+      "max": 22,
+      "min": 17,
+      "silver": 3000
+    },
+    {
+      "max": 29,
+      "min": 23,
+      "silver": 5000
+    },
+    {
+      "max": 37,
+      "min": 30,
+      "silver": 10000
+    },
+    {
+      "max": 46,
+      "min": 38,
+      "silver": 20000
+    },
+    {
+      "max": 56,
+      "min": 47,
+      "silver": 30000
+    },
+    {
+      "max": 99,
+      "min": 57,
+      "silver": 50000
+    }
+  ],
+  "sto_decrease_refund": {
+    "1": 1,
+    "2": 2,
+    "3": 3,
+    "4": 5,
+    "5": 7
+  },
+  "sto_increase_cost": {
+    "1": 2,
+    "2": 4,
+    "3": 6,
+    "4": 8,
+    "5": 10
+  },
+  "sto_weight": [
+    {
+      "maxKg": 19,
+      "minKg": 1,
+      "sto": 1
+    },
+    {
+      "maxKg": 35,
+      "minKg": 20,
+      "sto": 2
+    },
+    {
+      "maxKg": 50,
+      "minKg": 36,
+      "sto": 3
+    },
+    {
+      "maxKg": 65,
+      "minKg": 51,
+      "sto": 4
+    },
+    {
+      "maxKg": 80,
+      "minKg": 66,
+      "sto": 5
+    },
+    {
+      "maxKg": 95,
+      "minKg": 81,
+      "sto": 6
+    },
+    {
+      "maxKg": 110,
+      "minKg": 96,
+      "sto": 7
+    },
+    {
+      "maxKg": 125,
+      "minKg": 111,
+      "sto": 8
+    },
+    {
+      "maxKg": 140,
+      "minKg": 126,
+      "sto": 9
+    },
+    {
+      "maxKg": 155,
+      "minKg": 141,
+      "sto": 10
+    },
+    {
+      "maxKg": 180,
+      "minKg": 156,
+      "sto": 11
+    }
+  ]
+}

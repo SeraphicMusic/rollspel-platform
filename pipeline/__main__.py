@@ -7,9 +7,11 @@
     python3 -m pipeline jobb --workdir DIR [--typ transkription|korrektur] [--max N]
     python3 -m pipeline bokfor --workdir DIR
     python3 -m pipeline validera --workdir DIR [--system ID] [--force]
+    python3 -m pipeline forbesikta --workdir DIR [--sidor 40-44] [--force]
     python3 -m pipeline sammanfoga --workdir DIR
     python3 -m pipeline rapport --workdir DIR
-    python3 -m pipeline exportera --workdir DIR [--format md,csv,docx,alla]
+    python3 -m pipeline exportera --workdir DIR [--format md,csv,alla]
+    python3 -m pipeline konvertera --source BOK.JSON --from dod-t100 --to dod91
     python3 -m pipeline status --workdir DIR
     python3 -m pipeline system
 """
@@ -81,12 +83,33 @@ def main(argv=None):
     p.add_argument("--force", action="store_true",
                    help="validera om även redan validerade sidor")
 
+    p = add("forbesikta", help="deterministisk förbesiktning inför korrektur")
+    p.add_argument("--sidor", help="t.ex. 40-44 (default: alla som väntar)")
+    p.add_argument("--force", action="store_true",
+                   help="skriv om även befintliga heuristik.json")
+
     add("sammanfoga", help="bygg export/bok.json av bästa version per sida")
     add("rapport", help="generera granskningsrapport")
 
-    p = add("exportera", help="exportera md/csv/docx från bok.json")
+    p = add("exportera", help="exportera md/csv från bok.json")
     p.add_argument("--format", default="alla",
-                   help="kommaseparerat: md,csv,docx,alla")
+                   help="kommaseparerat: md,csv,alla (docx är avvecklad)")
+
+    p = sub.add_parser(
+        "konvertera",
+        help="konvertera exakt ett färdigrippat äventyr till en målprofil")
+    p.add_argument("--source", required=True,
+                   help="exakt sökväg till källans bok.json")
+    p.add_argument("--from", dest="source_profile", required=True,
+                   help="källprofil (version 1: dod-t100)")
+    p.add_argument("--to", dest="target_profile", required=True,
+                   help="målprofil (version 1: dod91)")
+    p.add_argument("--output-name",
+                   help="överstyr härlett äventyrsslug")
+    p.add_argument("--force", action="store_true",
+                   help="bygg om från originalkällan")
+    p.add_argument("--dry-run", action="store_true",
+                   help="skriv analys och rapport men publicera inte MD/JSON")
 
     add("status", help="visa state per steg")
     sub.add_parser("system", help="lista tillgängliga systemadaptrar")
@@ -100,6 +123,27 @@ def main(argv=None):
             print("%-12s %s (%s)" % (sid, a.system.get("name"),
                                      ", ".join(a.system.get("aliases", []))))
         return
+
+    if args.cmd == "konvertera":
+        from .convert_adventure import (SourceError, WriteError,
+                                        convert_adventure)
+        from .conversion_rules import ProfileError
+        try:
+            result = convert_adventure(
+                args.source, args.source_profile, args.target_profile,
+                output_name=args.output_name, force=args.force,
+                dry_run=args.dry_run)
+        except SourceError as exc:
+            print("fel: %s" % exc, file=sys.stderr)
+            return 2
+        except ProfileError as exc:
+            print("fel: %s" % exc, file=sys.stderr)
+            return 4
+        except WriteError as exc:
+            print("fel: %s" % exc, file=sys.stderr)
+            return 5
+        print(json.dumps(result, ensure_ascii=False, indent=2))
+        return 3 if result["status"] == "needs_review" else 0
 
     if args.cmd == "analysera":
         from .analyze import analyze
@@ -165,6 +209,24 @@ def main(argv=None):
         validate(workdir, load(system_id), force=args.force)
         return
 
+    if args.cmd == "forbesikta":
+        from .preflight import preflight
+        results = preflight(workdir, pages=parse_pages(args.sidor),
+                            force=args.force)
+        if not results:
+            print("inga sidor väntar på korrektur")
+        for no, counts in results:
+            if counts is None:
+                print("sida %3d: heuristik.json finns redan (--force skriver om)"
+                      % no)
+            else:
+                total = sum(counts.values())
+                print("sida %3d: %2d kandidater/flaggor  %s"
+                      % (no, total,
+                         ", ".join("%s=%d" % (k, v)
+                                   for k, v in counts.items() if v)))
+        return
+
     if args.cmd == "sammanfoga":
         from .merge import merge
         merge(workdir)
@@ -177,7 +239,10 @@ def main(argv=None):
 
     if args.cmd == "exportera":
         from .export import export_markdown, export_csv, export_docx
-        formats = set(args.format.replace("alla", "md,csv,docx").split(","))
+        # `alla` omfattar inte docx: markdown är läsformatet (användarbeslut
+        # 2026-07-29). DOCX-generatorn saknar rendering för statblockens
+        # vapentabeller och skulle annars tysta producera ofullständiga filer.
+        formats = set(args.format.replace("alla", "md,csv").split(","))
         if "md" in formats:
             export_markdown(workdir)
         if "csv" in formats:
@@ -204,4 +269,4 @@ def main(argv=None):
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

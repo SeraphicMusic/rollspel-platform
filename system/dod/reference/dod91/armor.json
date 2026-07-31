@@ -1,0 +1,317 @@
+{
+  "armor": [
+    {
+      "absorption": 1,
+      "bodyPart": "hela",
+      "name": "Tjockt tyg",
+      "price": 275,
+      "type": "full",
+      "weight": 7.5
+    },
+    {
+      "absorption": 2,
+      "bodyPart": "hela",
+      "name": "Läder",
+      "price": 1300,
+      "type": "full",
+      "weight": 12
+    },
+    {
+      "absorption": 3,
+      "bodyPart": "hela",
+      "name": "Nitläder",
+      "price": 2500,
+      "type": "full",
+      "weight": 16
+    },
+    {
+      "absorption": 4,
+      "bodyPart": "hela",
+      "name": "Härdat läder",
+      "price": 3500,
+      "type": "full",
+      "weight": 13
+    },
+    {
+      "absorption": 5,
+      "bodyPart": "hela",
+      "name": "Ringbrynja",
+      "price": 3700,
+      "type": "full",
+      "weight": 35
+    },
+    {
+      "absorption": 6,
+      "bodyPart": "hela",
+      "name": "Förstärkt ringbrynja",
+      "price": 4700,
+      "type": "full",
+      "weight": 51
+    },
+    {
+      "absorption": 7,
+      "bodyPart": "hela",
+      "name": "Hel lamellerad rustning",
+      "price": 6000,
+      "type": "full",
+      "weight": 28
+    },
+    {
+      "absorption": 8,
+      "bodyPart": "hela",
+      "name": "Hel metallrustning",
+      "price": 8000,
+      "type": "full",
+      "weight": 34
+    },
+    {
+      "absorption": 9,
+      "bodyPart": "hela",
+      "name": "Hel laminerad rustning",
+      "price": 5600,
+      "type": "full",
+      "weight": 38
+    },
+    {
+      "absorption": 1,
+      "bodyPart": "huvud",
+      "name": "Tyghuva",
+      "price": 25,
+      "type": "helmet",
+      "weight": 0.5
+    },
+    {
+      "absorption": 2,
+      "bodyPart": "huvud",
+      "name": "Läderhuva",
+      "price": 80,
+      "type": "helmet",
+      "weight": 1
+    },
+    {
+      "absorption": 3,
+      "bodyPart": "huvud",
+      "name": "Nätläderhuva",
+      "price": 180,
+      "type": "helmet",
+      "weight": 1.5
+    },
+    {
+      "absorption": 5,
+      "bodyPart": "huvud",
+      "name": "Ringbrynjehuva",
+      "price": 500,
+      "type": "helmet",
+      "weight": 3
+    },
+    {
+      "absorption": 6,
+      "bodyPart": "huvud",
+      "name": "Öppen metallhjälm",
+      "price": 1000,
+      "type": "helmet",
+      "weight": 4
+    },
+    {
+      "absorption": 7,
+      "bodyPart": "huvud",
+      "name": "Ö. metallhjälm m. visir",
+      "price": 1500,
+      "type": "helmet",
+      "weight": 6
+    },
+    {
+      "absorption": 8,
+      "bodyPart": "huvud",
+      "name": "Tunnhjälm",
+      "price": 1000,
+      "type": "helmet",
+      "weight": 6
+    },
+    {
+      "absorption": 1,
+      "bodyPart": "arm",
+      "name": "Tjockt tyg",
+      "price": 50,
+      "type": "arm",
+      "weight": 2
+    },
+    {
+      "absorption": 2,
+      "bodyPart": "arm",
+      "name": "Läder",
+      "price": 250,
+      "type": "arm",
+      "weight": 3
+    },
+    {
+      "absorption": 3,
+      "bodyPart": "arm",
+      "name": "Nätläder",
+      "price": 500,
+      "type": "arm",
+      "weight": 4
+    },
+    {
+      "absorption": 4,
+      "bodyPart": "arm",
+      "name": "Härdat läder",
+      "price": 750,
+      "type": "arm",
+      "weight": 5
+    },
+    {
+      "absorption": 6,
+      "bodyPart": "arm",
+      "name": "Lamellerad",
+      "price": 950,
+      "type": "arm",
+      "weight": 7
+    },
+    {
+      "absorption": 7,
+      "bodyPart": "arm",
+      "name": "Metall",
+      "price": 1150,
+      "type": "arm",
+      "weight": 8
+    },
+    {
+      "absorption": 8,
+      "bodyPart": "arm",
+      "name": "Laminerad",
+      "price": 1200,
+      "type": "arm",
+      "weight": 9
+    },
+    {
+      "absorption": 1,
+      "bodyPart": "ben",
+      "name": "Tjockt tyg",
+      "price": 400,
+      "type": "leg",
+      "weight": 3
+    },
+    {
+      "absorption": 2,
+      "bodyPart": "ben",
+      "name": "Läder",
+      "price": 600,
+      "type": "leg",
+      "weight": 4
+    },
+    {
+      "absorption": 3,
+      "bodyPart": "ben",
+      "name": "Nätläder",
+      "price": 750,
+      "type": "leg",
+      "weight": 6
+    },
+    {
+      "absorption": 4,
+      "bodyPart": "ben",
+      "name": "Härdat läder",
+      "price": 1150,
+      "type": "leg",
+      "weight": 5
+    },
+    {
+      "absorption": 6,
+      "bodyPart": "ben",
+      "name": "Lamellerad",
+      "price": 1550,
+      "type": "leg",
+      "weight": 7
+    },
+    {
+      "absorption": 7,
+      "bodyPart": "ben",
+      "name": "Metall",
+      "price": 1650,
+      "type": "leg",
+      "weight": 8
+    },
+    {
+      "absorption": 8,
+      "bodyPart": "ben",
+      "name": "Laminerad",
+      "price": 1800,
+      "type": "leg",
+      "weight": 9
+    },
+    {
+      "absorption": 1,
+      "bodyPart": "brostkorg",
+      "name": "Tjockt tyg",
+      "price": 130,
+      "type": "torso",
+      "weight": 2
+    },
+    {
+      "absorption": 2,
+      "bodyPart": "brostkorg",
+      "name": "Läder",
+      "price": 500,
+      "type": "torso",
+      "weight": 3
+    },
+    {
+      "absorption": 3,
+      "bodyPart": "brostkorg",
+      "name": "Nätläder",
+      "price": 1150,
+      "type": "torso",
+      "weight": 4
+    },
+    {
+      "absorption": 4,
+      "bodyPart": "brostkorg",
+      "name": "Härdat läder",
+      "price": 1150,
+      "type": "torso",
+      "weight": 5
+    },
+    {
+      "absorption": 5,
+      "bodyPart": "brostkorg",
+      "name": "Ringbrynjeskjorta",
+      "price": 1500,
+      "type": "torso",
+      "weight": 10
+    },
+    {
+      "absorption": 6,
+      "bodyPart": "brostkorg",
+      "name": "Förstärkt ringbrynja",
+      "price": 1500,
+      "type": "torso",
+      "weight": 15
+    },
+    {
+      "absorption": 7,
+      "bodyPart": "brostkorg",
+      "name": "Fjällpansar",
+      "price": 1500,
+      "type": "torso",
+      "weight": 15
+    },
+    {
+      "absorption": 7,
+      "bodyPart": "brostkorg",
+      "name": "Lamellerad",
+      "price": 1500,
+      "type": "torso",
+      "weight": 15
+    },
+    {
+      "absorption": 8,
+      "bodyPart": "brostkorg",
+      "name": "Metall",
+      "price": 1800,
+      "type": "torso",
+      "weight": 15
+    }
+  ],
+  "ruleset": "dod91"
+}

@@ -7,12 +7,17 @@ Verktyg för att extrahera, bearbeta, korrekturläsa och skapa innehåll för sv
 Deterministisk Python-pipeline i `pipeline/` — kör `python3 -m pipeline --help`.
 Allt state per bok ligger i `arbete/<slug>/` (manifest + per-sida-filer + export).
 Kommandon: `analysera`, `rendera`, `extrahera-text`, `identifiera-system`, `jobb`,
-`bokfor`, `validera`, `sammanfoga`, `rapport`, `exportera`, `status`, `system`.
+`bokfor`, `validera`, `forbesikta`, `sammanfoga`, `rapport`, `exportera`, `status`,
+`system`.
 
 Principer (bindande):
 
 - Alla steg är idempotenta — färdiga sidor körs aldrig om; avbrott återupptas med samma kommando.
-- Inga tysta korrigeringar — varje rättning är en korrektionspost (original, förslag, confidence, orsak, källa, applied).
+- Inga tysta korrigeringar — varje rättning är en korrektionspost (original, förslag, confidence, orsak, källa, kind, applied).
+- Valideringens **härledda** lexikonmatchningar är förslag (`applied: false`) — bara handkurerade alias appliceras direkt. En böjningsform som står korrekt i trycket får aldrig "rättas" tyst; advokaten dömer mot PNG:n.
+- `forbesikta` hittar de mekaniska felmönstren deterministiskt (linjeregel-prefix, raka citattecken, `±0`-garbel, kolumnsammanslagning, läsordning) och skriver kandidater till `page_NNN.review/heuristik.json`. Kör det FÖRE korrekturen — agenterna ska verifiera listan, inte leta upp mönstren igen.
+- Boknivåbeslut samlas i `arbete/<slug>/beslut.md` och delas ut av `jobb`. Bara advokaten skriver dit; alla läser den. Samma fråga ska inte utredas om på varje sida.
+- Uppenbara sättningsfel emenderas automatiskt (`kind: "emendering"`); trycket bevaras i postens `original` och rättningen listas i granskningsrapporten. Gränsen är bindande och står i [AGENTER.md](AGENTER.md) Regel 8a — siffror, spelvärden, dialekt och arkaismer rättas aldrig.
 - Osäkert innehåll flaggas (`needs_review`) och hamnar i granskningsrapporten i stället för att gissas.
 - Radera aldrig `arbete/`-kataloger — de är pipelinens state.
 
@@ -60,7 +65,6 @@ agenter per sida) och en lös tolkning av reglerna är precis det som äter kvot
 ## Dependencies
 
 - Python 3.9+ med PyMuPDF (`python3 -m pip install --user pymupdf`)
-- Node.js (DOCX-export via `.claude/skills/extrahera/create-docx.js`; `npm install` i den katalogen)
 - Gemini API key (`GEMINI_API_KEY`) — endast för `extrahera-konst`
 
 ## Output
@@ -68,7 +72,9 @@ agenter per sida) och en lös tolkning av reglerna är precis det som äter kvot
 - Namngivning av arkiverade PDF:er, arbete-mappar och skapat/konverterat material:
   [NAMNSTANDARD.md](NAMNSTANDARD.md) (`SYSTEM-TYP-titel`, t.ex. `DOD-AVE-den-vita-duvan`)
 - `arbete/<slug>/export/`: `bok.json` (kanoniskt, med proveniens/confidence/korrektioner),
-  `bok.md`, `bok.docx`, `tabeller/*.csv`, `granskningsrapport.md`
+  `bok.md`, `tabeller/*.csv`, `granskningsrapport.md`
+- Markdown är läsformatet. DOCX-exporten är avvecklad (2026-07-29) — den ingår
+  inte i `alla` och saknar statblockens vapentabeller.
 - `bibliotek/`: namnstandardade läskopior av färdiga `bok.md` — det man matar
   till andra agenter/verktyg
 - Illustrations: Reimagined in styles of Ackegard, Bergting, Egerkrans

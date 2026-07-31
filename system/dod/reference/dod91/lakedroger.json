@@ -1,0 +1,481 @@
+{
+  "lakedroger": [
+    {
+      "effect": {
+        "kind": "stop_bleeding"
+      },
+      "effektText": "Stoppar blödningar",
+      "id": "alvhands_buske",
+      "intagning": "Appliceras",
+      "name": "Alvhands Buske",
+      "tillredning": "Brygges",
+      "typ": "Buske",
+      "vanlighet": 7,
+      "vaxtdel": "Blad",
+      "vaxtplats": "Ljus lövskog"
+    },
+    {
+      "effect": {
+        "kind": "narrative"
+      },
+      "effektText": "Lindrar benbrott, halverar läkningstiden",
+      "id": "benhele",
+      "intagning": "Drickes",
+      "name": "Benhele",
+      "tillredning": "Brygges",
+      "typ": "Träd",
+      "vanlighet": 3,
+      "vaxtdel": "Blad",
+      "vaxtplats": "Kusttrakter"
+    },
+    {
+      "effect": {
+        "amount": "1",
+        "kind": "heal"
+      },
+      "effektText": "Helar 1 KP på 1 minut",
+      "id": "cepirbuske",
+      "intagning": "Drickes",
+      "name": "Cepirbuske",
+      "tillredning": "Brygges",
+      "typ": "Liten buske",
+      "vanlighet": 1,
+      "vaxtdel": "Blad",
+      "vaxtplats": "Överallt"
+    },
+    {
+      "effect": {
+        "kind": "narrative"
+      },
+      "effektText": "Läker mindre skärsår",
+      "id": "domarbunke",
+      "intagning": "Appliceras",
+      "name": "Domarbunke",
+      "tillredning": "Lägges i getmjölk",
+      "typ": "Ormbunke",
+      "vanlighet": 5,
+      "vaxtdel": "Kronblad",
+      "vaxtplats": "Blandskog"
+    },
+    {
+      "effect": {
+        "amount": "1T6",
+        "kind": "heal"
+      },
+      "effektText": "Helar 1T6 KP under loppet av en kvart",
+      "id": "draklovsek",
+      "intagning": "Drickes",
+      "name": "Draklövsek",
+      "tillredning": "Krossas och kokas",
+      "typ": "Träd",
+      "vanlighet": 3,
+      "vaxtdel": "Nöt",
+      "vaxtplats": "Skog"
+    },
+    {
+      "effect": {
+        "kind": "narrative"
+      },
+      "effektText": "Motgift STY 5",
+      "id": "gronblara",
+      "intagning": "Tuggas",
+      "name": "Grönblåra",
+      "tillredning": "Brytes",
+      "typ": "Buske",
+      "vanlighet": 3,
+      "vaxtdel": "Blad",
+      "vaxtplats": "Skog"
+    },
+    {
+      "effect": {
+        "kind": "narrative"
+      },
+      "effektText": "Helar sträckningar",
+      "id": "havssippa",
+      "intagning": "Ätes",
+      "name": "Havssippa",
+      "tillredning": "Torkas",
+      "typ": "Alg",
+      "vanlighet": 4,
+      "vaxtdel": "—",
+      "vaxtplats": "Saltvattenshav"
+    },
+    {
+      "effect": {
+        "amount": "1T20",
+        "kind": "heal"
+      },
+      "effektText": "Helar 1T20 KP omedelbart",
+      "id": "honungslilja",
+      "intagning": "Drickes",
+      "name": "Honungslilja",
+      "tillredning": "Brygges",
+      "typ": "Blomma",
+      "vanlighet": 9,
+      "vaxtdel": "Blad",
+      "vaxtplats": "Ljus, fuktig blandskog"
+    },
+    {
+      "effect": {
+        "kind": "narrative"
+      },
+      "effektText": "Stoppar magont",
+      "id": "horblomster",
+      "intagning": "Drickes",
+      "name": "Horblomster",
+      "tillredning": "Brygges",
+      "typ": "Blomma",
+      "vanlighet": 7,
+      "vaxtdel": "Blad",
+      "vaxtplats": "Bergstrakter"
+    },
+    {
+      "effect": {
+        "kind": "narrative"
+      },
+      "effektText": "Lindrar insektsbett under en timme",
+      "id": "hundora",
+      "intagning": "Drickes",
+      "name": "Hundöra",
+      "tillredning": "Brygges",
+      "typ": "Träd",
+      "vanlighet": 3,
+      "vaxtdel": "Blad",
+      "vaxtplats": "I kalla klimat"
+    },
+    {
+      "effect": {
+        "kind": "narrative"
+      },
+      "effektText": "Höjer immunförsvar (+5 på FYS på motståndsslag mot sjukdomar i 2 dagar)",
+      "id": "istapslav",
+      "intagning": "Ätes",
+      "name": "Istapslav",
+      "tillredning": "Värms i vatten",
+      "typ": "Lav",
+      "vanlighet": 6,
+      "vaxtdel": "—",
+      "vaxtplats": "Barrskog"
+    },
+    {
+      "effect": {
+        "amount": "1T6",
+        "kind": "heal"
+      },
+      "effektText": "Läker brännskador, 1T6 KP",
+      "id": "kardiskt_vildvin",
+      "intagning": "Tuggas",
+      "name": "Kardiskt Vildvin",
+      "tillredning": "Torkas svalt till kakor",
+      "typ": "Ranka",
+      "vanlighet": 7,
+      "vaxtdel": "Sav",
+      "vaxtplats": "Blandskog i kalla klimat"
+    },
+    {
+      "effect": {
+        "kind": "narrative"
+      },
+      "effektText": "Skyddar mot naturlig hetta",
+      "id": "klomossa",
+      "intagning": "Drickes",
+      "name": "Klomossa",
+      "tillredning": "Brygges",
+      "typ": "Mossa",
+      "vanlighet": 5,
+      "vaxtdel": "—",
+      "vaxtplats": "Lövskog"
+    },
+    {
+      "effect": {
+        "amount": "2T4",
+        "kind": "heal"
+      },
+      "effektText": "Helar 2T4 KP orsakade av krossvapen",
+      "id": "klubblomster",
+      "intagning": "Drickes",
+      "name": "Klubblomster",
+      "tillredning": "Brygges",
+      "typ": "Blomma",
+      "vanlighet": 4,
+      "vaxtdel": "Blad",
+      "vaxtplats": "Blandskog"
+    },
+    {
+      "effect": {
+        "amount": "3T6",
+        "kind": "heal"
+      },
+      "effektText": "Helar 3T6 KP på 1 minut",
+      "id": "kokongtrad",
+      "intagning": "Löses i vatten och drickes",
+      "name": "Kokongträd",
+      "tillredning": "Pulvriseras",
+      "typ": "Träd",
+      "vanlighet": 7,
+      "vaxtdel": "Bark",
+      "vaxtplats": "Barrskog"
+    },
+    {
+      "effect": {
+        "kind": "narrative"
+      },
+      "effektText": "Tar bort blåmärken",
+      "id": "kontera",
+      "intagning": "Appliceras",
+      "name": "Kontera",
+      "tillredning": "Lägges i varmt vatten",
+      "typ": "Buske",
+      "vanlighet": 3,
+      "vaxtdel": "Blad",
+      "vaxtplats": "Lövskog"
+    },
+    {
+      "effect": {
+        "amount": "1T4",
+        "kind": "heal"
+      },
+      "effektText": "Helar 1T4 KP på 1–30 minuter",
+      "id": "kronhjortshorn",
+      "intagning": "Drickes",
+      "name": "Kronhjortshorn",
+      "tillredning": "Pulvriseras och löses i vatten",
+      "typ": "Buske",
+      "vanlighet": 2,
+      "vaxtdel": "Bark",
+      "vaxtplats": "Skog"
+    },
+    {
+      "effect": {
+        "kind": "narrative"
+      },
+      "effektText": "Läker lindrigare benbrott och stukningar",
+      "id": "kronlonn",
+      "intagning": "Appliceras",
+      "name": "Kronlönn",
+      "tillredning": "Spädes med vatten och kokas",
+      "typ": "Träd",
+      "vanlighet": 5,
+      "vaxtdel": "Sav",
+      "vaxtplats": "Lövskog"
+    },
+    {
+      "effect": {
+        "kind": "stop_bleeding"
+      },
+      "effektText": "Stoppar mindre blödningar",
+      "id": "krakflader",
+      "intagning": "Appliceras",
+      "name": "Kråkfläder",
+      "tillredning": "Blötes",
+      "typ": "Buske",
+      "vanlighet": 2,
+      "vaxtdel": "Blad",
+      "vaxtplats": "Skog"
+    },
+    {
+      "effect": {
+        "kind": "narrative"
+      },
+      "effektText": "Lindrar köldskador",
+      "id": "koldnapsa",
+      "intagning": "Appliceras",
+      "name": "Köldnäpsa",
+      "tillredning": "—",
+      "typ": "Mossa",
+      "vanlighet": 5,
+      "vaxtdel": "—",
+      "vaxtplats": "Lövskog"
+    },
+    {
+      "effect": {
+        "kind": "narrative"
+      },
+      "effektText": "Febernedsättande",
+      "id": "malmros",
+      "intagning": "Drickes kall",
+      "name": "Malmros",
+      "tillredning": "Brygges",
+      "typ": "Näckros",
+      "vanlighet": 4,
+      "vaxtdel": "Blad",
+      "vaxtplats": "Örtagårdar"
+    },
+    {
+      "effect": {
+        "amount": "10",
+        "kind": "heal"
+      },
+      "effektText": "Helar 10 KP omedelbart",
+      "id": "mirenbuske",
+      "intagning": "Ätes",
+      "name": "Mirenbuske",
+      "tillredning": "—",
+      "typ": "Liten buske",
+      "vanlighet": 6,
+      "vaxtdel": "Bär",
+      "vaxtplats": "Snårskog"
+    },
+    {
+      "effect": {
+        "amount": "2T20",
+        "kind": "heal"
+      },
+      "effektText": "Helar 2T20 KP på tio minuter",
+      "id": "myrrlisterbuske",
+      "intagning": "Drickes",
+      "name": "Myrrlisterbuske",
+      "tillredning": "Brygges",
+      "typ": "Buske",
+      "vanlighet": 9,
+      "vaxtdel": "Blad",
+      "vaxtplats": "Myrar vid trädgränsen"
+    },
+    {
+      "effect": {
+        "kind": "narrative"
+      },
+      "effektText": "Läker insektbett, sänker ett gifts STY med 2T10",
+      "id": "martistel",
+      "intagning": "Appliceras",
+      "name": "Märtistel",
+      "tillredning": "Mossas",
+      "typ": "Tistel",
+      "vanlighet": 6,
+      "vaxtdel": "Stjälk",
+      "vaxtplats": "Torrlagda diken"
+    },
+    {
+      "effect": {
+        "amount": "1T10",
+        "kind": "heal"
+      },
+      "effektText": "Helar 1T10 KP inom en minut",
+      "id": "rodbar",
+      "intagning": "Ätes",
+      "name": "Rödbär",
+      "tillredning": "Kokas i källvatten",
+      "typ": "Liten buske",
+      "vanlighet": 6,
+      "vaxtdel": "Rot",
+      "vaxtplats": "Ängar"
+    },
+    {
+      "effect": {
+        "kind": "narrative"
+      },
+      "effektText": "Stoppar kallbrand",
+      "id": "rodstrimmig_spindelskivling",
+      "intagning": "Appliceras",
+      "name": "Rödstrimmig Spindelskivling",
+      "tillredning": "Torkas och krossas",
+      "typ": "Svamp",
+      "vanlighet": 9,
+      "vaxtdel": "Hatten",
+      "vaxtplats": "Lövskog"
+    },
+    {
+      "effect": {
+        "kind": "narrative"
+      },
+      "effektText": "Halverar chansen att ett sår infekteras",
+      "id": "saltsopp",
+      "intagning": "Ätes",
+      "name": "Saltsopp",
+      "tillredning": "Torkas och kokas",
+      "typ": "Svamp",
+      "vanlighet": 8,
+      "vaxtdel": "Foten",
+      "vaxtplats": "Saltvattenssträsk"
+    },
+    {
+      "effect": {
+        "amount": "2T10",
+        "kind": "heal"
+      },
+      "effektText": "Helar 2T10 KP, desinficerande",
+      "id": "sarlindringslark",
+      "intagning": "Drickes",
+      "name": "Sårlindringslärk",
+      "tillredning": "Spädes med tio delar vatten",
+      "typ": "Träd",
+      "vanlighet": 8,
+      "vaxtdel": "Sav",
+      "vaxtplats": "Barrskog"
+    },
+    {
+      "effect": {
+        "kind": "narrative"
+      },
+      "effektText": "Mildrar snuva",
+      "id": "tandort",
+      "intagning": "Ångan inhaleras",
+      "name": "Tandört",
+      "tillredning": "Brygges",
+      "typ": "Blomma",
+      "vanlighet": 1,
+      "vaxtdel": "Blad",
+      "vaxtplats": "Överallt"
+    },
+    {
+      "effect": {
+        "amount": "1T10",
+        "kind": "heal"
+      },
+      "effektText": "Läker köldskador, 1T10 KP",
+      "id": "tagvirkestang",
+      "intagning": "Drickes",
+      "name": "Tågvirkestång",
+      "tillredning": "Brygges",
+      "typ": "Tång",
+      "vanlighet": 9,
+      "vaxtdel": "—",
+      "vaxtplats": "Kuster"
+    },
+    {
+      "effect": {
+        "amount": "2",
+        "kind": "heal"
+      },
+      "effektText": "Lindrar huvudvärk, helar 2 KP",
+      "id": "argangsmistel",
+      "intagning": "Drickes",
+      "name": "Årgångsmistel",
+      "tillredning": "Brygges",
+      "typ": "Blomma",
+      "vanlighet": 5,
+      "vaxtdel": "Blad",
+      "vaxtplats": "Lövskog"
+    },
+    {
+      "effect": {
+        "amount": "1T6",
+        "kind": "heal"
+      },
+      "effektText": "Helar 1T6 KP på en timme",
+      "id": "alghornsen",
+      "intagning": "Ätes",
+      "name": "Älghornsen",
+      "tillredning": "—",
+      "typ": "Träd",
+      "vanlighet": 2,
+      "vaxtdel": "Nöt",
+      "vaxtplats": "Varma klimat"
+    },
+    {
+      "effect": {
+        "kind": "narrative"
+      },
+      "effektText": "Motgift (minskar ett gifts STY med 15)",
+      "id": "alskogsort",
+      "intagning": "Drickes kall",
+      "name": "Älskogsört",
+      "tillredning": "Brygges",
+      "typ": "Ormbunke",
+      "vanlighet": 6,
+      "vaxtdel": "Blad",
+      "vaxtplats": "Lövskog"
+    }
+  ],
+  "ruleset": "dod91"
+}

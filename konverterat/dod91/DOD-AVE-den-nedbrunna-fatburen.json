@@ -1,0 +1,4292 @@
+{
+  "generated": "2026-07-21T11:25:07Z",
+  "source": {
+    "path": "/Users/kalle.windefalk/Claude/private/RPG Ripparen/import/Den nedbrunna fatburen.pdf",
+    "sha256": "70e7924c64fd417f4c14fa32dbd9761fbe8f9d887820e53b8ebe502ec41f759c",
+    "pages": 7,
+    "metadata": {
+      "format": "PDF 1.7",
+      "creator": "PDFium",
+      "producer": "PDFium",
+      "creationDate": "D:20260717213615"
+    }
+  },
+  "system": {
+    "id": "dod",
+    "confidence": 0.66,
+    "method": "fingerprint",
+    "evidence": [
+      "attributsignatur:7/7"
+    ],
+    "ranking": [
+      [
+        "dod",
+        13.4
+      ],
+      [
+        "mutant2089",
+        6.8
+      ]
+    ]
+  },
+  "doc_type": {
+    "class_counts": {
+      "ocr_layer": 7
+    },
+    "boilerplate": []
+  },
+  "stats": {
+    "pages": 7,
+    "elements": 156,
+    "needs_review": 2,
+    "missing_pages": []
+  },
+  "pages": [
+    {
+      "page": 1,
+      "stage": "validated",
+      "class": "ocr_layer",
+      "elements": [
+        {
+          "type": "page_artifact",
+          "text": "DEN NEDBRUNNA FATBUREN",
+          "confidence": 1.0,
+          "source": {
+            "region": "sidhuvud",
+            "page": 1
+          },
+          "id": "p001_e01",
+          "corrections": []
+        },
+        {
+          "type": "heading",
+          "level": 1,
+          "text": "Den nedbrunna fatburen",
+          "confidence": 1.0,
+          "source": {
+            "region": "titel",
+            "page": 1
+          },
+          "id": "p001_e02",
+          "corrections": []
+        },
+        {
+          "type": "paragraph",
+          "text": "Detta äventyr är tänkt att utspela sig på Island under vikingatiden. Det kan givetvis bearbetas för att passa in i en annan sorts kampanj.",
+          "confidence": 1.0,
+          "source": {
+            "region": "vänsterkolumn",
+            "page": 1
+          },
+          "id": "p001_e03",
+          "corrections": []
+        },
+        {
+          "type": "paragraph",
+          "text": "Innan ni börjar spela äventyret, vill vi på redaktionen gärna rekommendera både SL och spelare att läsa till exempel Röde Orm av Frans G. Bengtsson, några av de isländska sagorna, och att, om möjligheten finns, inleda spelet med att titta på Korpen flyger, en av de allra bästa filmskildringar av vikingarna som har gjorts. Det är i samma stil och miljö som det här äventyret utspelar sig.",
+          "confidence": 1.0,
+          "source": {
+            "region": "vänsterkolumn",
+            "page": 1
+          },
+          "id": "p001_e04",
+          "corrections": []
+        },
+        {
+          "type": "illustration",
+          "text": "Karta över Island (siluett av ön).",
+          "confidence": 1.0,
+          "source": {
+            "region": "överst höger",
+            "page": 1
+          },
+          "id": "p001_e05",
+          "corrections": []
+        },
+        {
+          "type": "heading",
+          "level": 1,
+          "text": "Några ord om det vikingatida Island",
+          "confidence": 1.0,
+          "source": {
+            "region": "vänsterkolumn",
+            "page": 1
+          },
+          "id": "p001_e06",
+          "corrections": []
+        },
+        {
+          "type": "paragraph",
+          "text": "Under vikingatiden fanns ingen kung, ordningsmakt eller armé på Island. De domstolar som fanns, tingen, kunde enbart förklara om en anklagad var skyldig eller inte. Domstolen hade ingen makt att t ex tvinga någon att betala böter, att fängsla eller avrätta någon. Det var på brottsoffrets och/eller dennes familj eller släkt, som det ankom att se till att domstolens beslut blev genomförda. Detta medförde att man var tvungna att hålla ihop inom släkten för att inte bli illa behandlade av andra, starkare familjer.",
+          "confidence": 1.0,
+          "source": {
+            "region": "vänsterkolumn",
+            "page": 1
+          },
+          "id": "p001_e07",
+          "corrections": []
+        },
+        {
+          "type": "paragraph",
+          "text": "En annan orsak till att släktgruppen fick stor betydelse var att det för en ensam man kunde vara svårt att klara sin familj, tex vid olyckor som missväxt.",
+          "confidence": 1.0,
+          "source": {
+            "region": "vänsterkolumn",
+            "page": 1
+          },
+          "id": "p001_e08",
+          "corrections": []
+        },
+        {
+          "type": "paragraph",
+          "text": "Samhället var uppbyggt av släktgrupper bestående av bönder. Vissa bönder räknades som stormän och hade mer betydande inflytande över tinget än svagare familjer, men alla bönder var fria män, även om de blev så fattiga att de måste tigga sig fram.",
+          "confidence": 1.0,
+          "source": {
+            "region": "mittkolumn",
+            "page": 1
+          },
+          "id": "p001_e09",
+          "corrections": []
+        },
+        {
+          "type": "paragraph",
+          "text": "De enda som inte rådde över sig själva var trälarna. De var slavar som arbetade på böndernas gårdar. En träl betraktades närmast som ett husdjur och kunde köpas och säljas.",
+          "confidence": 1.0,
+          "source": {
+            "region": "mittkolumn",
+            "page": 1
+          },
+          "id": "p001_e10",
+          "corrections": []
+        },
+        {
+          "type": "paragraph",
+          "text": "Bönderna på Island bodde i ensliga gårdar utspridda på de bördigaste delarna av ön. Inga riktiga städer eller ens byar förekom.",
+          "confidence": 1.0,
+          "source": {
+            "region": "mittkolumn",
+            "page": 1
+          },
+          "id": "p001_e11",
+          "corrections": []
+        },
+        {
+          "type": "paragraph",
+          "text": "Förutom jordbruk och fiske, fick man inkomster från vikingatågen, vilka var kombinerade handels- och plundringsfärder. Dessa var vid denna tid ännu inga organiserade erövringståg, utan ofta var det några vänner eller släktingar som samlade ihop några skepp, skaffade besättning och gav sig av tillsammans.",
+          "confidence": 1.0,
+          "source": {
+            "region": "högerkolumn",
+            "page": 1
+          },
+          "id": "p001_e12",
+          "corrections": []
+        },
+        {
+          "type": "paragraph",
+          "text": "I äventyret antas det att äventyrarna är en samling unga och än så länge relativt okända vikingar/bönder som alla tillhör samma släkt, men är bosatta på motsatta sidan ön.",
+          "confidence": 1.0,
+          "source": {
+            "region": "högerkolumn",
+            "page": 1
+          },
+          "id": "p001_e13",
+          "corrections": []
+        },
+        {
+          "type": "heading",
+          "level": 1,
+          "text": "Inledning",
+          "confidence": 1.0,
+          "source": {
+            "region": "vänsterkolumn",
+            "page": 1
+          },
+          "id": "p001_e14",
+          "corrections": []
+        },
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Handlingen i korthet",
+          "confidence": 1.0,
+          "source": {
+            "region": "vänsterkolumn",
+            "page": 1
+          },
+          "id": "p001_e15",
+          "corrections": []
+        },
+        {
+          "type": "paragraph",
+          "text": "En förrädare inom äventyrarnas släkt, Leif, har tillsammans med en viking vid namn Sverre Skarpyx, stulit en mängd varor ur ett av släktens förrådshus, som Leif visste var obevakat. De brände ner huset för att dölja brottet.",
+          "confidence": 1.0,
+          "source": {
+            "region": "vänsterkolumn",
+            "page": 1
+          },
+          "id": "p001_e16",
+          "corrections": []
+        },
+        {
+          "type": "paragraph",
+          "text": "Äventyrarna får i uppdrag att undersöka en annan vikings, Thorgeirs, förråd. Detta för att han har handlat med varor som kom från det nedbrunna förrådshuset, något som gör honom misstänkt för att ha plundrat det.",
+          "confidence": 1.0,
+          "source": {
+            "region": "vänsterkolumn",
+            "page": 1
+          },
+          "id": "p001_e17",
+          "corrections": []
+        },
+        {
+          "type": "paragraph",
+          "text": "Äventyrarnas täckmantel är att bete sig som kringdragande, fattiga tillfällesarbetare. För att få ett visst rykte i trakten, och på så vis ha större chans att bli anställda av Thorgeir för att kunna spana på honom, planerar de att först arbeta på några andra gårdar.",
+          "confidence": 1.0,
+          "source": {
+            "region": "vänster/mittkolumn",
+            "page": 1
+          },
+          "id": "p001_e18",
+          "corrections": []
+        },
+        {
+          "type": "paragraph",
+          "text": "Den första gård de övernattar i tillhör Sverre. Han anar inget, utan råkar både visa äventyrarna en mängd varor de känner igen, samt anställer äventyrarna till att sortera och städa i hans förråd – där allt stöldgodset ligger – följande morgon.",
+          "confidence": 1.0,
+          "source": {
+            "region": "mittkolumn",
+            "page": 1
+          },
+          "id": "p001_e19",
+          "corrections": []
+        },
+        {
+          "type": "paragraph",
+          "text": "Under kvällen anländer en budbärare från Leif till Sverre. Leif avslöjar äventyrarnas identitet och uppdrag och varnar Sverre.",
+          "confidence": 1.0,
+          "source": {
+            "region": "mittkolumn",
+            "page": 1
+          },
+          "id": "p001_e20",
+          "corrections": []
+        },
+        {
+          "type": "paragraph",
+          "text": "Sverre beslutar att försöka dräpa äventyrarna under natten, eftersom han varken kan låta dem se hans förråd eller köra iväg dem utan det arbete som han har lovat dem, då deras misstänksamhet då skulle väckas.",
+          "confidence": 1.0,
+          "source": {
+            "region": "mitt/högerkolumn",
+            "page": 1
+          },
+          "id": "p001_e21",
+          "corrections": []
+        },
+        {
+          "type": "paragraph",
+          "text": "Om äventyrarna undkommer anfallet, bör de dra de rätta slutsatserna om hur saker och ting hänger samman.",
+          "confidence": 1.0,
+          "source": {
+            "region": "högerkolumn",
+            "page": 1
+          },
+          "id": "p001_e22",
+          "corrections": []
+        },
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Att tänka på som SL",
+          "confidence": 1.0,
+          "source": {
+            "region": "högerkolumn",
+            "page": 1
+          },
+          "id": "p001_e23",
+          "corrections": []
+        },
+        {
+          "type": "paragraph",
+          "text": "Det här är ett ganska kort och koncentrerat äventyr helt utan magi, men som kan bli en rätt våldsam uppgörelse i stil med den i Korpen flyger.",
+          "confidence": 1.0,
+          "source": {
+            "region": "högerkolumn",
+            "page": 1
+          },
+          "id": "p001_e24",
+          "corrections": []
+        },
+        {
+          "type": "paragraph",
+          "text": "Till skillnad från de flesta av våra äventyr, är Den nedbrunna fatburen väldigt hårt styrd i början fram till den punkt där äventyrarna mer eller mindre dumpas hos Sverre. Därefter är det helt och hållet spelarnas egna beslut som avgör vad som skall hända. Instruk-",
+          "confidence": 1.0,
+          "source": {
+            "region": "högerkolumn",
+            "page": 1
+          },
+          "id": "p001_e25",
+          "corrections": []
+        },
+        {
+          "type": "page_artifact",
+          "text": "22",
+          "confidence": 1.0,
+          "source": {
+            "region": "sidfot",
+            "page": 1
+          },
+          "id": "p001_e26",
+          "corrections": []
+        },
+        {
+          "type": "page_artifact",
+          "text": "SINKADUS",
+          "confidence": 1.0,
+          "source": {
+            "region": "sidfot",
+            "page": 1
+          },
+          "id": "p001_e27",
+          "corrections": []
+        }
+      ]
+    },
+    {
+      "page": 2,
+      "stage": "validated",
+      "class": "ocr_layer",
+      "elements": [
+        {
+          "type": "page_artifact",
+          "text": "DEN NEDBRUNNA FATBUREN",
+          "confidence": 1.0,
+          "source": {
+            "region": "sidhuvud",
+            "page": 2
+          },
+          "id": "p002_e01",
+          "corrections": []
+        },
+        {
+          "type": "paragraph",
+          "text": "tionerna till spelledaren är utformade så att han skall veta hur de olika SLP reagerar.",
+          "confidence": 1.0,
+          "source": {
+            "region": "vänsterkolumn",
+            "page": 2
+          },
+          "id": "p002_e02",
+          "corrections": []
+        },
+        {
+          "type": "paragraph",
+          "text": "Vad du som SL måste tänka på är att se till att spelarna inte inser att du styr dem förrän det är försent. Situationen är ganska känslig; två personer har blivit bestulna och den huvudmisstänktes dotter skall till att gifta sig med en av de bestulna. Då misstankarna skall sättas på prov placeras äventyrarna hos en av de egentliga skurkarna i syfte att ge dem en täckmantel…",
+          "confidence": 1.0,
+          "source": {
+            "region": "vänsterkolumn",
+            "page": 2
+          },
+          "id": "p002_e03",
+          "corrections": []
+        },
+        {
+          "type": "heading",
+          "level": 1,
+          "text": "Bakgrund",
+          "confidence": 1.0,
+          "source": {
+            "region": "vänsterkolumn",
+            "page": 2
+          },
+          "id": "p002_e04",
+          "corrections": []
+        },
+        {
+          "type": "paragraph",
+          "text": "Äventyrarna ingår i en av de lite större och mer ansedda släktgrupperna på Island. De är ännu unga och relativt okända, men de har flera berömda släktingar. Släktens äldste är visserligen gammal men betraktas ändå som en mäktig storman. Man har stor respekt i samhället och på tingen inför honom.",
+          "confidence": 1.0,
+          "source": {
+            "region": "vänsterkolumn",
+            "page": 2
+          },
+          "id": "p002_e05",
+          "corrections": []
+        },
+        {
+          "type": "paragraph",
+          "text": "Släkten är för tillfället inte indragen i någon konflikt med någon annan släkt, och man gör sitt bästa inom släkten för att hålla freden, bl a för att släkten har få riktiga vänner i trakten.",
+          "confidence": 1.0,
+          "source": {
+            "region": "vänsterkolumn",
+            "page": 2
+          },
+          "id": "p002_e06",
+          "corrections": []
+        },
+        {
+          "type": "heading",
+          "level": 1,
+          "text": "Äventyrets början",
+          "confidence": 1.0,
+          "source": {
+            "region": "vänsterkolumn",
+            "page": 2
+          },
+          "id": "p002_e07",
+          "corrections": []
+        },
+        {
+          "type": "paragraph",
+          "text": "Det är vår och äventyrarna befinner sig på sina gårdar på östra Island, upptagna med jordbruket. Till en av dem kommer en budbärare från Grane ridande. Han hälsar att han vill att äventyrarna skall utföra en kortare handelsfärd till Norge för släktens räkning och ber den som har tagit emot budskapet att samla ihop de övriga äventyrarna för att därefter bege sig till Granes gård.",
+          "confidence": 1.0,
+          "source": {
+            "region": "vänsterkolumn",
+            "page": 2
+          },
+          "id": "p002_e08",
+          "corrections": []
+        },
+        {
+          "type": "paragraph",
+          "text": "Det snabbaste och bekvämaste sättet att ta sig till Grane är att segla. Resan tar två dagar. Vid ankomsten väntar Ulf och Leif på äventyrarna där båten lägger till, vilket tyder på att äventyrarnas besök är viktigare än väntat, eftersom både Ulf och Leif har tagit sig tid att lämna sina gårdar för att möta dem.",
+          "confidence": 1.0,
+          "source": {
+            "region": "vänsterkolumn",
+            "page": 2
+          },
+          "id": "p002_e09",
+          "corrections": []
+        },
+        {
+          "type": "paragraph",
+          "text": "Äventyrarna får låna hästar som Ulf och Leif fört med sig och tillsammans rider de upp till Granes gård. Äventyrarna lägger märke till att något bekymrar Granes båda söner. Ulf är tyst och tycks fundera på något och Leif verkar upprörd och håller ena handen på svärdsfästet.",
+          "confidence": 1.0,
+          "source": {
+            "region": "vänsterkolumn",
+            "page": 2
+          },
+          "id": "p002_e10",
+          "corrections": []
+        },
+        {
+          "type": "paragraph",
+          "text": "Om äventyrarna ställer några frågor eller försöker få igång ett samtal, får de bara grymtningar till svar och en uppmaning om att vänta med pratet tills de har lyssnat på vad Grane har att säga.",
+          "confidence": 1.0,
+          "source": {
+            "region": "vänsterkolumn",
+            "page": 2
+          },
+          "id": "p002_e11",
+          "corrections": []
+        },
+        {
+          "type": "paragraph",
+          "text": "Just kring gården syns inte en själ till men längre bort på en fjällsluttning syns en mängd människor i arbete. I övrigt ser gården ut som vanligt men innan sällskapet går in i huvudbyggnaden, går Leif och Ulf runt husen för att kontrollera att ingen finns i närheten.",
+          "confidence": 1.0,
+          "source": {
+            "region": "vänster/mittkolumn",
+            "page": 2
+          },
+          "id": "p002_e12",
+          "corrections": []
+        },
+        {
+          "type": "paragraph",
+          "text": "Grane ligger nerkrupen bland sina skinnfällar i det innersta sovrummet i huset. När äventyrarna kommer in hälsar han dem välkomna och ber dem om ursäkt för att han inte tog emot sina gäster i dörren som seden är, men tillägger sedan att det kanske var lika bra att han sparade sin gamla kropp, eftersom de ändå måste talas vid här inne där ingen kan höra. Grane fortsätter: \"Jag måste göra er besvikna vad det gäller resan till Norge. För er del är jag rädd att den måste vänta till någon annan gång, för nu behöver släkten er hjälp med ett hemligt uppdrag.\"",
+          "confidence": 1.0,
+          "source": {
+            "region": "mitt/högerkolumn",
+            "page": 2
+          },
+          "id": "p002_e13",
+          "corrections": []
+        },
+        {
+          "type": "illustration",
+          "text": "Teckning av Grane, en gammal man insvept i pälsar med en käpp. Signerad S.K.",
+          "confidence": 1.0,
+          "source": {
+            "region": "överst höger",
+            "page": 2
+          },
+          "id": "p002_e14",
+          "corrections": []
+        },
+        {
+          "type": "paragraph",
+          "text": "En lång stund framöver berättar Grane, då och då hjälpt med ett påpekande från Ulf eller Leif, om problemet som har drabbat släkten.",
+          "confidence": 1.0,
+          "source": {
+            "region": "högerkolumn",
+            "page": 2
+          },
+          "id": "p002_e15",
+          "corrections": []
+        },
+        {
+          "type": "illustration",
+          "text": "Karta \"Granes gård\": planritning över gårdens byggnader (Eldhus, Skåle, Förråd, Stuga, Avträde) samt fristående Redskapshus, Ladugård och Badhus. Skala 1 2 3 m.",
+          "confidence": 1.0,
+          "source": {
+            "region": "nederst mitt/höger",
+            "page": 2
+          },
+          "id": "p002_e16",
+          "corrections": []
+        },
+        {
+          "type": "page_artifact",
+          "text": "Nr 8, juni 1987",
+          "confidence": 1.0,
+          "source": {
+            "region": "sidfot",
+            "page": 2
+          },
+          "id": "p002_e17",
+          "corrections": []
+        },
+        {
+          "type": "page_artifact",
+          "text": "23",
+          "confidence": 1.0,
+          "source": {
+            "region": "sidfot",
+            "page": 2
+          },
+          "id": "p002_e18",
+          "corrections": []
+        }
+      ]
+    },
+    {
+      "page": 3,
+      "stage": "validated",
+      "class": "ocr_layer",
+      "elements": [
+        {
+          "type": "page_artifact",
+          "text": "DEN NEDBRUNNA FATBUREN",
+          "confidence": 1.0,
+          "source": {
+            "region": "sidhuvud",
+            "page": 3
+          },
+          "id": "p003_e01",
+          "corrections": []
+        },
+        {
+          "type": "heading",
+          "level": 1,
+          "text": "Granes berättelse",
+          "confidence": 1.0,
+          "source": {
+            "region": "vänsterkolumn",
+            "page": 3
+          },
+          "id": "p003_e02",
+          "corrections": []
+        },
+        {
+          "type": "paragraph",
+          "text": "Grane berättar att han, Leif och Torolv hade ett gemensamt förrådshus nere vid fjordstranden, mitt emellan Leifs och Torolvs gårdar. Det låg på den plats där skeppen brukar dras upp på vintern. I förrådshuset brukade de varor som skeppen haft med sig hem från somrarnas färder förvaras tills de behövdes i någon av de tre gårdarna. Det totala värdet av dessa varor brukade vara en ansenlig förmögenhet och därför brukade Leif och Torolv turas om att sätta ut vakter från sina husfolk vid förrådet så att inga landsstrykare eller tiggare skulle lockas till inbrott.",
+          "confidence": 1.0,
+          "source": {
+            "region": "vänsterkolumn",
+            "page": 3
+          },
+          "id": "p003_e03",
+          "corrections": []
+        },
+        {
+          "type": "paragraph",
+          "text": "En natt alldeles nyligen, när tiderna var så bråda för både Leif och Torolv att de inte kunde avvara en enda man till att hålla vakt, brann förrådet ner. Torolv behövde allt sitt folk för att hinna förbereda sin mark för vårbruket, och Leif behövde alla sina män till att arbeta med förberedelserna för sommarens vikingatåg, som för Leifs del skall starta ovanligt tidigt i år. Det har alltid varit Leifs dröm att få följa med Sverre på plundring och när han nu skall få göra det, vill han absolut inte riskera att inte vara färdig att gå till sjöss på den dag som Sverre har bestämt.",
+          "confidence": 1.0,
+          "source": {
+            "region": "vänsterkolumn",
+            "page": 3
+          },
+          "id": "p003_e04",
+          "corrections": []
+        },
+        {
+          "type": "paragraph",
+          "text": "Det var bara Leif och Torolv personligen som visste om att förrådet var obevakat just den katastrofala natten, och därför ansåg Grane det vara väldigt otroligt att någon tjuv skulle ha vågat sig på ett inbrott och sedan tänt eld på huset för att dölja brottet.",
+          "confidence": 1.0,
+          "source": {
+            "region": "vänsterkolumn",
+            "page": 3
+          },
+          "id": "p003_e05",
+          "corrections": []
+        },
+        {
+          "type": "paragraph",
+          "text": "Istället misstänkte Leif att en av hans fumliga trälar, som var och hämtade några varor ur förrådet dagen innan det brann ner, kan ha slarvat med elden.",
+          "confidence": 1.0,
+          "source": {
+            "region": "vänsterkolumn",
+            "page": 3
+          },
+          "id": "p003_e06",
+          "corrections": []
+        },
+        {
+          "type": "paragraph",
+          "text": "Det konstiga är att en del av de varor som förvarades i förrådet nu har dykt upp i handeln. När Torolv och Leif undersökte brandplatsen tyckte de att det var lite underligt att det inte fanns några oskadade eller eller ens delvis oskadade föremål bland resterna.",
+          "confidence": 0.9,
+          "source": {
+            "region": "vänsterkolumn",
+            "page": 3
+          },
+          "needs_review": true,
+          "note": "Originaltrycket har dubblerat 'eller eller' — behållet print-faithful.",
+          "id": "p003_e07",
+          "corrections": []
+        },
+        {
+          "type": "paragraph",
+          "text": "Nu verkar det som om någon har kommit före till huset och tagit de varor som klarat sig undan lågorna. Det kan rimligen inte vara mycket denne någon kommit över, så Grane tycker inte att det är något att bråka om egentligen, utan anser det vara viktigare att hålla freden, men han vill ändå veta vem som har varit oärlig mot släkten och plundrat brandplatsen för att kunna hålla ett öga på honom i fortsättningen.",
+          "confidence": 1.0,
+          "source": {
+            "region": "vänsterkolumn",
+            "page": 3
+          },
+          "id": "p003_e08",
+          "corrections": []
+        },
+        {
+          "type": "heading",
+          "level": 1,
+          "text": "Uppdraget",
+          "confidence": 1.0,
+          "source": {
+            "region": "vänsterkolumn",
+            "page": 3
+          },
+          "id": "p003_e09",
+          "corrections": []
+        },
+        {
+          "type": "paragraph",
+          "text": "Grane ger äventyrarna i uppdrag att försöka ta reda på vem som har sakerna från det nedbrunna förrådet.",
+          "confidence": 1.0,
+          "source": {
+            "region": "vänsterkolumn",
+            "page": 3
+          },
+          "id": "p003_e10",
+          "corrections": []
+        },
+        {
+          "type": "paragraph",
+          "text": "För att undvika fiendskap bland folket i trakten och för att inte bli intvingade i en blodig släktfejd med tjuven och dennes släkt, så vill inte Grane låta släktens krigare rida runt öppet och kräva att få söka igenom alla gårdar i trakten.",
+          "confidence": 1.0,
+          "source": {
+            "region": "vänster/mittkolumn",
+            "page": 3
+          },
+          "id": "p003_e11",
+          "corrections": []
+        },
+        {
+          "type": "paragraph",
+          "text": "Istället vill han att äventyrarna utger sig vara kringvandrande egendomslösa och att de går runt i gårdarna i trakten och ber om tillfälliga jobb. Under tiden passar de på att spana efter varor som de kan tänkas känna igen enligt Granes, Leifs och Torolvs beskrivningar. Grane visar äventyrarna prov på de saker som fanns i förrådet, bl a mönstrade tyger, vinkrukor med namnet på den franske riddare som ägde dem innan Leif befriade dem från honom, ingraverat i botten, samt olika järnsmiden med smedens runor på, som så vitt de känner till, bara fanns i deras förråd på hela ön.",
+          "confidence": 1.0,
+          "source": {
+            "region": "mittkolumn",
+            "page": 3
+          },
+          "id": "p003_e12",
+          "corrections": []
+        },
+        {
+          "type": "paragraph",
+          "text": "Huvudsyftet med äventyrarnas första jobb i trakten skall emellertid vara att skaffa sig ett visst rykte som billig arbetskraft, så att de får större chanser att få anställning, eller i alla fall få övernatta, hos den huvudmisstänkte, nämligen Torolvs blivande svärfar, Thorgeir Kolbeinsson.",
+          "confidence": 1.0,
+          "source": {
+            "region": "mittkolumn",
+            "page": 3
+          },
+          "id": "p003_e13",
+          "corrections": []
+        },
+        {
+          "type": "paragraph",
+          "text": "Skälet till misstankarna mot Thorgeir är att han enligt säkra källor gjort en mängd affärer med varor som med säkerhet kom från förrådet.",
+          "confidence": 1.0,
+          "source": {
+            "region": "mittkolumn",
+            "page": 3
+          },
+          "id": "p003_e14",
+          "corrections": []
+        },
+        {
+          "type": "paragraph",
+          "text": "Ulf påpekar att det är på grund av att det är just Thorgeir som är misstänkt, som inte Torolv är med på mötet eller har informerats om Granes misstankar och planer. Det är alltså ingen mer utom Ulf, Leif, Grane och äventyrarna som känner till uppdraget.",
+          "confidence": 1.0,
+          "source": {
+            "region": "mittkolumn",
+            "page": 3
+          },
+          "id": "p003_e15",
+          "corrections": []
+        },
+        {
+          "type": "paragraph",
+          "text": "Eftersom äventyrarna är relativt okända i släkten och dessutom inte är från trakten, tror Grane att det räcker med att de ändrar frisyr och färgar hår och skägg för att inte bli igenkända, bara de spelar sina roller väl.",
+          "confidence": 1.0,
+          "source": {
+            "region": "mittkolumn",
+            "page": 3
+          },
+          "id": "p003_e16",
+          "corrections": []
+        },
+        {
+          "type": "paragraph",
+          "text": "Ulf anmärker att det vore lämpligt att söka arbete hos Leifs vän Sverre först, eftersom denne är känd för att vilja imponera på främlingar, och gärna vill att de skall föra vidare ryktet om hans rikedomar. Om han inte har något arbete just för tillfället, brukar han i alla fall ge folk tak över huvudet.",
+          "confidence": 1.0,
+          "source": {
+            "region": "mittkolumn",
+            "page": 3
+          },
+          "id": "p003_e17",
+          "corrections": []
+        },
+        {
+          "type": "paragraph",
+          "text": "Grane instämmer och säger att han just idag har hört att Sverre söker efter några starka karlar för att i några dagar hjälpa till med något arbete på gården i samband med årets vikingafärder.",
+          "confidence": 1.0,
+          "source": {
+            "region": "mittkolumn",
+            "page": 3
+          },
+          "id": "p003_e18",
+          "corrections": []
+        },
+        {
+          "type": "paragraph",
+          "text": "Grane avslutar överläggningarna med att önska äventyrarna lycka till.",
+          "confidence": 1.0,
+          "source": {
+            "region": "mittkolumn",
+            "page": 3
+          },
+          "id": "p003_e19",
+          "corrections": []
+        },
+        {
+          "type": "heading",
+          "level": 1,
+          "text": "Fakta till spelledaren",
+          "confidence": 1.0,
+          "source": {
+            "region": "mittkolumn",
+            "page": 3
+          },
+          "id": "p003_e20",
+          "corrections": []
+        },
+        {
+          "type": "paragraph",
+          "text": "Thorgeir Kolbeinsson är oskyldig. Varorna han använde för sina affärer, hade han fått av Sverre som ersättning för att han lånade Sverre en dragoxe under början av vårbruket. Sverre i sin tur hade fått varorna plus en hel del till, närmare bestämt hälften, från det nedbrända förrådet. Den andra hälften har Leif gömt.",
+          "confidence": 1.0,
+          "source": {
+            "region": "mittkolumn",
+            "page": 3
+          },
+          "id": "p003_e21",
+          "corrections": []
+        },
+        {
+          "type": "paragraph",
+          "text": "Leif erbjöd Sverre en möjlighet att stjäla hälften av varorna som ersättning för att Leif skulle få delta i Sverres vikingatåg. Sverre accepterade och lät sina män bryta sig in i, plundra och sedan bränna ner förrådet när Leif gav klartecken. De räknade med att det skulle se ut som en olyckshändelse, vilket är vad folk också tror.",
+          "confidence": 1.0,
+          "source": {
+            "region": "högerkolumn",
+            "page": 3
+          },
+          "id": "p003_e22",
+          "corrections": []
+        },
+        {
+          "type": "heading",
+          "level": 1,
+          "text": "Avfärden och ankomsten till Sverre",
+          "confidence": 1.0,
+          "source": {
+            "region": "högerkolumn",
+            "page": 3
+          },
+          "id": "p003_e23",
+          "corrections": []
+        },
+        {
+          "type": "paragraph",
+          "text": "Mötet med Grane varar halva förmiddagen. Äventyrarna följs av Ulf och Leif ner till ett väntande skepp, som samma dag skall ge sig iväg till Norge, men först skall det lämna äventyrarna i en liten vik nära Sverres gård.",
+          "confidence": 1.0,
+          "source": {
+            "region": "högerkolumn",
+            "page": 3
+          },
+          "id": "p003_e24",
+          "corrections": []
+        },
+        {
+          "type": "paragraph",
+          "text": "Vid middagstid lägger skeppet till och äventyrarna kan gå i land. Medan skeppet ger sig iväg, kommer Sverre Skarpyx traskande ner mot stranden. Han kommer att ställa några allmänna frågor till äventyrarna och om han får veta att de är främlingar i trakten, erbjuder han dem arbete med att flytta delar av hans förråd. Han säger skrytsamt att han börjar bli så rik att han inte vet vad han skall göra med allt han äger. Eftersom äventyrarna anländer vid tiden för middagsmålet, ger Sverre order om att mat skall sättas fram åt dem. Sverre verkar vara på gott humör och beordrar fram mängder av mjöd till sig och gästerna. Han säger att om äventyrarna gör ett gott arbete, skall han belöna dem rejält och sprida ut om hur dugliga de är – i gengäld hoppas han att äventyrarna låter alla få höra vilken generös och mäktig hövding Sverre Skarpyx är.",
+          "confidence": 1.0,
+          "source": {
+            "region": "högerkolumn",
+            "page": 3
+          },
+          "id": "p003_e25",
+          "corrections": []
+        },
+        {
+          "type": "paragraph",
+          "text": "Mitt i allt drickande får Sverre för sig att han skall bjuda på något riktigt fint, en riktig stormansdryck. Han går själv ut för att hämta några vinkrus och blir borta en stund. När han kommer tillbaka får äventyrarna själva hälla upp, varvid de kommer att känna igen märkningen i botten av vinkrusen. Om äventyrarna frågar om var han har fått vinet ifrån, skrattar Sverre och säger att vin bara är för stormän och inget för drängar att fika efter.",
+          "confidence": 1.0,
+          "source": {
+            "region": "högerkolumn",
+            "page": 3
+          },
+          "id": "p003_e26",
+          "corrections": []
+        },
+        {
+          "type": "paragraph",
+          "text": "Om äventyrarna stannar kvar kommer eftermiddagen sedan att gå åt till att flytta gods från ett av Sverres förråd. Äventyrarna kommer att anlitas till att bära ut föremålen och att packa dem på Sverres hästar. Hans egna män för sedan djuren upp till det nya förråd som han håller på att bygga. Skarpsynta äventyrare kommer att känna igen en hel del varor på Granes beskrivningar.",
+          "confidence": 1.0,
+          "source": {
+            "region": "högerkolumn",
+            "page": 3
+          },
+          "id": "p003_e27",
+          "corrections": []
+        },
+        {
+          "type": "heading",
+          "level": 1,
+          "text": "Efter arbetet",
+          "confidence": 1.0,
+          "source": {
+            "region": "högerkolumn",
+            "page": 3
+          },
+          "id": "p003_e28",
+          "corrections": []
+        },
+        {
+          "type": "paragraph",
+          "text": "Efter dagens avslutade arbete blir det mer mat och ändå mera mjöd och vin. Om äventyrarna har arbetat bra är Sverre mycket",
+          "confidence": 1.0,
+          "source": {
+            "region": "högerkolumn",
+            "page": 3
+          },
+          "id": "p003_e29",
+          "corrections": []
+        },
+        {
+          "type": "page_artifact",
+          "text": "24",
+          "confidence": 1.0,
+          "source": {
+            "region": "sidfot",
+            "page": 3
+          },
+          "id": "p003_e30",
+          "corrections": []
+        },
+        {
+          "type": "page_artifact",
+          "text": "SINKADUS",
+          "confidence": 1.0,
+          "source": {
+            "region": "sidfot",
+            "page": 3
+          },
+          "id": "p003_e31",
+          "corrections": []
+        }
+      ]
+    },
+    {
+      "page": 4,
+      "stage": "validated",
+      "class": "ocr_layer",
+      "elements": [
+        {
+          "type": "page_artifact",
+          "text": "DEN NEDBRUNNA FATBUREN",
+          "confidence": 1.0,
+          "source": {
+            "region": "sidhuvud",
+            "page": 4
+          },
+          "id": "p004_e01",
+          "corrections": []
+        },
+        {
+          "type": "illustration",
+          "text": "Karta \"Sverre Skarpyx' gård\": planritning med Förrådshus, Skåle (sovrum), Stenmur, två Eldstad, Hall, Brunn, Ladugård, Ytterdörrar, Avträde, Badhus och Smedja. Skala 1 2 3 m.",
+          "confidence": 1.0,
+          "source": {
+            "region": "överst",
+            "page": 4
+          },
+          "id": "p004_e02",
+          "corrections": []
+        },
+        {
+          "type": "paragraph",
+          "text": "upprymd. Mitt under måltiden, när Sverre går ut för att hämta mera vin, kan äventyrarna höra att någon anländer till häst. Det är tyst under en kort stund innan hovklappret talar om att besökaren har gett sig av. När",
+          "confidence": 1.0,
+          "source": {
+            "region": "vänsterkolumn",
+            "page": 4
+          },
+          "id": "p004_e03",
+          "corrections": []
+        },
+        {
+          "type": "illustration",
+          "text": "Teckning av en gästabudsscen: människor kring ett långbord med mat och dryck, en hund under bordet. Signerad S.K.",
+          "confidence": 1.0,
+          "source": {
+            "region": "nederst vänster",
+            "page": 4
+          },
+          "id": "p004_e04",
+          "corrections": []
+        },
+        {
+          "type": "paragraph",
+          "text": "Sverre kommer in är han betydligt mera dämpad, även om han försöker att inte visa det. Efter maten visar han dem till hallen där de får några skinnfällar att sova på.",
+          "confidence": 1.0,
+          "source": {
+            "region": "mittkolumn",
+            "page": 4
+          },
+          "id": "p004_e05",
+          "corrections": []
+        },
+        {
+          "type": "heading",
+          "level": 1,
+          "text": "Vad som händer under tiden",
+          "confidence": 1.0,
+          "source": {
+            "region": "mittkolumn",
+            "page": 4
+          },
+          "id": "p004_e06",
+          "corrections": []
+        },
+        {
+          "type": "paragraph",
+          "text": "När Leif får veta Granes planer om att skicka ut äventyrarna att undersöka vad som blivit av de varor som uppenbarligen klarat sig undan lågorna (det får han samtidigt som äventyrarna, dvs under mötet med Grane), beslutar han sig för att varna Sverre. Hans budbärare har ingen möjlighet att komma iväg så tidigt att han hinner varna Sverre innan äventyrarna kommer fram. När budbäraren anländer har Sverre redan råkat visa äventyrarna en hel del av de stulna varorna. I det här läget bör äventyrarnas misstänksamhet ha väckts. Sverre beslutar att låta äventyrarna \"försvinna\" under natten så snart hans egna män kan komma tillbaka från det nya förrådet. Detta kommer att ske cirka fyra timmar efter det att budbäraren har ridit vidare.",
+          "confidence": 1.0,
+          "source": {
+            "region": "mitt/högerkolumn",
+            "page": 4
+          },
+          "id": "p004_e07",
+          "corrections": []
+        },
+        {
+          "type": "heading",
+          "level": 1,
+          "text": "Natten",
+          "confidence": 1.0,
+          "source": {
+            "region": "högerkolumn",
+            "page": 4
+          },
+          "id": "p004_e08",
+          "corrections": []
+        },
+        {
+          "type": "paragraph",
+          "text": "Om äventyrarna inte gör något, kommer Sverres män att anlända vid midnatt. Sverre kommer att tala om vad han vill ha uträttat. Männen tar sina vapen, men lämnar övrig utrustning för att kunna smyga lättare och tassar fram mot hallen där äventyrarna sover. Spelledaren kan här lära spelarna en moralisk läxa om de har låtit sina rollpersoner dricka alltför friskt under kvällen, genom att låta dem sova ovanligt tungt och därför ge dem sämre chans på Upptäcka fara. De kan också få sämre värden på andra färdigheter, men SL bör tänka på att äventyrarna, oavsett när de vaknar, bör ha stora möjligheter att komma undan eftersom de inte har haft någon chans att förstå att deras identiteter är avslöjade. Sverres män bör inte vara alltför många och väl rustade. Spelledaren kan hjälpa rollpersonerna genom att låta total",
+          "confidence": 1.0,
+          "source": {
+            "region": "högerkolumn",
+            "page": 4
+          },
+          "id": "p004_e09",
+          "corrections": []
+        },
+        {
+          "type": "page_artifact",
+          "text": "Nr 8, juni 1987",
+          "confidence": 1.0,
+          "source": {
+            "region": "sidfot",
+            "page": 4
+          },
+          "id": "p004_e10",
+          "corrections": []
+        },
+        {
+          "type": "page_artifact",
+          "text": "25",
+          "confidence": 1.0,
+          "source": {
+            "region": "sidfot",
+            "page": 4
+          },
+          "id": "p004_e11",
+          "corrections": []
+        }
+      ]
+    },
+    {
+      "page": 5,
+      "stage": "validated",
+      "class": "ocr_layer",
+      "elements": [
+        {
+          "type": "page_artifact",
+          "text": "DEN NEDBRUNNA FATBUREN",
+          "confidence": 1.0,
+          "source": {
+            "region": "sidhuvud",
+            "page": 5
+          },
+          "id": "p005_e01",
+          "corrections": []
+        },
+        {
+          "type": "paragraph",
+          "text": "förvirring utbryta i mörkret under de första stridsronderna. En av Sverres män kommer därpå in med en tänd oljelampa som han genast tappar, vilket tvingar Sverres män att desperat försöka trampa ner lågorna som slår upp. Ute kan det gärna störtregna eller vara tät dimma så att förföljandet försvåras.",
+          "confidence": 1.0,
+          "source": {
+            "region": "vänsterkolumn",
+            "page": 5
+          },
+          "id": "p005_e02",
+          "corrections": []
+        },
+        {
+          "type": "heading",
+          "level": 1,
+          "text": "Återsamling i terrängen",
+          "confidence": 1.0,
+          "source": {
+            "region": "vänsterkolumn",
+            "page": 5
+          },
+          "id": "p005_e03",
+          "corrections": []
+        },
+        {
+          "type": "paragraph",
+          "text": "Om äventyrarna har kommit ut ur huset kan de komma undan. Om de har kommit ifrån varandra, kanske det krävs en stunds nervöst kringkrypande och viskande innan de hittar varandra, men sedan bör de få samlas för att kunna diskutera igenom fortsatta planer.",
+          "confidence": 1.0,
+          "source": {
+            "region": "vänsterkolumn",
+            "page": 5
+          },
+          "id": "p005_e04",
+          "corrections": []
+        },
+        {
+          "type": "paragraph",
+          "text": "Äventyrarna bör kunna dra vissa slutsatser vid sina diskussioner och spelledaren bör ge dem ganska god tid på sig och lyssna på vad de säger.",
+          "confidence": 1.0,
+          "source": {
+            "region": "vänsterkolumn",
+            "page": 5
+          },
+          "id": "p005_e05",
+          "corrections": []
+        },
+        {
+          "type": "heading",
+          "level": 1,
+          "text": "De korrekta slutsatserna",
+          "confidence": 1.0,
+          "source": {
+            "region": "vänsterkolumn",
+            "page": 5
+          },
+          "id": "p005_e06",
+          "corrections": []
+        },
+        {
+          "type": "list",
+          "confidence": 1.0,
+          "source": {
+            "region": "vänster/mittkolumn",
+            "page": 5
+          },
+          "data": {
+            "items": [
+              "Motivet till Sverres överfall måste ha med äventyrarnas uppdrag att göra.",
+              "Sverre har en stor mängd av det stulna godset i sina förråd, och äventyrarna måste dödas därför att de har upptäckt detta.",
+              "Endast tre personer kände till uppdraget; Grane, Ulf och Leif. Någon av dem måste ha varnat Sverre.",
+              "Mängden varor i omlopp, dels hos Sverre och dels hos Thorgeir, pekar på att förrådet faktiskt plundrades innan det brann ner. Hur kunde Sverre veta om att förrådet var obevakat just den natten om inte någon hade berättat det?",
+              "Av de som kunnat varna Sverre, var det bara en som visste att förrådet var obevakat: Leif.",
+              "Leif har ett motiv att låta Sverre stjäla ur förrådet; en utlovad plats i Sverres tjänst under sommarens vikingatåg."
+            ]
+          },
+          "id": "p005_e07",
+          "corrections": []
+        },
+        {
+          "type": "heading",
+          "level": 1,
+          "text": "Handlingsalternativ",
+          "confidence": 1.0,
+          "source": {
+            "region": "mittkolumn",
+            "page": 5
+          },
+          "id": "p005_e08",
+          "corrections": []
+        },
+        {
+          "type": "paragraph",
+          "text": "Har spelarna dragit de rätta slutsatserna är det bara att återvända hem och rapportera till Grane. Om de inte är säkra på sin sak är det möjligt att de vill fortsätta undersökningarna.",
+          "confidence": 1.0,
+          "source": {
+            "region": "mittkolumn",
+            "page": 5
+          },
+          "id": "p005_e09",
+          "corrections": []
+        },
+        {
+          "type": "paragraph",
+          "text": "Sverre kommer i vilket fall som helst att försöka hindra äventyrarna genom att sprida ut att de är ett rövarband som försökte dräpa Sverre och hans hushåll när dessa låg och sov. Sverre kommer att skicka ut sina män för att leta efter \"rövarna\" och Leif kommer att ge sina män i uppgift att bevaka trakten mellan Granes och Sverres gårdar, så fort han får veta vad som har hänt. Även Thorgeirs män kommer att vara på jakt efter de förmenta rövarna.",
+          "confidence": 1.0,
+          "source": {
+            "region": "mittkolumn",
+            "page": 5
+          },
+          "id": "p005_e10",
+          "corrections": []
+        },
+        {
+          "type": "heading",
+          "level": 1,
+          "text": "Hemfärd",
+          "confidence": 1.0,
+          "source": {
+            "region": "mittkolumn",
+            "page": 5
+          },
+          "id": "p005_e11",
+          "corrections": []
+        },
+        {
+          "type": "paragraph",
+          "text": "Trakten mellan gårdarna är bevakad och det krävs försiktighet för att inte gå i en fälla. Tänk på att Island inte har någon skog att gömma sig i, men väl en klippig terräng. Spelledaren kan variera graden av faror längs hemfärden, alltifrån problemfritt till en nervpressande mardröm med dolda bakhåll, jagande ryttare och ständig livsfara.",
+          "confidence": 1.0,
+          "source": {
+            "region": "mitt/högerkolumn",
+            "page": 5
+          },
+          "id": "p005_e12",
+          "corrections": []
+        },
+        {
+          "type": "heading",
+          "level": 1,
+          "text": "Till Thorgeir",
+          "confidence": 1.0,
+          "source": {
+            "region": "högerkolumn",
+            "page": 5
+          },
+          "id": "p005_e13",
+          "corrections": []
+        },
+        {
+          "type": "paragraph",
+          "text": "Om äventyrarna vill undersöka vad som finns i Thorgeirs förråd, måste de vara mycket försiktiga. Thorgeir har satt ut vakter vid sina förrådshus och har sagt åt sina män att se upp för alla främlingar. Om äventyrarna upptäcks av Thorgeirs män, försöker de i första hand att ta dem till fånga, men dödar dem hellre än låter dem komma undan.",
+          "confidence": 1.0,
+          "source": {
+            "region": "högerkolumn",
+            "page": 5
+          },
+          "id": "p005_e14",
+          "corrections": []
+        },
+        {
+          "type": "paragraph",
+          "text": "Om äventyrarna lyckas ta sig in i Thorgeirs förråd finner de bara någon enstaka, mindre värdefull vara från stölden. Dessa föremål ligger helt öppet och inga försök att dölja dem har gjorts.",
+          "confidence": 1.0,
+          "source": {
+            "region": "högerkolumn",
+            "page": 5
+          },
+          "id": "p005_e15",
+          "corrections": []
+        },
+        {
+          "type": "heading",
+          "level": 1,
+          "text": "Fångar",
+          "confidence": 1.0,
+          "source": {
+            "region": "högerkolumn",
+            "page": 5
+          },
+          "id": "p005_e16",
+          "corrections": []
+        },
+        {
+          "type": "paragraph",
+          "text": "Om äventyrarna blir tillfångatagna av Thorgeir måste de avslöja sina rätta identiteter för att inte bli utlämnade till Sverre. Om de berättar, blir Thorgeir irriterad över att dras in i affären och han säger att han inte vill tro mer på äventyrarna än på Sverre, förrän han har talat med Grane. Om de inte berättar, kommer Sverre att ta hand om dem…",
+          "confidence": 1.0,
+          "source": {
+            "region": "högerkolumn",
+            "page": 5
+          },
+          "id": "p005_e17",
+          "corrections": []
+        },
+        {
+          "type": "illustration",
+          "text": "Karta \"Thorgeir Kolbeinssons gård\": planritning med Avträde, Eldhus, Förråd, Stuga, Eldstad, Skåle, Thorgeirs skåle och Ladugård. Skala 1 2 3 m.",
+          "confidence": 1.0,
+          "source": {
+            "region": "nederst mitt/höger",
+            "page": 5
+          },
+          "id": "p005_e18",
+          "corrections": []
+        },
+        {
+          "type": "heading",
+          "level": 1,
+          "text": "Fortsatt spaning på Sverre",
+          "confidence": 1.0,
+          "source": {
+            "region": "högerkolumn",
+            "page": 5
+          },
+          "id": "p005_e19",
+          "corrections": []
+        },
+        {
+          "type": "paragraph",
+          "text": "Sverres gård är nu så väl bevakad att det knappast går att att ta sig in utan strid. Däremot kan äventyrarna bara genom att ligga gömda och speja på gården, se hur budbärare från Leif anländer och hur Sverre skickar iväg ryttare längs stigen som leder till Leifs",
+          "confidence": 0.9,
+          "source": {
+            "region": "högerkolumn",
+            "page": 5
+          },
+          "needs_review": true,
+          "note": "Originaltrycket har dubblerat 'att att' — behållet print-faithful.",
+          "id": "p005_e20",
+          "corrections": []
+        },
+        {
+          "type": "page_artifact",
+          "text": "26",
+          "confidence": 1.0,
+          "source": {
+            "region": "sidfot",
+            "page": 5
+          },
+          "id": "p005_e21",
+          "corrections": []
+        },
+        {
+          "type": "page_artifact",
+          "text": "SINKADUS",
+          "confidence": 1.0,
+          "source": {
+            "region": "sidfot",
+            "page": 5
+          },
+          "id": "p005_e22",
+          "corrections": []
+        }
+      ]
+    },
+    {
+      "page": 6,
+      "stage": "validated",
+      "class": "ocr_layer",
+      "elements": [
+        {
+          "type": "page_artifact",
+          "text": "DEN NEDBRUNNA FATBUREN",
+          "confidence": 1.0,
+          "source": {
+            "region": "sidhuvud",
+            "page": 6
+          },
+          "id": "p006_e01",
+          "corrections": []
+        },
+        {
+          "type": "paragraph",
+          "text": "gård. Dessutom kan de se hur både Sverres och Leifs män letar efter dem.",
+          "confidence": 1.0,
+          "source": {
+            "region": "vänsterkolumn",
+            "page": 6
+          },
+          "id": "p006_e02",
+          "corrections": []
+        },
+        {
+          "type": "paragraph",
+          "text": "Om äventyrarna ännu inte tycker sig ha bevis nog, utan fortsätter att spana, kommer de att kunna se hur Sverres män skyndsamt för undan en mängd gods till ett gömsle uppe på fjället. Om detta undersöks kommer äventyrarna att känna igen åtskilligt. Liknande aktiviteter pågår vid Leifs gård också, om äventyrarna skulle bevaka den.",
+          "confidence": 1.0,
+          "source": {
+            "region": "vänsterkolumn",
+            "page": 6
+          },
+          "id": "p006_e03",
+          "corrections": []
+        },
+        {
+          "type": "heading",
+          "level": 1,
+          "text": "Möjliga komplikationer",
+          "confidence": 1.0,
+          "source": {
+            "region": "vänsterkolumn",
+            "page": 6
+          },
+          "id": "p006_e04",
+          "corrections": []
+        },
+        {
+          "type": "list",
+          "confidence": 1.0,
+          "source": {
+            "region": "vänsterkolumn",
+            "page": 6
+          },
+          "data": {
+            "items": [
+              "Äventyrarna överlever inte det nattliga attentatet. Slut på äventyret.",
+              "Äventyrarna inser inte att Sverre och Leif är tjuvarna, utan går vidare till Thorgeir. Denne blir urförbannad när han inser att Grane tror honom om sådan småaktighet. Släktfejd och ett helt nytt äventyr."
+            ]
+          },
+          "id": "p006_e05",
+          "corrections": []
+        },
+        {
+          "type": "heading",
+          "level": 1,
+          "text": "Upplösning",
+          "confidence": 1.0,
+          "source": {
+            "region": "vänsterkolumn",
+            "page": 6
+          },
+          "id": "p006_e06",
+          "corrections": []
+        },
+        {
+          "type": "paragraph",
+          "text": "Om äventyrarna själva inte har räknat ut hur sakerna hänger ihop, gör Grane det med ledning av vad äventyrarna berättar.",
+          "confidence": 1.0,
+          "source": {
+            "region": "vänsterkolumn",
+            "page": 6
+          },
+          "id": "p006_e07",
+          "corrections": []
+        },
+        {
+          "type": "paragraph",
+          "text": "Hans beslut kommer att bli att Sverre måste dräpas för stölden och för dråpförsöket mot äventyrarna, förutsatt att han fortfarande lever. Leif kommer att fråntas all sin egendom och sätts på ett skepp till Norge, med en uppmaning att aldrig mer återvända till Island.",
+          "confidence": 1.0,
+          "source": {
+            "region": "vänsterkolumn",
+            "page": 6
+          },
+          "id": "p006_e08",
+          "corrections": []
+        },
+        {
+          "type": "paragraph",
+          "text": "Ulf samlar ihop de krigare som finns tillgängliga för en attack mot Sverres gård. Om Sverre är vid liv, har han dragit ihop en mängd hårdföra typer på gården, vilket gör att det kommer att bli en hård strid. Om inget avgörande har kommit efter en dags strid, kommer Ulf att sätta eld på gården.",
+          "confidence": 1.0,
+          "source": {
+            "region": "vänsterkolumn",
+            "page": 6
+          },
+          "id": "p006_e09",
+          "corrections": []
+        },
+        {
+          "type": "paragraph",
+          "text": "Det som återstår av värde efteråt kommer att fördelas bland segrarna, varefter fallet med den nedbrända fatburen kommer att anses vara uppklarat enligt den allmänt accepterade lagen om \"öga för öga – tand för tand\".",
+          "confidence": 1.0,
+          "source": {
+            "region": "vänsterkolumn",
+            "page": 6
+          },
+          "id": "p006_e10",
+          "corrections": []
+        },
+        {
+          "type": "paragraph",
+          "text": "Äventyrarna, de som har överlevt, får givetvis en viss penningbelöning för sin insats, men några större krav passar det sig inte att de ställer. Det förväntas ju av dem att de ställer upp när släkten kallar. I gengäld kommer de att få stor ära och uppskattning, framför allt inom släkten men även ute i samhället i stort kommer de att hållas för hårdföra och förslagna karlar.",
+          "confidence": 1.0,
+          "source": {
+            "region": "vänsterkolumn",
+            "page": 6
+          },
+          "id": "p006_e11",
+          "corrections": []
+        },
+        {
+          "type": "paragraph",
+          "text": "En fördel av ställningen i släkten som märks omedelbart är att äventyrarna får gratis träning hos släktens bästa män så länge de och äventyrarna har tid.",
+          "confidence": 1.0,
+          "source": {
+            "region": "vänsterkolumn",
+            "page": 6
+          },
+          "id": "p006_e12",
+          "corrections": []
+        },
+        {
+          "type": "heading",
+          "level": 1,
+          "text": "Efteråt",
+          "confidence": 1.0,
+          "source": {
+            "region": "vänsterkolumn",
+            "page": 6
+          },
+          "id": "p006_e13",
+          "corrections": []
+        },
+        {
+          "type": "illustration",
+          "text": "Diagram \"Skåle i genomskärning\": tvärsnitt av en långhus-skåle med etiketter Grästorv som täckmaterial, Väggar av torv, Breda bänkar med sovplatser, Eldstad och Takstolpar.",
+          "confidence": 1.0,
+          "source": {
+            "region": "överst mitt/höger",
+            "page": 6
+          },
+          "id": "p006_e14",
+          "corrections": []
+        },
+        {
+          "type": "paragraph",
+          "text": "En vikingafärd till Irland, Norge, eller till och med ända bort till Miklagård i Gårdarike, vore kanske något för så här dugliga män. Europa under 900- och 1000-talen var en händelserik och spännande tid, och vikingarna var bland de som färdades vida omkring och såg de märkligaste ting. Den som följer med, kan råka ut för de mest fantastiska händelser, som till exempel att den norske kungen Sigurd Jorsalafar (Jerusalemsfararen) deltog i ett korståg och att islänningen Leif Eriksson upptäckte Amerika…",
+          "confidence": 1.0,
+          "source": {
+            "region": "mittkolumn",
+            "page": 6
+          },
+          "id": "p006_e15",
+          "corrections": []
+        },
+        {
+          "type": "heading",
+          "level": 1,
+          "text": "Livsfilosofi",
+          "confidence": 1.0,
+          "source": {
+            "region": "mittkolumn",
+            "page": 6
+          },
+          "id": "p006_e16",
+          "corrections": []
+        },
+        {
+          "type": "paragraph",
+          "text": "Vikingarnas syn på världen var mycket dyster. De fega var förutbestämda att komma till det otäcka dödsriket Hel efter livet medan de tappra skulle fylkas i Valhall. Men inte ens gudarnas hem skulle bestå för evigt. I framtiden väntade Ragnarök, det sista slaget, då alla gudar och tappra kämpar skulle gå under för evigt tillsammans med världen. De trodde att ingenting skulle bestå för evigt utan att allt skulle sluta i mörker och kaos. Den tappre mannen kunde visa sitt trots mot det okänsliga Ödet, och gå mot undergången med stolt och högburet huvud.",
+          "confidence": 1.0,
+          "source": {
+            "region": "mitt/högerkolumn",
+            "page": 6
+          },
+          "id": "p006_e17",
+          "corrections": []
+        },
+        {
+          "type": "paragraph",
+          "text": "Vikingasamhället var mycket brutalt med",
+          "confidence": 1.0,
+          "source": {
+            "region": "högerkolumn",
+            "page": 6
+          },
+          "id": "p006_e18",
+          "corrections": []
+        },
+        {
+          "type": "illustration",
+          "text": "Teckning av beväpnade vikingar till häst i strid/ritt. Signerad S.K.",
+          "confidence": 1.0,
+          "source": {
+            "region": "nederst höger",
+            "page": 6
+          },
+          "id": "p006_e19",
+          "corrections": []
+        },
+        {
+          "type": "page_artifact",
+          "text": "Nr 8, juni 1987",
+          "confidence": 1.0,
+          "source": {
+            "region": "sidfot",
+            "page": 6
+          },
+          "id": "p006_e20",
+          "corrections": []
+        },
+        {
+          "type": "page_artifact",
+          "text": "27",
+          "confidence": 1.0,
+          "source": {
+            "region": "sidfot",
+            "page": 6
+          },
+          "id": "p006_e21",
+          "corrections": []
+        }
+      ]
+    },
+    {
+      "page": 7,
+      "stage": "final",
+      "class": "ocr_layer",
+      "elements": [
+        {
+          "type": "page_artifact",
+          "text": "DEN NEDBRUNNA FATBUREN",
+          "confidence": 1.0,
+          "source": {
+            "region": "sidhuvud",
+            "page": 7
+          },
+          "id": "p007_e01",
+          "corrections": []
+        },
+        {
+          "type": "paragraph",
+          "text": "våra ögon sett. Krig, dråp, blodshämnd och människooffer till gudarna förekom ofta och alla såg det som något naturligt. De enda man kunde lita på var sina blodsfränder. Familjebanden var heliga för en viking och man ställde alltid upp för att försvara den.",
+          "confidence": 1.0,
+          "source": {
+            "region": "vänsterkolumn",
+            "page": 7
+          },
+          "id": "p007_e02",
+          "corrections": []
+        },
+        {
+          "type": "heading",
+          "level": 1,
+          "text": "Gårdarna i äventyret",
+          "confidence": 1.0,
+          "source": {
+            "region": "vänsterkolumn",
+            "page": 7
+          },
+          "id": "p007_e03",
+          "corrections": []
+        },
+        {
+          "type": "paragraph",
+          "text": "En isländsk gård var anpassad till två problem: timmerbristen och de kalla vintrarna. Husen kunde därför förses med upp till tre meter tjocka torvväggar. De byggdes ofta vägg i vägg för att spara byggmaterial. Torvtaken bars upp av trästolpar.",
+          "confidence": 1.0,
+          "source": {
+            "region": "vänsterkolumn",
+            "page": 7
+          },
+          "id": "p007_e04",
+          "corrections": [
+            {
+              "original": "spara",
+              "corrected": "Spåra",
+              "applied": false,
+              "confidence": 0.94,
+              "reason": "Matchar systemterm 'Spåra' efter diakritisk normalisering",
+              "source": "validator:lexicon",
+              "timestamp": "2026-07-17T19:54:11Z"
+            },
+            {
+              "original": "Spåra",
+              "corrected": "spara",
+              "applied": true,
+              "confidence": 0.99,
+              "reason": "Överkorrektion avvisad och återställd. Hög-DPI-omrendering (300+ DPI) av PNG:n bekräftar gemena löpordet 'spara' i 'vägg i vägg för att spara byggmaterial' (= att spara/bevara byggmaterial), inte färdigheten 'Spåra'. Den oberoende OCR-texten läser också 'spara byggmaterial'. Diakritisk normalisering felmatchade lexikonet.",
+              "source": "agent:djavulens-advokat",
+              "timestamp": "2026-07-17T22:05:00Z"
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "text": "En rik gård kännetecknades av att det fanns flera fristående hus medan en fattig kanske bara hade ett hus. Vanligen bestod en gård av fyra avdelningar som brukade hänga ihop.",
+          "confidence": 1.0,
+          "source": {
+            "region": "vänsterkolumn",
+            "page": 7
+          },
+          "id": "p007_e05",
+          "corrections": []
+        },
+        {
+          "type": "paragraph",
+          "text": "I stugan fanns bänkar och långbord längs väggarna och husbondens högsäte stod vid ena kortänden. Gårdens folk åt och umgicks, och många sysslor kunde utföras här. I gårdens skåle sov man. Rika bönder kunde ha ett eget rum för sig själva och den närmaste familjen, men för det mesta sov alla i samma rum. Eldhuset var gårdens kök och här tillredde kvinnorna maten. Ibland fanns en källa eller en bäck vars vatten strömmade igenom eldhuset. Fatburen var förrådshuset och dessutom hade vikingen ladugårdar. Fönster förekom sällan och rummen lystes oftast upp av ljuset som föll in genom rökhålen i taket. Antalet dörrar begränsades för att underlätta husets försvar.",
+          "confidence": 1.0,
+          "source": {
+            "region": "vänsterkolumn",
+            "page": 7
+          },
+          "uncertain": [],
+          "needs_review": false,
+          "review_reasons": [
+            "Forensik på glyfen mellan 'här.' och 'går-' (källa: import/Den nedbrunna fatburen.pdf sida 7, ca x=725–737, y=1387–1419; omrenderad i 300+ DPI / 12x zoom och pixelanalyserad): glyfen är ett nästan jämnbrett vertikalt streck (~47 px) UTAN breda serifer, med ett rent avbrott (rad 242–275) och en fristående punkt av samma bredd nederst — formsignaturen för ett utropstecken '!', inte ett versalt 'I'. Två referensversaler 'I' på samma sida ('Ibland', 'Island') är kontinuerliga streck med breda serifer (125–195 px) utan avbrott. Semantiskt/grammatiskt krävs dock 'I' (=i): 'I gårdens skåle sov man'. Form ('!') och kontext ('I') motsäger varandra → ingen entydig tydning. Behåller [?], ändrar inte texten och gissar inte. Det oberoende OCR-lagret läste glyfen som '!'."
+          ],
+          "id": "p007_e06",
+          "corrections": [
+            {
+              "original": "I[?]",
+              "corrected": "I",
+              "applied": true,
+              "confidence": 0.9,
+              "reason": "Glyfen mellan 'här.' och 'gårdens' liknar '!' till formen men betydelsen är entydig: 'I gårdens skåle sov man' (=i). Användarbeslut: betydelsen styr → 'I'. Formtvetydigheten ('!' vs 'I') noterad vid hög-DPI-omrendering; semantiskt inget alternativ.",
+              "source": "användare:beslut",
+              "timestamp": "2026-07-21T11:24:48Z"
+            }
+          ]
+        },
+        {
+          "type": "heading",
+          "level": 1,
+          "text": "Viktiga SLP",
+          "confidence": 1.0,
+          "source": {
+            "region": "vänsterkolumn",
+            "page": 7
+          },
+          "id": "p007_e07",
+          "corrections": []
+        },
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Ulf",
+          "confidence": 1.0,
+          "source": {
+            "region": "vänsterkolumn",
+            "page": 7
+          },
+          "id": "p007_e08",
+          "corrections": []
+        },
+        {
+          "type": "paragraph",
+          "text": "35 år gammal och Granes äldste nu levande son. Han är en kortvuxen, fet och mycket kraftig man. Han anses vara en av de starkaste männen på Island. Han uppträder lugnt och sävligt och är en klok och vänlig person som sällan gör något överilat. Ulf tycker om mat, dryck och fester. Han trivs bäst hemma på sin gård med familjen men får ibland ryck av äventyrslystnad. Då drar han ut på vikingatåg och återvänder oftast med rikt byte. Han är den naturlige ledaren för ett vikingatåg då han är med. Han antas bli släktens kommande huvudman.",
+          "confidence": 1.0,
+          "source": {
+            "region": "vänsterkolumn",
+            "page": 7
+          },
+          "id": "p007_e09",
+          "corrections": []
+        },
+        {
+          "type": "statblock",
+          "confidence": 0.97,
+          "source": {
+            "region": "vänster/mittkolumn",
+            "page": 7
+          },
+          "data": {
+            "name": "Ulf",
+            "stats": {
+              "STY": 18,
+              "STO": 7,
+              "FYS": 15,
+              "SMI": 15,
+              "INT": 15,
+              "PSY": 15,
+              "KAR": 16,
+              "KP": 11,
+              "SB": "–"
+            },
+            "weapons": [
+              {
+                "name": "Stridsyxa",
+                "attack": 17,
+                "damage": "1T10+2",
+                "bv": 11,
+                "length": 0,
+                "price": 450,
+                "styKrav": 11,
+                "type": "melee",
+                "weaponGroup": "enhandsyxor",
+                "weight": 4
+              },
+              {
+                "name": "Dolk",
+                "attack": 14,
+                "damage": "1T4+1",
+                "bv": 9,
+                "length": 0,
+                "price": 70,
+                "styKrav": 1,
+                "type": "melee",
+                "weaponGroup": "dolkar",
+                "weight": 0.5
+              },
+              {
+                "name": "Kastspjut",
+                "attack": 14,
+                "damage": "1T6+1",
+                "rackvidd": "18 rutor",
+                "price": 120,
+                "styKrav": 11,
+                "type": "thrown",
+                "weaponGroup": "kastvapen",
+                "weight": 1
+              }
+            ],
+            "skills": {
+              "Rida": 14,
+              "Heraldik": 10,
+              "Simma": 12,
+              "Upptäcka fara": 10,
+              "Första hjälpen": 10
+            },
+            "other": {
+              "Ålder": "35 år",
+              "Skydd": "Ringbrynja (abs 4), Rundsköld, stor (FV 17, BV 11)"
+            }
+          },
+          "id": "p007_e10",
+          "corrections": []
+        },
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Leif",
+          "confidence": 1.0,
+          "source": {
+            "region": "mittkolumn",
+            "page": 7
+          },
+          "id": "p007_e11",
+          "corrections": []
+        },
+        {
+          "type": "paragraph",
+          "text": "31 år. Granes yngre son är en vild, tapper och grym vikingakrigare. Han är också äregirig, hänsynslös och lite självgod och därtill ganska lättretlig. Hans största besvikelser är att han inte är en lika omtyckt och framgångsrik skeppshövding som sin storebror Ulf, och att denne anses vara Granes efterträdare. Själv tycker han sig vara bättre lämpad att styra släkten.",
+          "confidence": 1.0,
+          "source": {
+            "region": "mittkolumn",
+            "page": 7
+          },
+          "id": "p007_e12",
+          "corrections": []
+        },
+        {
+          "type": "statblock",
+          "confidence": 0.97,
+          "source": {
+            "region": "mittkolumn",
+            "page": 7
+          },
+          "data": {
+            "name": "Leif",
+            "stats": {
+              "STY": 15,
+              "STO": 12,
+              "FYS": 12,
+              "SMI": 11,
+              "INT": 8,
+              "PSY": 8,
+              "KAR": 7,
+              "KP": 12,
+              "SB": "–"
+            },
+            "weapons": [
+              {
+                "name": "Bastardsvärd",
+                "attack": 17,
+                "damage": "1T10+1",
+                "bv": 13,
+                "length": 0,
+                "price": 2500,
+                "styKrav": 17,
+                "type": "melee",
+                "weaponGroup": "enhandssward",
+                "weight": 5.5
+              },
+              {
+                "name": "Dolk",
+                "attack": 15,
+                "damage": "1T4+1",
+                "bv": 9,
+                "length": 0,
+                "price": 70,
+                "styKrav": 1,
+                "type": "melee",
+                "weaponGroup": "dolkar",
+                "weight": 0.5
+              },
+              {
+                "name": "Kastspjut",
+                "attack": 14,
+                "damage": "1T6+1",
+                "rackvidd": "15 rutor",
+                "price": 120,
+                "styKrav": 11,
+                "type": "thrown",
+                "weaponGroup": "kastvapen",
+                "weight": 1
+              }
+            ],
+            "skills": {
+              "Rida": 12,
+              "Simma": 12,
+              "Upptäcka fara": 10,
+              "Första hjälpen": 10
+            },
+            "other": {
+              "Ålder": "31 år",
+              "Skydd": "Ringbrynja (abs 4), Rundsköld, stor (FV 18, BV 11)"
+            }
+          },
+          "id": "p007_e13",
+          "corrections": []
+        },
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Torolv",
+          "confidence": 1.0,
+          "source": {
+            "region": "mittkolumn",
+            "page": 7
+          },
+          "id": "p007_e14",
+          "corrections": []
+        },
+        {
+          "type": "paragraph",
+          "text": "27 år. Granes brorson. Fadern dog för något år sedan. Torolv är en tillbakadragen, sluten och lite blyg person. Han är inte mycket för strid och plundringståg trots att han är en god svärdskämpe. Han undviker bråk och uppmärksamhet och är fullt nöjd med sin tillvaro och sitt kommande giftermål med dottern till stormannen i en annan släkt. Kvinnan är Unni, dotter till Thorgeir Kolbeinsson. Hon anses allmänt vara det bästa giftet i bygden. Torolv håller nu på att bygga sig en ny gård på den mark han har fått i hemgift av Thorgeir.",
+          "confidence": 1.0,
+          "source": {
+            "region": "mittkolumn",
+            "page": 7
+          },
+          "id": "p007_e15",
+          "corrections": []
+        },
+        {
+          "type": "statblock",
+          "confidence": 0.97,
+          "source": {
+            "region": "mittkolumn",
+            "page": 7
+          },
+          "data": {
+            "name": "Torolv",
+            "stats": {
+              "STY": 12,
+              "STO": 11,
+              "FYS": 13,
+              "SMI": 14,
+              "INT": 14,
+              "PSY": 16,
+              "KAR": 12,
+              "KP": 12,
+              "SB": "–"
+            },
+            "weapons": [
+              {
+                "name": "Bredsvärd",
+                "attack": 16,
+                "damage": "1T8+1",
+                "bv": 15,
+                "length": 0,
+                "price": 1000,
+                "styKrav": 13,
+                "type": "melee",
+                "weaponGroup": "enhandssward",
+                "weight": 4.5
+              },
+              {
+                "name": "Dolk",
+                "attack": 15,
+                "damage": "1T4+1",
+                "bv": 9,
+                "length": 0,
+                "price": 70,
+                "styKrav": 1,
+                "type": "melee",
+                "weaponGroup": "dolkar",
+                "weight": 0.5
+              },
+              {
+                "name": "Kastspjut",
+                "attack": 12,
+                "damage": "1T6+1",
+                "rackvidd": "12 rutor",
+                "price": 120,
+                "styKrav": 11,
+                "type": "thrown",
+                "weaponGroup": "kastvapen",
+                "weight": 1
+              }
+            ],
+            "skills": {
+              "Rida": 12,
+              "Heraldik": 16,
+              "Simma": 12,
+              "Upptäcka fara": 10,
+              "Första hjälpen": 10,
+              "Spela stränginstrument": 15,
+              "Sjunga": 15
+            },
+            "other": {
+              "Ålder": "27 år",
+              "Skydd": "Ringbrynja (abs 4), Rundsköld, stor (FV 17, BV 11)"
+            }
+          },
+          "id": "p007_e16",
+          "corrections": []
+        },
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Thorgeir Kolbeinsson",
+          "confidence": 1.0,
+          "source": {
+            "region": "mittkolumn",
+            "page": 7
+          },
+          "id": "p007_e17",
+          "corrections": []
+        },
+        {
+          "type": "paragraph",
+          "text": "44 år och huvudman för en släkt som hittills varit neutral gentemot, och haft liten kontakt med, äventyrarnas släkt. Förbindelserna håller dock på att bli mer vänskapliga nu i samband med giftermålet mellan Torolv och Unni. Thorgeir har nyligen ärvt huvudmannaskapet efter sin far och han tar sitt ansvar för släkten på djupt allvar. Han är beredd att offra allt för släktens skull och tvekar inte att ta till vapen mot den som hotar släkten. Han är en hårdför och misstänksam man som dock är en trofast och pålitlig vän för de som han litar på.",
+          "confidence": 1.0,
+          "source": {
+            "region": "mitt/högerkolumn",
+            "page": 7
+          },
+          "id": "p007_e18",
+          "corrections": []
+        },
+        {
+          "type": "statblock",
+          "confidence": 0.97,
+          "source": {
+            "region": "högerkolumn",
+            "page": 7
+          },
+          "data": {
+            "name": "Thorgeir Kolbeinsson",
+            "stats": {
+              "STY": 14,
+              "STO": 14,
+              "FYS": 16,
+              "SMI": 12,
+              "INT": 14,
+              "PSY": 16,
+              "KAR": 16,
+              "KP": 15,
+              "SB": "–"
+            },
+            "weapons": [
+              {
+                "name": "Bastardsvärd",
+                "attack": 16,
+                "damage": "1T10+1",
+                "bv": 13,
+                "length": 0,
+                "price": 2500,
+                "styKrav": 17,
+                "type": "melee",
+                "weaponGroup": "enhandssward",
+                "weight": 5.5
+              },
+              {
+                "name": "Dolk",
+                "attack": 15,
+                "damage": "1T4+1",
+                "bv": 9,
+                "length": 0,
+                "price": 70,
+                "styKrav": 1,
+                "type": "melee",
+                "weaponGroup": "dolkar",
+                "weight": 0.5
+              },
+              {
+                "name": "Kortbåge",
+                "attack": 12,
+                "damage": "1T6+1",
+                "rackvidd": "135 m",
+                "price": 400,
+                "styKrav": 17,
+                "type": "ranged",
+                "weaponGroup": "bagar",
+                "weight": 2
+              }
+            ],
+            "skills": {
+              "Rida": 14,
+              "Heraldik": 10,
+              "Simma": 12,
+              "Upptäcka fara": 10,
+              "Första hjälpen": 10
+            },
+            "other": {
+              "Ålder": "44 år",
+              "Skydd": "Ringbrynja (abs 4), Rundsköld, stor (FV 18, BV 11)"
+            }
+          },
+          "id": "p007_e19",
+          "corrections": []
+        },
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Sverre Skarpyx",
+          "confidence": 1.0,
+          "source": {
+            "region": "högerkolumn",
+            "page": 7
+          },
+          "id": "p007_e20",
+          "corrections": []
+        },
+        {
+          "type": "paragraph",
+          "text": "41 år och en mycket beryktad och ganska inflytelserik medlem av en tredje släkt, och alltså inte befryndad med vare sig äventyrarna eller Thorgeir. Han är en grym och fruktad kämpe, som aldrig tvekar att använda våld. Hans häftiga humör och fruktansvärda ilska är vida omtalade. Tack vare hans oerhörda djärvhet, är han en populär ledare för våldsamma och dödsföraktande krigare som gärna riskerar livet för ett rikt byte. De få som brukar överleva hans härnadståg brukar bli rika och betraktas allmänt som särskilt vilda och farliga män. Han är själv mycket rik men slösar bort stora delar av sina tillgångar på statushöjande saker som skrytbyggen och stora gästabud. Varje vår när han skall skaffa män till sina skepp, kan han välja och vraka bland en stor stridslysten skara som har hört om hans rykte och vill följa med på hans plundringsfärder. Det är bara de allra vildaste och oräddaste som kommer med på resorna, så att han ska få färre att dela bytet med.",
+          "confidence": 1.0,
+          "source": {
+            "region": "högerkolumn",
+            "page": 7
+          },
+          "id": "p007_e21",
+          "corrections": [
+            {
+              "original": "skara",
+              "corrected": "Skära",
+              "applied": false,
+              "confidence": 0.94,
+              "reason": "Matchar systemterm 'Skära' efter diakritisk normalisering",
+              "source": "validator:lexicon",
+              "timestamp": "2026-07-17T19:54:11Z"
+            },
+            {
+              "original": "Skära",
+              "corrected": "skara",
+              "applied": true,
+              "confidence": 0.99,
+              "reason": "Överkorrektion avvisad och återställd. Hög-DPI-omrendering (300+ DPI) av PNG:n visar gemena löpordet 'skara' i 'en stor stridslysten skara som har hört om hans rykte' (= en folkskara/samling män), inte verktyget/färdigheten 'Skära'. Det oberoende OCR-lagret läser 'lysten skara'. Diakritisk normalisering felmatchade lexikonet.",
+              "source": "agent:djavulens-advokat",
+              "timestamp": "2026-07-17T22:05:00Z"
+            }
+          ]
+        },
+        {
+          "type": "statblock",
+          "confidence": 0.97,
+          "source": {
+            "region": "högerkolumn",
+            "page": 7
+          },
+          "data": {
+            "name": "Sverre Skarpyx",
+            "stats": {
+              "STY": 17,
+              "STO": 12,
+              "FYS": 18,
+              "SMI": 15,
+              "INT": 9,
+              "PSY": 12,
+              "KAR": 14,
+              "KP": 15,
+              "SB": "–"
+            },
+            "weapons": [
+              {
+                "name": "Stridsyxa",
+                "attack": 18,
+                "damage": "1T10+2",
+                "bv": 11,
+                "length": 0,
+                "price": 450,
+                "styKrav": 11,
+                "type": "melee",
+                "weaponGroup": "enhandsyxor",
+                "weight": 4
+              },
+              {
+                "name": "Dolk",
+                "attack": 18,
+                "damage": "1T4+1",
+                "bv": 9,
+                "length": 0,
+                "price": 70,
+                "styKrav": 1,
+                "type": "melee",
+                "weaponGroup": "dolkar",
+                "weight": 0.5
+              },
+              {
+                "name": "Kastyxa",
+                "attack": 18,
+                "damage": "1T6+2",
+                "rackvidd": "17 rutor",
+                "price": 90,
+                "styKrav": 9,
+                "type": "thrown",
+                "weaponGroup": "kastvapen",
+                "weight": 3
+              }
+            ],
+            "skills": {
+              "Första hjälpen": 12,
+              "Sjunga": 10,
+              "Rida": 14,
+              "Simma": 15
+            },
+            "other": {
+              "Ålder": "41 år",
+              "Skydd": "Ringbrynja (abs 4), Rundsköld, stor (FV 18, BV 11)"
+            }
+          },
+          "id": "p007_e22",
+          "corrections": []
+        },
+        {
+          "type": "heading",
+          "level": 2,
+          "text": "Typisk vikingakrigare",
+          "confidence": 1.0,
+          "source": {
+            "region": "högerkolumn",
+            "page": 7
+          },
+          "id": "p007_e23",
+          "corrections": []
+        },
+        {
+          "type": "statblock",
+          "confidence": 0.97,
+          "source": {
+            "region": "högerkolumn",
+            "page": 7
+          },
+          "data": {
+            "name": "Typisk vikingakrigare",
+            "stats": {
+              "STY": 14,
+              "STO": 11,
+              "FYS": 13,
+              "SMI": 14,
+              "INT": 10,
+              "PSY": 10,
+              "KAR": 12,
+              "KP": 12,
+              "SB": "–"
+            },
+            "weapons": [
+              {
+                "name": "Bastardsvärd",
+                "attack": 15,
+                "damage": "1T10+1",
+                "bv": 13,
+                "length": 0,
+                "price": 2500,
+                "styKrav": 17,
+                "type": "melee",
+                "weaponGroup": "enhandssward",
+                "weight": 5.5
+              },
+              {
+                "name": "Dolk",
+                "attack": 15,
+                "damage": "1T4+1",
+                "bv": 9,
+                "length": 0,
+                "price": 70,
+                "styKrav": 1,
+                "type": "melee",
+                "weaponGroup": "dolkar",
+                "weight": 0.5
+              },
+              {
+                "name": "Kastspjut",
+                "attack": 12,
+                "damage": "1T6+1",
+                "rackvidd": "14 rutor",
+                "price": 120,
+                "styKrav": 11,
+                "type": "thrown",
+                "weaponGroup": "kastvapen",
+                "weight": 1
+              }
+            ],
+            "skills": {
+              "Rida": 12,
+              "Simma": 12,
+              "Upptäcka fara": 10,
+              "Första hjälpen": 10
+            },
+            "other": {
+              "Skydd": "Läder (abs 2), Rundsköld, stor (FV 15, BV 11)"
+            }
+          },
+          "id": "p007_e24",
+          "corrections": []
+        },
+        {
+          "type": "page_artifact",
+          "text": "28",
+          "confidence": 1.0,
+          "source": {
+            "region": "sidfot",
+            "page": 7
+          },
+          "id": "p007_e25",
+          "corrections": []
+        },
+        {
+          "type": "page_artifact",
+          "text": "SINKADUS",
+          "confidence": 1.0,
+          "source": {
+            "region": "sidfot",
+            "page": 7
+          },
+          "id": "p007_e26",
+          "corrections": []
+        }
+      ]
+    }
+  ],
+  "conversion": {
+    "source_ruleset": "dod-t100",
+    "target_ruleset": "dod91",
+    "profile": "dod-t100-to-dod91",
+    "profile_version": 7,
+    "source_sha256": "6981158375499c96b322ef9b70a454580c12eb196f5f5d5a9cf6893cf5e78471",
+    "generated": "2026-07-29T11:55:11Z",
+    "status": "complete",
+    "counts": {
+      "applied": 76,
+      "needs_review": 5,
+      "blocking": 0,
+      "unchanged": 5
+    },
+    "catalog": {
+      "source_repository": "Drakar och Demoner 1991",
+      "source_commit": "53730e6b77bdb641b70bc6004e217a4f1bbc0261"
+    }
+  },
+  "conversion_records": [
+    {
+      "kind": "rules_conversion",
+      "element_id": "p007_e10",
+      "source": {
+        "page": 7,
+        "region": "vänster/mittkolumn",
+        "text": "Stor sköld (85%",
+        "location": {
+          "field": "data.other.Skydd",
+          "text_range": [
+            20,
+            35
+          ]
+        }
+      },
+      "original": "Stor sköld (85%",
+      "converted": "Rundsköld, stor (FV 17",
+      "source_ruleset": "dod-t100",
+      "target_ruleset": "dod91",
+      "rule": "fv.divide-by-five",
+      "profile_version": 7,
+      "confidence": 1.0,
+      "reason": "Procentvärde på T100-skalan inuti parentes efter 'Stor sköld' räknas om till FV; sköldnamnet normaliseras mot katalogen",
+      "applied": true,
+      "needs_review": false,
+      "blocking": false,
+      "category": "skill_value"
+    },
+    {
+      "kind": "rules_conversion",
+      "element_id": "p007_e10",
+      "source": {
+        "page": 7,
+        "region": "vänster/mittkolumn",
+        "text": "abs 16",
+        "location": {
+          "field": "data.other.Skydd",
+          "text_range": [
+            37,
+            43
+          ]
+        }
+      },
+      "original": "abs 16",
+      "converted": "BV 11",
+      "source_ruleset": "dod-t100",
+      "target_ruleset": "dod91",
+      "rule": "shield.absorption-to-bv",
+      "profile_version": 7,
+      "confidence": 1.0,
+      "reason": "DoD91-sköldar anges med brytvärde, inte absorption; katalogens BV för Rundsköld, stor ersätter källans 'abs 16'",
+      "applied": true,
+      "needs_review": false,
+      "blocking": false,
+      "category": "armor"
+    },
+    {
+      "kind": "rules_conversion",
+      "element_id": "p007_e10",
+      "source": {
+        "page": 7,
+        "region": "vänster/mittkolumn",
+        "text": "Rida 70",
+        "location": {
+          "field": "data.skills.Rida"
+        }
+      },
+      "original": "Rida 70",
+      "converted": "Rida 14",
+      "source_ruleset": "dod-t100",
+      "target_ruleset": "dod91",
+      "rule": "fv.divide-by-five",
+      "profile_version": 7,
+      "confidence": 1.0,
+      "reason": "Strukturerat FV och verifierad DoD91-färdigheten",
+      "applied": true,
+      "needs_review": false,
+      "blocking": false,
+      "category": "skill_value"
+    },
+    {
+      "kind": "rules_conversion",
+      "element_id": "p007_e10",
+      "source": {
+        "page": 7,
+        "region": "vänster/mittkolumn",
+        "text": "Heraldik 50",
+        "location": {
+          "field": "data.skills.Heraldik"
+        }
+      },
+      "original": "Heraldik 50",
+      "converted": "Heraldik 10",
+      "source_ruleset": "dod-t100",
+      "target_ruleset": "dod91",
+      "rule": "fv.divide-by-five",
+      "profile_version": 7,
+      "confidence": 1.0,
+      "reason": "Strukturerat FV och verifierad DoD91-färdigheten",
+      "applied": true,
+      "needs_review": false,
+      "blocking": false,
+      "category": "skill_value"
+    },
+    {
+      "kind": "rules_conversion",
+      "element_id": "p007_e10",
+      "source": {
+        "page": 7,
+        "region": "vänster/mittkolumn",
+        "text": "Simma 60",
+        "location": {
+          "field": "data.skills.Simma"
+        }
+      },
+      "original": "Simma 60",
+      "converted": "Simma 12",
+      "source_ruleset": "dod-t100",
+      "target_ruleset": "dod91",
+      "rule": "fv.divide-by-five",
+      "profile_version": 7,
+      "confidence": 1.0,
+      "reason": "Strukturerat FV och verifierad DoD91-färdigheten",
+      "applied": true,
+      "needs_review": false,
+      "blocking": false,
+      "category": "skill_value"
+    },
+    {
+      "kind": "rules_conversion",
+      "element_id": "p007_e10",
+      "source": {
+        "page": 7,
+        "region": "vänster/mittkolumn",
+        "text": "Upptäcka fara 50",
+        "location": {
+          "field": "data.skills.Upptäcka fara"
+        }
+      },
+      "original": "Upptäcka fara 50",
+      "converted": "Upptäcka fara 10",
+      "source_ruleset": "dod-t100",
+      "target_ruleset": "dod91",
+      "rule": "fv.divide-by-five",
+      "profile_version": 7,
+      "confidence": 1.0,
+      "reason": "Strukturerat FV och verifierad DoD91-färdigheten",
+      "applied": true,
+      "needs_review": false,
+      "blocking": false,
+      "category": "skill_value"
+    },
+    {
+      "kind": "rules_conversion",
+      "element_id": "p007_e10",
+      "source": {
+        "page": 7,
+        "region": "vänster/mittkolumn",
+        "text": "Första hjälpen 50",
+        "location": {
+          "field": "data.skills.Första hjälpen"
+        }
+      },
+      "original": "Första hjälpen 50",
+      "converted": "Första hjälpen 10",
+      "source_ruleset": "dod-t100",
+      "target_ruleset": "dod91",
+      "rule": "fv.divide-by-five",
+      "profile_version": 7,
+      "confidence": 1.0,
+      "reason": "Strukturerat FV och verifierad DoD91-färdigheten",
+      "applied": true,
+      "needs_review": false,
+      "blocking": false,
+      "category": "skill_value"
+    },
+    {
+      "kind": "rules_conversion",
+      "element_id": "p007_e10",
+      "source": {
+        "page": 7,
+        "region": "vänster/mittkolumn",
+        "text": "Stridsyxa 85%",
+        "location": {
+          "field": "data.weapons[0].attack"
+        }
+      },
+      "original": "Stridsyxa 85%",
+      "converted": "Stridsyxa FV 17",
+      "source_ruleset": "dod-t100",
+      "target_ruleset": "dod91",
+      "rule": "fv.divide-by-five",
+      "profile_version": 7,
+      "confidence": 1.0,
+      "reason": "Angreppsvärdet är bärarens färdighet med vapnet och räknas om till FV",
+      "applied": true,
+      "needs_review": false,
+      "blocking": false,
+      "category": "weapon_skill"
+    },
+    {
+      "kind": "rules_conversion",
+      "element_id": "p007_e10",
+      "source": {
+        "page": 7,
+        "region": "vänster/mittkolumn",
+        "text": "Stridsyxa damage: 1T10+2",
+        "location": {
+          "field": "data.weapons[0].damage"
+        }
+      },
+      "original": "Stridsyxa damage: 1T10+2",
+      "converted": "Stridsyxa damage: 1T10+2",
+      "source_ruleset": "dod-t100",
+      "target_ruleset": "dod91",
+      "rule": "weapon.printed-value-differs",
+      "profile_version": 7,
+      "confidence": 0.6,
+      "reason": "Trycket anger damage '1T10+2' där DoD91-katalogen har '1T8+2'. Tryckta spelvärden rättas inte automatiskt (Regel 8a) — behållet som det står, avvikelsen flaggas.",
+      "applied": false,
+      "needs_review": true,
+      "blocking": false,
+      "category": "unmatched_term"
+    },
+    {
+      "kind": "rules_conversion",
+      "element_id": "p007_e10",
+      "source": {
+        "page": 7,
+        "region": "vänster/mittkolumn",
+        "text": "{'name': 'Stridsyxa', 'attack': '85%', 'damage': '1T10+2', 'bv': 11}",
+        "location": {
+          "field": "data.weapons[0]"
+        }
+      },
+      "original": "{'name': 'Stridsyxa', 'attack': '85%', 'damage': '1T10+2', 'bv': 11}",
+      "converted": "{'name': 'Stridsyxa', 'attack': 17, 'damage': '1T10+2', 'bv': 11, 'length': 0, 'price': 450, 'styKrav': 11, 'type': 'melee', 'weaponGroup': 'enhandsyxor', 'weight': 4}",
+      "source_ruleset": "dod-t100",
+      "target_ruleset": "dod91",
+      "rule": "weapon.catalog",
+      "profile_version": 7,
+      "confidence": 1.0,
+      "reason": "Katalogen fyller i de DoD91-värden boken inte anger; tryckta värden behålls",
+      "applied": true,
+      "needs_review": false,
+      "blocking": false,
+      "category": "weapon"
+    },
+    {
+      "kind": "rules_conversion",
+      "element_id": "p007_e10",
+      "source": {
+        "page": 7,
+        "region": "vänster/mittkolumn",
+        "text": "Dolk 70%",
+        "location": {
+          "field": "data.weapons[1].attack"
+        }
+      },
+      "original": "Dolk 70%",
+      "converted": "Dolk FV 14",
+      "source_ruleset": "dod-t100",
+      "target_ruleset": "dod91",
+      "rule": "fv.divide-by-five",
+      "profile_version": 7,
+      "confidence": 1.0,
+      "reason": "Angreppsvärdet är bärarens färdighet med vapnet och räknas om till FV",
+      "applied": true,
+      "needs_review": false,
+      "blocking": false,
+      "category": "weapon_skill"
+    },
+    {
+      "kind": "rules_conversion",
+      "element_id": "p007_e10",
+      "source": {
+        "page": 7,
+        "region": "vänster/mittkolumn",
+        "text": "{'name': 'Dolk', 'attack': '70%', 'damage': '1T4+1', 'bv': 9}",
+        "location": {
+          "field": "data.weapons[1]"
+        }
+      },
+      "original": "{'name': 'Dolk', 'attack': '70%', 'damage': '1T4+1', 'bv': 9}",
+      "converted": "{'name': 'Dolk', 'attack': 14, 'damage': '1T4+1', 'bv': 9, 'length': 0, 'price': 70, 'styKrav': 1, 'type': 'melee', 'weaponGroup': 'dolkar', 'weight': 0.5}",
+      "source_ruleset": "dod-t100",
+      "target_ruleset": "dod91",
+      "rule": "weapon.catalog",
+      "profile_version": 7,
+      "confidence": 1.0,
+      "reason": "Katalogen fyller i de DoD91-värden boken inte anger; tryckta värden behålls",
+      "applied": true,
+      "needs_review": false,
+      "blocking": false,
+      "category": "weapon"
+    },
+    {
+      "kind": "rules_conversion",
+      "element_id": "p007_e10",
+      "source": {
+        "page": 7,
+        "region": "vänster/mittkolumn",
+        "text": "Kastspjut 70%",
+        "location": {
+          "field": "data.weapons[2].attack"
+        }
+      },
+      "original": "Kastspjut 70%",
+      "converted": "Kastspjut FV 14",
+      "source_ruleset": "dod-t100",
+      "target_ruleset": "dod91",
+      "rule": "fv.divide-by-five",
+      "profile_version": 7,
+      "confidence": 1.0,
+      "reason": "Angreppsvärdet är bärarens färdighet med vapnet och räknas om till FV",
+      "applied": true,
+      "needs_review": false,
+      "blocking": false,
+      "category": "weapon_skill"
+    },
+    {
+      "kind": "rules_conversion",
+      "element_id": "p007_e10",
+      "source": {
+        "page": 7,
+        "region": "vänster/mittkolumn",
+        "text": "{'name': 'Kastspjut', 'attack': '70%', 'damage': '1T6+1', 'rackvidd': '18 rutor'}",
+        "location": {
+          "field": "data.weapons[2]"
+        }
+      },
+      "original": "{'name': 'Kastspjut', 'attack': '70%', 'damage': '1T6+1', 'rackvidd': '18 rutor'}",
+      "converted": "{'name': 'Kastspjut', 'attack': 14, 'damage': '1T6+1', 'rackvidd': '18 rutor', 'price': 120, 'styKrav': 11, 'type': 'thrown', 'weaponGroup': 'kastvapen', 'weight': 1}",
+      "source_ruleset": "dod-t100",
+      "target_ruleset": "dod91",
+      "rule": "weapon.catalog",
+      "profile_version": 7,
+      "confidence": 1.0,
+      "reason": "Katalogen fyller i de DoD91-värden boken inte anger; tryckta värden behålls",
+      "applied": true,
+      "needs_review": false,
+      "blocking": false,
+      "category": "weapon"
+    },
+    {
+      "kind": "rules_conversion",
+      "element_id": "p007_e13",
+      "source": {
+        "page": 7,
+        "region": "mittkolumn",
+        "text": "Stor sköld (95%",
+        "location": {
+          "field": "data.other.Skydd",
+          "text_range": [
+            20,
+            35
+          ]
+        }
+      },
+      "original": "Stor sköld (95%",
+      "converted": "Rundsköld, stor (FV 18",
+      "source_ruleset": "dod-t100",
+      "target_ruleset": "dod91",
+      "rule": "fv.divide-by-five",
+      "profile_version": 7,
+      "confidence": 1.0,
+      "reason": "Procentvärde på T100-skalan inuti parentes efter 'Stor sköld' räknas om till FV; sköldnamnet normaliseras mot katalogen",
+      "applied": true,
+      "needs_review": false,
+      "blocking": false,
+      "category": "skill_value"
+    },
+    {
+      "kind": "rules_conversion",
+      "element_id": "p007_e13",
+      "source": {
+        "page": 7,
+        "region": "mittkolumn",
+        "text": "abs 16",
+        "location": {
+          "field": "data.other.Skydd",
+          "text_range": [
+            37,
+            43
+          ]
+        }
+      },
+      "original": "abs 16",
+      "converted": "BV 11",
+      "source_ruleset": "dod-t100",
+      "target_ruleset": "dod91",
+      "rule": "shield.absorption-to-bv",
+      "profile_version": 7,
+      "confidence": 1.0,
+      "reason": "DoD91-sköldar anges med brytvärde, inte absorption; katalogens BV för Rundsköld, stor ersätter källans 'abs 16'",
+      "applied": true,
+      "needs_review": false,
+      "blocking": false,
+      "category": "armor"
+    },
+    {
+      "kind": "rules_conversion",
+      "element_id": "p007_e13",
+      "source": {
+        "page": 7,
+        "region": "mittkolumn",
+        "text": "Rida 60",
+        "location": {
+          "field": "data.skills.Rida"
+        }
+      },
+      "original": "Rida 60",
+      "converted": "Rida 12",
+      "source_ruleset": "dod-t100",
+      "target_ruleset": "dod91",
+      "rule": "fv.divide-by-five",
+      "profile_version": 7,
+      "confidence": 1.0,
+      "reason": "Strukturerat FV och verifierad DoD91-färdigheten",
+      "applied": true,
+      "needs_review": false,
+      "blocking": false,
+      "category": "skill_value"
+    },
+    {
+      "kind": "rules_conversion",
+      "element_id": "p007_e13",
+      "source": {
+        "page": 7,
+        "region": "mittkolumn",
+        "text": "Simma 60",
+        "location": {
+          "field": "data.skills.Simma"
+        }
+      },
+      "original": "Simma 60",
+      "converted": "Simma 12",
+      "source_ruleset": "dod-t100",
+      "target_ruleset": "dod91",
+      "rule": "fv.divide-by-five",
+      "profile_version": 7,
+      "confidence": 1.0,
+      "reason": "Strukturerat FV och verifierad DoD91-färdigheten",
+      "applied": true,
+      "needs_review": false,
+      "blocking": false,
+      "category": "skill_value"
+    },
+    {
+      "kind": "rules_conversion",
+      "element_id": "p007_e13",
+      "source": {
+        "page": 7,
+        "region": "mittkolumn",
+        "text": "Upptäcka fara 50",
+        "location": {
+          "field": "data.skills.Upptäcka fara"
+        }
+      },
+      "original": "Upptäcka fara 50",
+      "converted": "Upptäcka fara 10",
+      "source_ruleset": "dod-t100",
+      "target_ruleset": "dod91",
+      "rule": "fv.divide-by-five",
+      "profile_version": 7,
+      "confidence": 1.0,
+      "reason": "Strukturerat FV och verifierad DoD91-färdigheten",
+      "applied": true,
+      "needs_review": false,
+      "blocking": false,
+      "category": "skill_value"
+    },
+    {
+      "kind": "rules_conversion",
+      "element_id": "p007_e13",
+      "source": {
+        "page": 7,
+        "region": "mittkolumn",
+        "text": "Första hjälpen 50",
+        "location": {
+          "field": "data.skills.Första hjälpen"
+        }
+      },
+      "original": "Första hjälpen 50",
+      "converted": "Första hjälpen 10",
+      "source_ruleset": "dod-t100",
+      "target_ruleset": "dod91",
+      "rule": "fv.divide-by-five",
+      "profile_version": 7,
+      "confidence": 1.0,
+      "reason": "Strukturerat FV och verifierad DoD91-färdigheten",
+      "applied": true,
+      "needs_review": false,
+      "blocking": false,
+      "category": "skill_value"
+    },
+    {
+      "kind": "rules_conversion",
+      "element_id": "p007_e13",
+      "source": {
+        "page": 7,
+        "region": "mittkolumn",
+        "text": "Bastardsvärd 85%",
+        "location": {
+          "field": "data.weapons[0].attack"
+        }
+      },
+      "original": "Bastardsvärd 85%",
+      "converted": "Bastardsvärd FV 17",
+      "source_ruleset": "dod-t100",
+      "target_ruleset": "dod91",
+      "rule": "fv.divide-by-five",
+      "profile_version": 7,
+      "confidence": 1.0,
+      "reason": "Angreppsvärdet är bärarens färdighet med vapnet och räknas om till FV",
+      "applied": true,
+      "needs_review": false,
+      "blocking": false,
+      "category": "weapon_skill"
+    },
+    {
+      "kind": "rules_conversion",
+      "element_id": "p007_e13",
+      "source": {
+        "page": 7,
+        "region": "mittkolumn",
+        "text": "Bastardsvärd bv: 13",
+        "location": {
+          "field": "data.weapons[0].bv"
+        }
+      },
+      "original": "Bastardsvärd bv: 13",
+      "converted": "Bastardsvärd bv: 13",
+      "source_ruleset": "dod-t100",
+      "target_ruleset": "dod91",
+      "rule": "weapon.printed-value-differs",
+      "profile_version": 7,
+      "confidence": 0.6,
+      "reason": "Trycket anger bv 13 där DoD91-katalogen har 15. Tryckta spelvärden rättas inte automatiskt (Regel 8a) — behållet som det står, avvikelsen flaggas.",
+      "applied": false,
+      "needs_review": true,
+      "blocking": false,
+      "category": "unmatched_term"
+    },
+    {
+      "kind": "rules_conversion",
+      "element_id": "p007_e13",
+      "source": {
+        "page": 7,
+        "region": "mittkolumn",
+        "text": "{'name': 'Slagsvärd', 'attack': '85%', 'damage': '1T10+1', 'bv': 13}",
+        "location": {
+          "field": "data.weapons[0]"
+        }
+      },
+      "original": "{'name': 'Slagsvärd', 'attack': '85%', 'damage': '1T10+1', 'bv': 13}",
+      "converted": "{'name': 'Bastardsvärd', 'attack': 17, 'damage': '1T10+1', 'bv': 13, 'length': 0, 'price': 2500, 'styKrav': 17, 'type': 'melee', 'weaponGroup': 'enhandssward', 'weight': 5.5}",
+      "source_ruleset": "dod-t100",
+      "target_ruleset": "dod91",
+      "rule": "weapon.catalog",
+      "profile_version": 7,
+      "confidence": 1.0,
+      "reason": "Katalogen fyller i de DoD91-värden boken inte anger; tryckta värden behålls",
+      "applied": true,
+      "needs_review": false,
+      "blocking": false,
+      "category": "weapon"
+    },
+    {
+      "kind": "rules_conversion",
+      "element_id": "p007_e13",
+      "source": {
+        "page": 7,
+        "region": "mittkolumn",
+        "text": "Dolk 75%",
+        "location": {
+          "field": "data.weapons[1].attack"
+        }
+      },
+      "original": "Dolk 75%",
+      "converted": "Dolk FV 15",
+      "source_ruleset": "dod-t100",
+      "target_ruleset": "dod91",
+      "rule": "fv.divide-by-five",
+      "profile_version": 7,
+      "confidence": 1.0,
+      "reason": "Angreppsvärdet är bärarens färdighet med vapnet och räknas om till FV",
+      "applied": true,
+      "needs_review": false,
+      "blocking": false,
+      "category": "weapon_skill"
+    },
+    {
+      "kind": "rules_conversion",
+      "element_id": "p007_e13",
+      "source": {
+        "page": 7,
+        "region": "mittkolumn",
+        "text": "{'name': 'Dolk', 'attack': '75%', 'damage': '1T4+1', 'bv': 9}",
+        "location": {
+          "field": "data.weapons[1]"
+        }
+      },
+      "original": "{'name': 'Dolk', 'attack': '75%', 'damage': '1T4+1', 'bv': 9}",
+      "converted": "{'name': 'Dolk', 'attack': 15, 'damage': '1T4+1', 'bv': 9, 'length': 0, 'price': 70, 'styKrav': 1, 'type': 'melee', 'weaponGroup': 'dolkar', 'weight': 0.5}",
+      "source_ruleset": "dod-t100",
+      "target_ruleset": "dod91",
+      "rule": "weapon.catalog",
+      "profile_version": 7,
+      "confidence": 1.0,
+      "reason": "Katalogen fyller i de DoD91-värden boken inte anger; tryckta värden behålls",
+      "applied": true,
+      "needs_review": false,
+      "blocking": false,
+      "category": "weapon"
+    },
+    {
+      "kind": "rules_conversion",
+      "element_id": "p007_e13",
+      "source": {
+        "page": 7,
+        "region": "mittkolumn",
+        "text": "Kastspjut 70%",
+        "location": {
+          "field": "data.weapons[2].attack"
+        }
+      },
+      "original": "Kastspjut 70%",
+      "converted": "Kastspjut FV 14",
+      "source_ruleset": "dod-t100",
+      "target_ruleset": "dod91",
+      "rule": "fv.divide-by-five",
+      "profile_version": 7,
+      "confidence": 1.0,
+      "reason": "Angreppsvärdet är bärarens färdighet med vapnet och räknas om till FV",
+      "applied": true,
+      "needs_review": false,
+      "blocking": false,
+      "category": "weapon_skill"
+    },
+    {
+      "kind": "rules_conversion",
+      "element_id": "p007_e13",
+      "source": {
+        "page": 7,
+        "region": "mittkolumn",
+        "text": "{'name': 'Kastspjut', 'attack': '70%', 'damage': '1T6+1', 'rackvidd': '15 rutor'}",
+        "location": {
+          "field": "data.weapons[2]"
+        }
+      },
+      "original": "{'name': 'Kastspjut', 'attack': '70%', 'damage': '1T6+1', 'rackvidd': '15 rutor'}",
+      "converted": "{'name': 'Kastspjut', 'attack': 14, 'damage': '1T6+1', 'rackvidd': '15 rutor', 'price': 120, 'styKrav': 11, 'type': 'thrown', 'weaponGroup': 'kastvapen', 'weight': 1}",
+      "source_ruleset": "dod-t100",
+      "target_ruleset": "dod91",
+      "rule": "weapon.catalog",
+      "profile_version": 7,
+      "confidence": 1.0,
+      "reason": "Katalogen fyller i de DoD91-värden boken inte anger; tryckta värden behålls",
+      "applied": true,
+      "needs_review": false,
+      "blocking": false,
+      "category": "weapon"
+    },
+    {
+      "kind": "rules_conversion",
+      "element_id": "p007_e16",
+      "source": {
+        "page": 7,
+        "region": "mittkolumn",
+        "text": "Stor sköld (85%",
+        "location": {
+          "field": "data.other.Skydd",
+          "text_range": [
+            20,
+            35
+          ]
+        }
+      },
+      "original": "Stor sköld (85%",
+      "converted": "Rundsköld, stor (FV 17",
+      "source_ruleset": "dod-t100",
+      "target_ruleset": "dod91",
+      "rule": "fv.divide-by-five",
+      "profile_version": 7,
+      "confidence": 1.0,
+      "reason": "Procentvärde på T100-skalan inuti parentes efter 'Stor sköld' räknas om till FV; sköldnamnet normaliseras mot katalogen",
+      "applied": true,
+      "needs_review": false,
+      "blocking": false,
+      "category": "skill_value"
+    },
+    {
+      "kind": "rules_conversion",
+      "element_id": "p007_e16",
+      "source": {
+        "page": 7,
+        "region": "mittkolumn",
+        "text": "abs 16",
+        "location": {
+          "field": "data.other.Skydd",
+          "text_range": [
+            37,
+            43
+          ]
+        }
+      },
+      "original": "abs 16",
+      "converted": "BV 11",
+      "source_ruleset": "dod-t100",
+      "target_ruleset": "dod91",
+      "rule": "shield.absorption-to-bv",
+      "profile_version": 7,
+      "confidence": 1.0,
+      "reason": "DoD91-sköldar anges med brytvärde, inte absorption; katalogens BV för Rundsköld, stor ersätter källans 'abs 16'",
+      "applied": true,
+      "needs_review": false,
+      "blocking": false,
+      "category": "armor"
+    },
+    {
+      "kind": "rules_conversion",
+      "element_id": "p007_e16",
+      "source": {
+        "page": 7,
+        "region": "mittkolumn",
+        "text": "Rida 60",
+        "location": {
+          "field": "data.skills.Rida"
+        }
+      },
+      "original": "Rida 60",
+      "converted": "Rida 12",
+      "source_ruleset": "dod-t100",
+      "target_ruleset": "dod91",
+      "rule": "fv.divide-by-five",
+      "profile_version": 7,
+      "confidence": 1.0,
+      "reason": "Strukturerat FV och verifierad DoD91-färdigheten",
+      "applied": true,
+      "needs_review": false,
+      "blocking": false,
+      "category": "skill_value"
+    },
+    {
+      "kind": "rules_conversion",
+      "element_id": "p007_e16",
+      "source": {
+        "page": 7,
+        "region": "mittkolumn",
+        "text": "Heraldik 80",
+        "location": {
+          "field": "data.skills.Heraldik"
+        }
+      },
+      "original": "Heraldik 80",
+      "converted": "Heraldik 16",
+      "source_ruleset": "dod-t100",
+      "target_ruleset": "dod91",
+      "rule": "fv.divide-by-five",
+      "profile_version": 7,
+      "confidence": 1.0,
+      "reason": "Strukturerat FV och verifierad DoD91-färdigheten",
+      "applied": true,
+      "needs_review": false,
+      "blocking": false,
+      "category": "skill_value"
+    },
+    {
+      "kind": "rules_conversion",
+      "element_id": "p007_e16",
+      "source": {
+        "page": 7,
+        "region": "mittkolumn",
+        "text": "Simma 60",
+        "location": {
+          "field": "data.skills.Simma"
+        }
+      },
+      "original": "Simma 60",
+      "converted": "Simma 12",
+      "source_ruleset": "dod-t100",
+      "target_ruleset": "dod91",
+      "rule": "fv.divide-by-five",
+      "profile_version": 7,
+      "confidence": 1.0,
+      "reason": "Strukturerat FV och verifierad DoD91-färdigheten",
+      "applied": true,
+      "needs_review": false,
+      "blocking": false,
+      "category": "skill_value"
+    },
+    {
+      "kind": "rules_conversion",
+      "element_id": "p007_e16",
+      "source": {
+        "page": 7,
+        "region": "mittkolumn",
+        "text": "Upptäcka fara 50",
+        "location": {
+          "field": "data.skills.Upptäcka fara"
+        }
+      },
+      "original": "Upptäcka fara 50",
+      "converted": "Upptäcka fara 10",
+      "source_ruleset": "dod-t100",
+      "target_ruleset": "dod91",
+      "rule": "fv.divide-by-five",
+      "profile_version": 7,
+      "confidence": 1.0,
+      "reason": "Strukturerat FV och verifierad DoD91-färdigheten",
+      "applied": true,
+      "needs_review": false,
+      "blocking": false,
+      "category": "skill_value"
+    },
+    {
+      "kind": "rules_conversion",
+      "element_id": "p007_e16",
+      "source": {
+        "page": 7,
+        "region": "mittkolumn",
+        "text": "Första hjälpen 50",
+        "location": {
+          "field": "data.skills.Första hjälpen"
+        }
+      },
+      "original": "Första hjälpen 50",
+      "converted": "Första hjälpen 10",
+      "source_ruleset": "dod-t100",
+      "target_ruleset": "dod91",
+      "rule": "fv.divide-by-five",
+      "profile_version": 7,
+      "confidence": 1.0,
+      "reason": "Strukturerat FV och verifierad DoD91-färdigheten",
+      "applied": true,
+      "needs_review": false,
+      "blocking": false,
+      "category": "skill_value"
+    },
+    {
+      "kind": "rules_conversion",
+      "element_id": "p007_e16",
+      "source": {
+        "page": 7,
+        "region": "mittkolumn",
+        "text": "Spela och sjunga 75",
+        "location": {
+          "field": "data.skills.Spela och sjunga"
+        }
+      },
+      "original": "Spela och sjunga 75",
+      "converted": "Spela stränginstrument 15, Sjunga 15",
+      "source_ruleset": "dod-t100",
+      "target_ruleset": "dod91",
+      "rule": "skill.split",
+      "profile_version": 7,
+      "confidence": 1.0,
+      "reason": "Den sammanslagna källfärdigheten delas upp i DoD91:s separata färdigheter",
+      "applied": true,
+      "needs_review": false,
+      "blocking": false,
+      "category": "skill_value"
+    },
+    {
+      "kind": "rules_conversion",
+      "element_id": "p007_e16",
+      "source": {
+        "page": 7,
+        "region": "mittkolumn",
+        "text": "Bredsvärd 80%",
+        "location": {
+          "field": "data.weapons[0].attack"
+        }
+      },
+      "original": "Bredsvärd 80%",
+      "converted": "Bredsvärd FV 16",
+      "source_ruleset": "dod-t100",
+      "target_ruleset": "dod91",
+      "rule": "fv.divide-by-five",
+      "profile_version": 7,
+      "confidence": 1.0,
+      "reason": "Angreppsvärdet är bärarens färdighet med vapnet och räknas om till FV",
+      "applied": true,
+      "needs_review": false,
+      "blocking": false,
+      "category": "weapon_skill"
+    },
+    {
+      "kind": "rules_conversion",
+      "element_id": "p007_e16",
+      "source": {
+        "page": 7,
+        "region": "mittkolumn",
+        "text": "{'name': 'Bredsvärd', 'attack': '80%', 'damage': '1T8+1', 'bv': 15}",
+        "location": {
+          "field": "data.weapons[0]"
+        }
+      },
+      "original": "{'name': 'Bredsvärd', 'attack': '80%', 'damage': '1T8+1', 'bv': 15}",
+      "converted": "{'name': 'Bredsvärd', 'attack': 16, 'damage': '1T8+1', 'bv': 15, 'length': 0, 'price': 1000, 'styKrav': 13, 'type': 'melee', 'weaponGroup': 'enhandssward', 'weight': 4.5}",
+      "source_ruleset": "dod-t100",
+      "target_ruleset": "dod91",
+      "rule": "weapon.catalog",
+      "profile_version": 7,
+      "confidence": 1.0,
+      "reason": "Katalogen fyller i de DoD91-värden boken inte anger; tryckta värden behålls",
+      "applied": true,
+      "needs_review": false,
+      "blocking": false,
+      "category": "weapon"
+    },
+    {
+      "kind": "rules_conversion",
+      "element_id": "p007_e16",
+      "source": {
+        "page": 7,
+        "region": "mittkolumn",
+        "text": "Dolk 75%",
+        "location": {
+          "field": "data.weapons[1].attack"
+        }
+      },
+      "original": "Dolk 75%",
+      "converted": "Dolk FV 15",
+      "source_ruleset": "dod-t100",
+      "target_ruleset": "dod91",
+      "rule": "fv.divide-by-five",
+      "profile_version": 7,
+      "confidence": 1.0,
+      "reason": "Angreppsvärdet är bärarens färdighet med vapnet och räknas om till FV",
+      "applied": true,
+      "needs_review": false,
+      "blocking": false,
+      "category": "weapon_skill"
+    },
+    {
+      "kind": "rules_conversion",
+      "element_id": "p007_e16",
+      "source": {
+        "page": 7,
+        "region": "mittkolumn",
+        "text": "{'name': 'Dolk', 'attack': '75%', 'damage': '1T4+1', 'bv': 9}",
+        "location": {
+          "field": "data.weapons[1]"
+        }
+      },
+      "original": "{'name': 'Dolk', 'attack': '75%', 'damage': '1T4+1', 'bv': 9}",
+      "converted": "{'name': 'Dolk', 'attack': 15, 'damage': '1T4+1', 'bv': 9, 'length': 0, 'price': 70, 'styKrav': 1, 'type': 'melee', 'weaponGroup': 'dolkar', 'weight': 0.5}",
+      "source_ruleset": "dod-t100",
+      "target_ruleset": "dod91",
+      "rule": "weapon.catalog",
+      "profile_version": 7,
+      "confidence": 1.0,
+      "reason": "Katalogen fyller i de DoD91-värden boken inte anger; tryckta värden behålls",
+      "applied": true,
+      "needs_review": false,
+      "blocking": false,
+      "category": "weapon"
+    },
+    {
+      "kind": "rules_conversion",
+      "element_id": "p007_e16",
+      "source": {
+        "page": 7,
+        "region": "mittkolumn",
+        "text": "Kastspjut 60%",
+        "location": {
+          "field": "data.weapons[2].attack"
+        }
+      },
+      "original": "Kastspjut 60%",
+      "converted": "Kastspjut FV 12",
+      "source_ruleset": "dod-t100",
+      "target_ruleset": "dod91",
+      "rule": "fv.divide-by-five",
+      "profile_version": 7,
+      "confidence": 1.0,
+      "reason": "Angreppsvärdet är bärarens färdighet med vapnet och räknas om till FV",
+      "applied": true,
+      "needs_review": false,
+      "blocking": false,
+      "category": "weapon_skill"
+    },
+    {
+      "kind": "rules_conversion",
+      "element_id": "p007_e16",
+      "source": {
+        "page": 7,
+        "region": "mittkolumn",
+        "text": "{'name': 'Kastspjut', 'attack': '60%', 'damage': '1T6+1', 'rackvidd': '12 rutor'}",
+        "location": {
+          "field": "data.weapons[2]"
+        }
+      },
+      "original": "{'name': 'Kastspjut', 'attack': '60%', 'damage': '1T6+1', 'rackvidd': '12 rutor'}",
+      "converted": "{'name': 'Kastspjut', 'attack': 12, 'damage': '1T6+1', 'rackvidd': '12 rutor', 'price': 120, 'styKrav': 11, 'type': 'thrown', 'weaponGroup': 'kastvapen', 'weight': 1}",
+      "source_ruleset": "dod-t100",
+      "target_ruleset": "dod91",
+      "rule": "weapon.catalog",
+      "profile_version": 7,
+      "confidence": 1.0,
+      "reason": "Katalogen fyller i de DoD91-värden boken inte anger; tryckta värden behålls",
+      "applied": true,
+      "needs_review": false,
+      "blocking": false,
+      "category": "weapon"
+    },
+    {
+      "kind": "rules_conversion",
+      "element_id": "p007_e19",
+      "source": {
+        "page": 7,
+        "region": "högerkolumn",
+        "text": "Stor sköld (95%",
+        "location": {
+          "field": "data.other.Skydd",
+          "text_range": [
+            20,
+            35
+          ]
+        }
+      },
+      "original": "Stor sköld (95%",
+      "converted": "Rundsköld, stor (FV 18",
+      "source_ruleset": "dod-t100",
+      "target_ruleset": "dod91",
+      "rule": "fv.divide-by-five",
+      "profile_version": 7,
+      "confidence": 1.0,
+      "reason": "Procentvärde på T100-skalan inuti parentes efter 'Stor sköld' räknas om till FV; sköldnamnet normaliseras mot katalogen",
+      "applied": true,
+      "needs_review": false,
+      "blocking": false,
+      "category": "skill_value"
+    },
+    {
+      "kind": "rules_conversion",
+      "element_id": "p007_e19",
+      "source": {
+        "page": 7,
+        "region": "högerkolumn",
+        "text": "abs 16",
+        "location": {
+          "field": "data.other.Skydd",
+          "text_range": [
+            37,
+            43
+          ]
+        }
+      },
+      "original": "abs 16",
+      "converted": "BV 11",
+      "source_ruleset": "dod-t100",
+      "target_ruleset": "dod91",
+      "rule": "shield.absorption-to-bv",
+      "profile_version": 7,
+      "confidence": 1.0,
+      "reason": "DoD91-sköldar anges med brytvärde, inte absorption; katalogens BV för Rundsköld, stor ersätter källans 'abs 16'",
+      "applied": true,
+      "needs_review": false,
+      "blocking": false,
+      "category": "armor"
+    },
+    {
+      "kind": "rules_conversion",
+      "element_id": "p007_e19",
+      "source": {
+        "page": 7,
+        "region": "högerkolumn",
+        "text": "Rida 70",
+        "location": {
+          "field": "data.skills.Rida"
+        }
+      },
+      "original": "Rida 70",
+      "converted": "Rida 14",
+      "source_ruleset": "dod-t100",
+      "target_ruleset": "dod91",
+      "rule": "fv.divide-by-five",
+      "profile_version": 7,
+      "confidence": 1.0,
+      "reason": "Strukturerat FV och verifierad DoD91-färdigheten",
+      "applied": true,
+      "needs_review": false,
+      "blocking": false,
+      "category": "skill_value"
+    },
+    {
+      "kind": "rules_conversion",
+      "element_id": "p007_e19",
+      "source": {
+        "page": 7,
+        "region": "högerkolumn",
+        "text": "Heraldik 50",
+        "location": {
+          "field": "data.skills.Heraldik"
+        }
+      },
+      "original": "Heraldik 50",
+      "converted": "Heraldik 10",
+      "source_ruleset": "dod-t100",
+      "target_ruleset": "dod91",
+      "rule": "fv.divide-by-five",
+      "profile_version": 7,
+      "confidence": 1.0,
+      "reason": "Strukturerat FV och verifierad DoD91-färdigheten",
+      "applied": true,
+      "needs_review": false,
+      "blocking": false,
+      "category": "skill_value"
+    },
+    {
+      "kind": "rules_conversion",
+      "element_id": "p007_e19",
+      "source": {
+        "page": 7,
+        "region": "högerkolumn",
+        "text": "Simma 60",
+        "location": {
+          "field": "data.skills.Simma"
+        }
+      },
+      "original": "Simma 60",
+      "converted": "Simma 12",
+      "source_ruleset": "dod-t100",
+      "target_ruleset": "dod91",
+      "rule": "fv.divide-by-five",
+      "profile_version": 7,
+      "confidence": 1.0,
+      "reason": "Strukturerat FV och verifierad DoD91-färdigheten",
+      "applied": true,
+      "needs_review": false,
+      "blocking": false,
+      "category": "skill_value"
+    },
+    {
+      "kind": "rules_conversion",
+      "element_id": "p007_e19",
+      "source": {
+        "page": 7,
+        "region": "högerkolumn",
+        "text": "Upptäcka fara 50",
+        "location": {
+          "field": "data.skills.Upptäcka fara"
+        }
+      },
+      "original": "Upptäcka fara 50",
+      "converted": "Upptäcka fara 10",
+      "source_ruleset": "dod-t100",
+      "target_ruleset": "dod91",
+      "rule": "fv.divide-by-five",
+      "profile_version": 7,
+      "confidence": 1.0,
+      "reason": "Strukturerat FV och verifierad DoD91-färdigheten",
+      "applied": true,
+      "needs_review": false,
+      "blocking": false,
+      "category": "skill_value"
+    },
+    {
+      "kind": "rules_conversion",
+      "element_id": "p007_e19",
+      "source": {
+        "page": 7,
+        "region": "högerkolumn",
+        "text": "Första hjälpen 50",
+        "location": {
+          "field": "data.skills.Första hjälpen"
+        }
+      },
+      "original": "Första hjälpen 50",
+      "converted": "Första hjälpen 10",
+      "source_ruleset": "dod-t100",
+      "target_ruleset": "dod91",
+      "rule": "fv.divide-by-five",
+      "profile_version": 7,
+      "confidence": 1.0,
+      "reason": "Strukturerat FV och verifierad DoD91-färdigheten",
+      "applied": true,
+      "needs_review": false,
+      "blocking": false,
+      "category": "skill_value"
+    },
+    {
+      "kind": "rules_conversion",
+      "element_id": "p007_e19",
+      "source": {
+        "page": 7,
+        "region": "högerkolumn",
+        "text": "Bastardsvärd 80%",
+        "location": {
+          "field": "data.weapons[0].attack"
+        }
+      },
+      "original": "Bastardsvärd 80%",
+      "converted": "Bastardsvärd FV 16",
+      "source_ruleset": "dod-t100",
+      "target_ruleset": "dod91",
+      "rule": "fv.divide-by-five",
+      "profile_version": 7,
+      "confidence": 1.0,
+      "reason": "Angreppsvärdet är bärarens färdighet med vapnet och räknas om till FV",
+      "applied": true,
+      "needs_review": false,
+      "blocking": false,
+      "category": "weapon_skill"
+    },
+    {
+      "kind": "rules_conversion",
+      "element_id": "p007_e19",
+      "source": {
+        "page": 7,
+        "region": "högerkolumn",
+        "text": "Bastardsvärd bv: 13",
+        "location": {
+          "field": "data.weapons[0].bv"
+        }
+      },
+      "original": "Bastardsvärd bv: 13",
+      "converted": "Bastardsvärd bv: 13",
+      "source_ruleset": "dod-t100",
+      "target_ruleset": "dod91",
+      "rule": "weapon.printed-value-differs",
+      "profile_version": 7,
+      "confidence": 0.6,
+      "reason": "Trycket anger bv 13 där DoD91-katalogen har 15. Tryckta spelvärden rättas inte automatiskt (Regel 8a) — behållet som det står, avvikelsen flaggas.",
+      "applied": false,
+      "needs_review": true,
+      "blocking": false,
+      "category": "unmatched_term"
+    },
+    {
+      "kind": "rules_conversion",
+      "element_id": "p007_e19",
+      "source": {
+        "page": 7,
+        "region": "högerkolumn",
+        "text": "{'name': 'Slagsvärd', 'attack': '80%', 'damage': '1T10+1', 'bv': 13}",
+        "location": {
+          "field": "data.weapons[0]"
+        }
+      },
+      "original": "{'name': 'Slagsvärd', 'attack': '80%', 'damage': '1T10+1', 'bv': 13}",
+      "converted": "{'name': 'Bastardsvärd', 'attack': 16, 'damage': '1T10+1', 'bv': 13, 'length': 0, 'price': 2500, 'styKrav': 17, 'type': 'melee', 'weaponGroup': 'enhandssward', 'weight': 5.5}",
+      "source_ruleset": "dod-t100",
+      "target_ruleset": "dod91",
+      "rule": "weapon.catalog",
+      "profile_version": 7,
+      "confidence": 1.0,
+      "reason": "Katalogen fyller i de DoD91-värden boken inte anger; tryckta värden behålls",
+      "applied": true,
+      "needs_review": false,
+      "blocking": false,
+      "category": "weapon"
+    },
+    {
+      "kind": "rules_conversion",
+      "element_id": "p007_e19",
+      "source": {
+        "page": 7,
+        "region": "högerkolumn",
+        "text": "Dolk 75%",
+        "location": {
+          "field": "data.weapons[1].attack"
+        }
+      },
+      "original": "Dolk 75%",
+      "converted": "Dolk FV 15",
+      "source_ruleset": "dod-t100",
+      "target_ruleset": "dod91",
+      "rule": "fv.divide-by-five",
+      "profile_version": 7,
+      "confidence": 1.0,
+      "reason": "Angreppsvärdet är bärarens färdighet med vapnet och räknas om till FV",
+      "applied": true,
+      "needs_review": false,
+      "blocking": false,
+      "category": "weapon_skill"
+    },
+    {
+      "kind": "rules_conversion",
+      "element_id": "p007_e19",
+      "source": {
+        "page": 7,
+        "region": "högerkolumn",
+        "text": "{'name': 'Dolk', 'attack': '75%', 'damage': '1T4+1', 'bv': 9}",
+        "location": {
+          "field": "data.weapons[1]"
+        }
+      },
+      "original": "{'name': 'Dolk', 'attack': '75%', 'damage': '1T4+1', 'bv': 9}",
+      "converted": "{'name': 'Dolk', 'attack': 15, 'damage': '1T4+1', 'bv': 9, 'length': 0, 'price': 70, 'styKrav': 1, 'type': 'melee', 'weaponGroup': 'dolkar', 'weight': 0.5}",
+      "source_ruleset": "dod-t100",
+      "target_ruleset": "dod91",
+      "rule": "weapon.catalog",
+      "profile_version": 7,
+      "confidence": 1.0,
+      "reason": "Katalogen fyller i de DoD91-värden boken inte anger; tryckta värden behålls",
+      "applied": true,
+      "needs_review": false,
+      "blocking": false,
+      "category": "weapon"
+    },
+    {
+      "kind": "rules_conversion",
+      "element_id": "p007_e19",
+      "source": {
+        "page": 7,
+        "region": "högerkolumn",
+        "text": "Kortbåge 60%",
+        "location": {
+          "field": "data.weapons[2].attack"
+        }
+      },
+      "original": "Kortbåge 60%",
+      "converted": "Kortbåge FV 12",
+      "source_ruleset": "dod-t100",
+      "target_ruleset": "dod91",
+      "rule": "fv.divide-by-five",
+      "profile_version": 7,
+      "confidence": 1.0,
+      "reason": "Angreppsvärdet är bärarens färdighet med vapnet och räknas om till FV",
+      "applied": true,
+      "needs_review": false,
+      "blocking": false,
+      "category": "weapon_skill"
+    },
+    {
+      "kind": "rules_conversion",
+      "element_id": "p007_e19",
+      "source": {
+        "page": 7,
+        "region": "högerkolumn",
+        "text": "{'name': 'Kortbåge', 'attack': '60%', 'damage': '1T6+1', 'rackvidd': '135 m'}",
+        "location": {
+          "field": "data.weapons[2]"
+        }
+      },
+      "original": "{'name': 'Kortbåge', 'attack': '60%', 'damage': '1T6+1', 'rackvidd': '135 m'}",
+      "converted": "{'name': 'Kortbåge', 'attack': 12, 'damage': '1T6+1', 'rackvidd': '135 m', 'price': 400, 'styKrav': 17, 'type': 'ranged', 'weaponGroup': 'bagar', 'weight': 2}",
+      "source_ruleset": "dod-t100",
+      "target_ruleset": "dod91",
+      "rule": "weapon.catalog",
+      "profile_version": 7,
+      "confidence": 1.0,
+      "reason": "Katalogen fyller i de DoD91-värden boken inte anger; tryckta värden behålls",
+      "applied": true,
+      "needs_review": false,
+      "blocking": false,
+      "category": "weapon"
+    },
+    {
+      "kind": "rules_conversion",
+      "element_id": "p007_e22",
+      "source": {
+        "page": 7,
+        "region": "högerkolumn",
+        "text": "Stor sköld (95%",
+        "location": {
+          "field": "data.other.Skydd",
+          "text_range": [
+            20,
+            35
+          ]
+        }
+      },
+      "original": "Stor sköld (95%",
+      "converted": "Rundsköld, stor (FV 18",
+      "source_ruleset": "dod-t100",
+      "target_ruleset": "dod91",
+      "rule": "fv.divide-by-five",
+      "profile_version": 7,
+      "confidence": 1.0,
+      "reason": "Procentvärde på T100-skalan inuti parentes efter 'Stor sköld' räknas om till FV; sköldnamnet normaliseras mot katalogen",
+      "applied": true,
+      "needs_review": false,
+      "blocking": false,
+      "category": "skill_value"
+    },
+    {
+      "kind": "rules_conversion",
+      "element_id": "p007_e22",
+      "source": {
+        "page": 7,
+        "region": "högerkolumn",
+        "text": "abs 16",
+        "location": {
+          "field": "data.other.Skydd",
+          "text_range": [
+            37,
+            43
+          ]
+        }
+      },
+      "original": "abs 16",
+      "converted": "BV 11",
+      "source_ruleset": "dod-t100",
+      "target_ruleset": "dod91",
+      "rule": "shield.absorption-to-bv",
+      "profile_version": 7,
+      "confidence": 1.0,
+      "reason": "DoD91-sköldar anges med brytvärde, inte absorption; katalogens BV för Rundsköld, stor ersätter källans 'abs 16'",
+      "applied": true,
+      "needs_review": false,
+      "blocking": false,
+      "category": "armor"
+    },
+    {
+      "kind": "rules_conversion",
+      "element_id": "p007_e22",
+      "source": {
+        "page": 7,
+        "region": "högerkolumn",
+        "text": "Första hjälpen 60",
+        "location": {
+          "field": "data.skills.Första hjälpen"
+        }
+      },
+      "original": "Första hjälpen 60",
+      "converted": "Första hjälpen 12",
+      "source_ruleset": "dod-t100",
+      "target_ruleset": "dod91",
+      "rule": "fv.divide-by-five",
+      "profile_version": 7,
+      "confidence": 1.0,
+      "reason": "Strukturerat FV och verifierad DoD91-färdigheten",
+      "applied": true,
+      "needs_review": false,
+      "blocking": false,
+      "category": "skill_value"
+    },
+    {
+      "kind": "rules_conversion",
+      "element_id": "p007_e22",
+      "source": {
+        "page": 7,
+        "region": "högerkolumn",
+        "text": "Sjunga 50",
+        "location": {
+          "field": "data.skills.Sjunga"
+        }
+      },
+      "original": "Sjunga 50",
+      "converted": "Sjunga 10",
+      "source_ruleset": "dod-t100",
+      "target_ruleset": "dod91",
+      "rule": "fv.divide-by-five",
+      "profile_version": 7,
+      "confidence": 1.0,
+      "reason": "Strukturerat FV och verifierad DoD91-färdigheten",
+      "applied": true,
+      "needs_review": false,
+      "blocking": false,
+      "category": "skill_value"
+    },
+    {
+      "kind": "rules_conversion",
+      "element_id": "p007_e22",
+      "source": {
+        "page": 7,
+        "region": "högerkolumn",
+        "text": "Rida 70",
+        "location": {
+          "field": "data.skills.Rida"
+        }
+      },
+      "original": "Rida 70",
+      "converted": "Rida 14",
+      "source_ruleset": "dod-t100",
+      "target_ruleset": "dod91",
+      "rule": "fv.divide-by-five",
+      "profile_version": 7,
+      "confidence": 1.0,
+      "reason": "Strukturerat FV och verifierad DoD91-färdigheten",
+      "applied": true,
+      "needs_review": false,
+      "blocking": false,
+      "category": "skill_value"
+    },
+    {
+      "kind": "rules_conversion",
+      "element_id": "p007_e22",
+      "source": {
+        "page": 7,
+        "region": "högerkolumn",
+        "text": "Simma 75",
+        "location": {
+          "field": "data.skills.Simma"
+        }
+      },
+      "original": "Simma 75",
+      "converted": "Simma 15",
+      "source_ruleset": "dod-t100",
+      "target_ruleset": "dod91",
+      "rule": "fv.divide-by-five",
+      "profile_version": 7,
+      "confidence": 1.0,
+      "reason": "Strukturerat FV och verifierad DoD91-färdigheten",
+      "applied": true,
+      "needs_review": false,
+      "blocking": false,
+      "category": "skill_value"
+    },
+    {
+      "kind": "rules_conversion",
+      "element_id": "p007_e22",
+      "source": {
+        "page": 7,
+        "region": "högerkolumn",
+        "text": "Stridsyxa 95%",
+        "location": {
+          "field": "data.weapons[0].attack"
+        }
+      },
+      "original": "Stridsyxa 95%",
+      "converted": "Stridsyxa FV 18",
+      "source_ruleset": "dod-t100",
+      "target_ruleset": "dod91",
+      "rule": "fv.divide-by-five",
+      "profile_version": 7,
+      "confidence": 1.0,
+      "reason": "Angreppsvärdet är bärarens färdighet med vapnet och räknas om till FV",
+      "applied": true,
+      "needs_review": false,
+      "blocking": false,
+      "category": "weapon_skill"
+    },
+    {
+      "kind": "rules_conversion",
+      "element_id": "p007_e22",
+      "source": {
+        "page": 7,
+        "region": "högerkolumn",
+        "text": "Stridsyxa damage: 1T10+2",
+        "location": {
+          "field": "data.weapons[0].damage"
+        }
+      },
+      "original": "Stridsyxa damage: 1T10+2",
+      "converted": "Stridsyxa damage: 1T10+2",
+      "source_ruleset": "dod-t100",
+      "target_ruleset": "dod91",
+      "rule": "weapon.printed-value-differs",
+      "profile_version": 7,
+      "confidence": 0.6,
+      "reason": "Trycket anger damage '1T10+2' där DoD91-katalogen har '1T8+2'. Tryckta spelvärden rättas inte automatiskt (Regel 8a) — behållet som det står, avvikelsen flaggas.",
+      "applied": false,
+      "needs_review": true,
+      "blocking": false,
+      "category": "unmatched_term"
+    },
+    {
+      "kind": "rules_conversion",
+      "element_id": "p007_e22",
+      "source": {
+        "page": 7,
+        "region": "högerkolumn",
+        "text": "{'name': 'Stridsyxa', 'attack': '95%', 'damage': '1T10+2', 'bv': 11}",
+        "location": {
+          "field": "data.weapons[0]"
+        }
+      },
+      "original": "{'name': 'Stridsyxa', 'attack': '95%', 'damage': '1T10+2', 'bv': 11}",
+      "converted": "{'name': 'Stridsyxa', 'attack': 18, 'damage': '1T10+2', 'bv': 11, 'length': 0, 'price': 450, 'styKrav': 11, 'type': 'melee', 'weaponGroup': 'enhandsyxor', 'weight': 4}",
+      "source_ruleset": "dod-t100",
+      "target_ruleset": "dod91",
+      "rule": "weapon.catalog",
+      "profile_version": 7,
+      "confidence": 1.0,
+      "reason": "Katalogen fyller i de DoD91-värden boken inte anger; tryckta värden behålls",
+      "applied": true,
+      "needs_review": false,
+      "blocking": false,
+      "category": "weapon"
+    },
+    {
+      "kind": "rules_conversion",
+      "element_id": "p007_e22",
+      "source": {
+        "page": 7,
+        "region": "högerkolumn",
+        "text": "Dolk 95%",
+        "location": {
+          "field": "data.weapons[1].attack"
+        }
+      },
+      "original": "Dolk 95%",
+      "converted": "Dolk FV 18",
+      "source_ruleset": "dod-t100",
+      "target_ruleset": "dod91",
+      "rule": "fv.divide-by-five",
+      "profile_version": 7,
+      "confidence": 1.0,
+      "reason": "Angreppsvärdet är bärarens färdighet med vapnet och räknas om till FV",
+      "applied": true,
+      "needs_review": false,
+      "blocking": false,
+      "category": "weapon_skill"
+    },
+    {
+      "kind": "rules_conversion",
+      "element_id": "p007_e22",
+      "source": {
+        "page": 7,
+        "region": "högerkolumn",
+        "text": "{'name': 'Dolk', 'attack': '95%', 'damage': '1T4+1', 'bv': 9}",
+        "location": {
+          "field": "data.weapons[1]"
+        }
+      },
+      "original": "{'name': 'Dolk', 'attack': '95%', 'damage': '1T4+1', 'bv': 9}",
+      "converted": "{'name': 'Dolk', 'attack': 18, 'damage': '1T4+1', 'bv': 9, 'length': 0, 'price': 70, 'styKrav': 1, 'type': 'melee', 'weaponGroup': 'dolkar', 'weight': 0.5}",
+      "source_ruleset": "dod-t100",
+      "target_ruleset": "dod91",
+      "rule": "weapon.catalog",
+      "profile_version": 7,
+      "confidence": 1.0,
+      "reason": "Katalogen fyller i de DoD91-värden boken inte anger; tryckta värden behålls",
+      "applied": true,
+      "needs_review": false,
+      "blocking": false,
+      "category": "weapon"
+    },
+    {
+      "kind": "rules_conversion",
+      "element_id": "p007_e22",
+      "source": {
+        "page": 7,
+        "region": "högerkolumn",
+        "text": "Kastyxa 95%",
+        "location": {
+          "field": "data.weapons[2].attack"
+        }
+      },
+      "original": "Kastyxa 95%",
+      "converted": "Kastyxa FV 18",
+      "source_ruleset": "dod-t100",
+      "target_ruleset": "dod91",
+      "rule": "fv.divide-by-five",
+      "profile_version": 7,
+      "confidence": 1.0,
+      "reason": "Angreppsvärdet är bärarens färdighet med vapnet och räknas om till FV",
+      "applied": true,
+      "needs_review": false,
+      "blocking": false,
+      "category": "weapon_skill"
+    },
+    {
+      "kind": "rules_conversion",
+      "element_id": "p007_e22",
+      "source": {
+        "page": 7,
+        "region": "högerkolumn",
+        "text": "{'name': 'Kastyxa', 'attack': '95%', 'damage': '1T6+2', 'rackvidd': '17 rutor'}",
+        "location": {
+          "field": "data.weapons[2]"
+        }
+      },
+      "original": "{'name': 'Kastyxa', 'attack': '95%', 'damage': '1T6+2', 'rackvidd': '17 rutor'}",
+      "converted": "{'name': 'Kastyxa', 'attack': 18, 'damage': '1T6+2', 'rackvidd': '17 rutor', 'price': 90, 'styKrav': 9, 'type': 'thrown', 'weaponGroup': 'kastvapen', 'weight': 3}",
+      "source_ruleset": "dod-t100",
+      "target_ruleset": "dod91",
+      "rule": "weapon.catalog",
+      "profile_version": 7,
+      "confidence": 1.0,
+      "reason": "Katalogen fyller i de DoD91-värden boken inte anger; tryckta värden behålls",
+      "applied": true,
+      "needs_review": false,
+      "blocking": false,
+      "category": "weapon"
+    },
+    {
+      "kind": "rules_conversion",
+      "element_id": "p007_e24",
+      "source": {
+        "page": 7,
+        "region": "högerkolumn",
+        "text": "Stor sköld (75%",
+        "location": {
+          "field": "data.other.Skydd",
+          "text_range": [
+            15,
+            30
+          ]
+        }
+      },
+      "original": "Stor sköld (75%",
+      "converted": "Rundsköld, stor (FV 15",
+      "source_ruleset": "dod-t100",
+      "target_ruleset": "dod91",
+      "rule": "fv.divide-by-five",
+      "profile_version": 7,
+      "confidence": 1.0,
+      "reason": "Procentvärde på T100-skalan inuti parentes efter 'Stor sköld' räknas om till FV; sköldnamnet normaliseras mot katalogen",
+      "applied": true,
+      "needs_review": false,
+      "blocking": false,
+      "category": "skill_value"
+    },
+    {
+      "kind": "rules_conversion",
+      "element_id": "p007_e24",
+      "source": {
+        "page": 7,
+        "region": "högerkolumn",
+        "text": "abs 16",
+        "location": {
+          "field": "data.other.Skydd",
+          "text_range": [
+            32,
+            38
+          ]
+        }
+      },
+      "original": "abs 16",
+      "converted": "BV 11",
+      "source_ruleset": "dod-t100",
+      "target_ruleset": "dod91",
+      "rule": "shield.absorption-to-bv",
+      "profile_version": 7,
+      "confidence": 1.0,
+      "reason": "DoD91-sköldar anges med brytvärde, inte absorption; katalogens BV för Rundsköld, stor ersätter källans 'abs 16'",
+      "applied": true,
+      "needs_review": false,
+      "blocking": false,
+      "category": "armor"
+    },
+    {
+      "kind": "rules_conversion",
+      "element_id": "p007_e24",
+      "source": {
+        "page": 7,
+        "region": "högerkolumn",
+        "text": "Rida 60",
+        "location": {
+          "field": "data.skills.Rida"
+        }
+      },
+      "original": "Rida 60",
+      "converted": "Rida 12",
+      "source_ruleset": "dod-t100",
+      "target_ruleset": "dod91",
+      "rule": "fv.divide-by-five",
+      "profile_version": 7,
+      "confidence": 1.0,
+      "reason": "Strukturerat FV och verifierad DoD91-färdigheten",
+      "applied": true,
+      "needs_review": false,
+      "blocking": false,
+      "category": "skill_value"
+    },
+    {
+      "kind": "rules_conversion",
+      "element_id": "p007_e24",
+      "source": {
+        "page": 7,
+        "region": "högerkolumn",
+        "text": "Simma 60",
+        "location": {
+          "field": "data.skills.Simma"
+        }
+      },
+      "original": "Simma 60",
+      "converted": "Simma 12",
+      "source_ruleset": "dod-t100",
+      "target_ruleset": "dod91",
+      "rule": "fv.divide-by-five",
+      "profile_version": 7,
+      "confidence": 1.0,
+      "reason": "Strukturerat FV och verifierad DoD91-färdigheten",
+      "applied": true,
+      "needs_review": false,
+      "blocking": false,
+      "category": "skill_value"
+    },
+    {
+      "kind": "rules_conversion",
+      "element_id": "p007_e24",
+      "source": {
+        "page": 7,
+        "region": "högerkolumn",
+        "text": "Upptäcka fara 50",
+        "location": {
+          "field": "data.skills.Upptäcka fara"
+        }
+      },
+      "original": "Upptäcka fara 50",
+      "converted": "Upptäcka fara 10",
+      "source_ruleset": "dod-t100",
+      "target_ruleset": "dod91",
+      "rule": "fv.divide-by-five",
+      "profile_version": 7,
+      "confidence": 1.0,
+      "reason": "Strukturerat FV och verifierad DoD91-färdigheten",
+      "applied": true,
+      "needs_review": false,
+      "blocking": false,
+      "category": "skill_value"
+    },
+    {
+      "kind": "rules_conversion",
+      "element_id": "p007_e24",
+      "source": {
+        "page": 7,
+        "region": "högerkolumn",
+        "text": "Första hjälpen 50",
+        "location": {
+          "field": "data.skills.Första hjälpen"
+        }
+      },
+      "original": "Första hjälpen 50",
+      "converted": "Första hjälpen 10",
+      "source_ruleset": "dod-t100",
+      "target_ruleset": "dod91",
+      "rule": "fv.divide-by-five",
+      "profile_version": 7,
+      "confidence": 1.0,
+      "reason": "Strukturerat FV och verifierad DoD91-färdigheten",
+      "applied": true,
+      "needs_review": false,
+      "blocking": false,
+      "category": "skill_value"
+    },
+    {
+      "kind": "rules_conversion",
+      "element_id": "p007_e24",
+      "source": {
+        "page": 7,
+        "region": "högerkolumn",
+        "text": "Bastardsvärd 75%",
+        "location": {
+          "field": "data.weapons[0].attack"
+        }
+      },
+      "original": "Bastardsvärd 75%",
+      "converted": "Bastardsvärd FV 15",
+      "source_ruleset": "dod-t100",
+      "target_ruleset": "dod91",
+      "rule": "fv.divide-by-five",
+      "profile_version": 7,
+      "confidence": 1.0,
+      "reason": "Angreppsvärdet är bärarens färdighet med vapnet och räknas om till FV",
+      "applied": true,
+      "needs_review": false,
+      "blocking": false,
+      "category": "weapon_skill"
+    },
+    {
+      "kind": "rules_conversion",
+      "element_id": "p007_e24",
+      "source": {
+        "page": 7,
+        "region": "högerkolumn",
+        "text": "Bastardsvärd bv: 13",
+        "location": {
+          "field": "data.weapons[0].bv"
+        }
+      },
+      "original": "Bastardsvärd bv: 13",
+      "converted": "Bastardsvärd bv: 13",
+      "source_ruleset": "dod-t100",
+      "target_ruleset": "dod91",
+      "rule": "weapon.printed-value-differs",
+      "profile_version": 7,
+      "confidence": 0.6,
+      "reason": "Trycket anger bv 13 där DoD91-katalogen har 15. Tryckta spelvärden rättas inte automatiskt (Regel 8a) — behållet som det står, avvikelsen flaggas.",
+      "applied": false,
+      "needs_review": true,
+      "blocking": false,
+      "category": "unmatched_term"
+    },
+    {
+      "kind": "rules_conversion",
+      "element_id": "p007_e24",
+      "source": {
+        "page": 7,
+        "region": "högerkolumn",
+        "text": "{'name': 'Slagsvärd', 'attack': '75%', 'damage': '1T10+1', 'bv': 13}",
+        "location": {
+          "field": "data.weapons[0]"
+        }
+      },
+      "original": "{'name': 'Slagsvärd', 'attack': '75%', 'damage': '1T10+1', 'bv': 13}",
+      "converted": "{'name': 'Bastardsvärd', 'attack': 15, 'damage': '1T10+1', 'bv': 13, 'length': 0, 'price': 2500, 'styKrav': 17, 'type': 'melee', 'weaponGroup': 'enhandssward', 'weight': 5.5}",
+      "source_ruleset": "dod-t100",
+      "target_ruleset": "dod91",
+      "rule": "weapon.catalog",
+      "profile_version": 7,
+      "confidence": 1.0,
+      "reason": "Katalogen fyller i de DoD91-värden boken inte anger; tryckta värden behålls",
+      "applied": true,
+      "needs_review": false,
+      "blocking": false,
+      "category": "weapon"
+    },
+    {
+      "kind": "rules_conversion",
+      "element_id": "p007_e24",
+      "source": {
+        "page": 7,
+        "region": "högerkolumn",
+        "text": "Dolk 75%",
+        "location": {
+          "field": "data.weapons[1].attack"
+        }
+      },
+      "original": "Dolk 75%",
+      "converted": "Dolk FV 15",
+      "source_ruleset": "dod-t100",
+      "target_ruleset": "dod91",
+      "rule": "fv.divide-by-five",
+      "profile_version": 7,
+      "confidence": 1.0,
+      "reason": "Angreppsvärdet är bärarens färdighet med vapnet och räknas om till FV",
+      "applied": true,
+      "needs_review": false,
+      "blocking": false,
+      "category": "weapon_skill"
+    },
+    {
+      "kind": "rules_conversion",
+      "element_id": "p007_e24",
+      "source": {
+        "page": 7,
+        "region": "högerkolumn",
+        "text": "{'name': 'Dolk', 'attack': '75%', 'damage': '1T4+1', 'bv': 9}",
+        "location": {
+          "field": "data.weapons[1]"
+        }
+      },
+      "original": "{'name': 'Dolk', 'attack': '75%', 'damage': '1T4+1', 'bv': 9}",
+      "converted": "{'name': 'Dolk', 'attack': 15, 'damage': '1T4+1', 'bv': 9, 'length': 0, 'price': 70, 'styKrav': 1, 'type': 'melee', 'weaponGroup': 'dolkar', 'weight': 0.5}",
+      "source_ruleset": "dod-t100",
+      "target_ruleset": "dod91",
+      "rule": "weapon.catalog",
+      "profile_version": 7,
+      "confidence": 1.0,
+      "reason": "Katalogen fyller i de DoD91-värden boken inte anger; tryckta värden behålls",
+      "applied": true,
+      "needs_review": false,
+      "blocking": false,
+      "category": "weapon"
+    },
+    {
+      "kind": "rules_conversion",
+      "element_id": "p007_e24",
+      "source": {
+        "page": 7,
+        "region": "högerkolumn",
+        "text": "Kastspjut 60%",
+        "location": {
+          "field": "data.weapons[2].attack"
+        }
+      },
+      "original": "Kastspjut 60%",
+      "converted": "Kastspjut FV 12",
+      "source_ruleset": "dod-t100",
+      "target_ruleset": "dod91",
+      "rule": "fv.divide-by-five",
+      "profile_version": 7,
+      "confidence": 1.0,
+      "reason": "Angreppsvärdet är bärarens färdighet med vapnet och räknas om till FV",
+      "applied": true,
+      "needs_review": false,
+      "blocking": false,
+      "category": "weapon_skill"
+    },
+    {
+      "kind": "rules_conversion",
+      "element_id": "p007_e24",
+      "source": {
+        "page": 7,
+        "region": "högerkolumn",
+        "text": "{'name': 'Kastspjut', 'attack': '60%', 'damage': '1T6+1', 'rackvidd': '14 rutor'}",
+        "location": {
+          "field": "data.weapons[2]"
+        }
+      },
+      "original": "{'name': 'Kastspjut', 'attack': '60%', 'damage': '1T6+1', 'rackvidd': '14 rutor'}",
+      "converted": "{'name': 'Kastspjut', 'attack': 12, 'damage': '1T6+1', 'rackvidd': '14 rutor', 'price': 120, 'styKrav': 11, 'type': 'thrown', 'weaponGroup': 'kastvapen', 'weight': 1}",
+      "source_ruleset": "dod-t100",
+      "target_ruleset": "dod91",
+      "rule": "weapon.catalog",
+      "profile_version": 7,
+      "confidence": 1.0,
+      "reason": "Katalogen fyller i de DoD91-värden boken inte anger; tryckta värden behålls",
+      "applied": true,
+      "needs_review": false,
+      "blocking": false,
+      "category": "weapon"
+    }
+  ]
+}

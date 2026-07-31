@@ -40,8 +40,11 @@ def merge(workdir):
             if el.get("needs_review"):
                 review_total += 1
         n_elements += len(elements)
-        pages_out.append({"page": no, "stage": stage, "class": p["class"],
-                          "elements": elements})
+        page_out = {"page": no, "stage": stage, "class": p["class"],
+                    "elements": elements}
+        if data.get("skipped"):
+            page_out["skipped"] = data["skipped"]
+        pages_out.append(page_out)
 
     book = {
         "generated": now_iso(),

@@ -1,0 +1,537 @@
+{
+  "equipment": [
+    {
+      "category": "aventyr",
+      "name": "Arbalestlod (10 st)",
+      "price": 60,
+      "weight": 0
+    },
+    {
+      "category": "aventyr",
+      "name": "Armborstlod (10 st)",
+      "price": 50,
+      "weight": 0
+    },
+    {
+      "category": "aventyr",
+      "name": "Pilar (10 st)",
+      "price": 50,
+      "weight": 0
+    },
+    {
+      "category": "aventyr",
+      "name": "Slungkulor, stål (10 st)",
+      "price": 50,
+      "weight": 0.5
+    },
+    {
+      "category": "aventyr",
+      "name": "Bågsträng",
+      "price": 20,
+      "weight": 0
+    },
+    {
+      "category": "aventyr",
+      "name": "Flint & stål",
+      "price": 40,
+      "weight": 0.5
+    },
+    {
+      "category": "aventyr",
+      "name": "Fackla (1 timme)",
+      "price": 10,
+      "weight": 0
+    },
+    {
+      "category": "aventyr",
+      "name": "Oljelampa (1 timme)",
+      "price": 40,
+      "weight": 0
+    },
+    {
+      "category": "aventyr",
+      "name": "Oljeflaska (1 timme)",
+      "price": 25,
+      "weight": 0
+    },
+    {
+      "category": "aventyr",
+      "name": "Järnspik (2 liter)",
+      "price": 40,
+      "weight": 0
+    },
+    {
+      "category": "aventyr",
+      "name": "Fisknät (2×5 m)",
+      "price": 40,
+      "weight": 4
+    },
+    {
+      "category": "aventyr",
+      "name": "Sovfäll",
+      "price": 40,
+      "weight": 0
+    },
+    {
+      "category": "aventyr",
+      "name": "Tält (2 man)",
+      "price": 190,
+      "weight": 0
+    },
+    {
+      "category": "behallare",
+      "name": "Glasflaska (10 doser)",
+      "price": 160,
+      "weight": 0.5
+    },
+    {
+      "category": "behallare",
+      "name": "Glasplunta (1 dos)",
+      "price": 60,
+      "weight": 0
+    },
+    {
+      "category": "behallare",
+      "name": "Koger (20 pilar)",
+      "price": 40,
+      "weight": 0
+    },
+    {
+      "category": "behallare",
+      "name": "Lerkruka (4 liter)",
+      "price": 12,
+      "weight": 1
+    },
+    {
+      "category": "behallare",
+      "name": "Penningpung (50 mynt)",
+      "price": 15,
+      "weight": 0
+    },
+    {
+      "category": "behallare",
+      "name": "Myntbälte (100 mynt)",
+      "price": 40,
+      "weight": 0
+    },
+    {
+      "category": "behallare",
+      "name": "Ryggsäck (20 liter)",
+      "price": 20,
+      "weight": 1
+    },
+    {
+      "category": "behallare",
+      "name": "Träskrin",
+      "price": 15,
+      "weight": 1
+    },
+    {
+      "category": "behallare",
+      "name": "Metallskrin",
+      "price": 140,
+      "weight": 2
+    },
+    {
+      "category": "diverse",
+      "name": "1-tums rep (10 m)",
+      "price": 190,
+      "weight": 12
+    },
+    {
+      "category": "diverse",
+      "name": "½-tums rep (10 m)",
+      "price": 180,
+      "weight": 6
+    },
+    {
+      "category": "diverse",
+      "name": "Hänglås + nyckel",
+      "price": 150,
+      "weight": 0
+    },
+    {
+      "category": "diverse",
+      "name": "Kedja (1 m, 1400 kg)",
+      "price": 45,
+      "weight": 1
+    },
+    {
+      "category": "diverse",
+      "name": "Kedja (1 m, 1000 kg)",
+      "price": 30,
+      "weight": 0.5
+    },
+    {
+      "category": "diverse",
+      "name": "Kraftig kedja (1 m)",
+      "price": 190,
+      "weight": 1
+    },
+    {
+      "category": "diverse",
+      "name": "Penna, bläck & pergament",
+      "price": 40,
+      "weight": 0
+    },
+    {
+      "category": "diverse",
+      "name": "Repstege (3 m)",
+      "price": 100,
+      "weight": 0
+    },
+    {
+      "category": "diverse",
+      "name": "Solur",
+      "price": 80,
+      "weight": 0
+    },
+    {
+      "category": "diverse",
+      "name": "Spegel",
+      "price": 40,
+      "weight": 0
+    },
+    {
+      "category": "diverse",
+      "name": "Synål",
+      "price": 10,
+      "weight": 0
+    },
+    {
+      "category": "diverse",
+      "name": "Sytråd (10 m)",
+      "price": 20,
+      "weight": 0
+    },
+    {
+      "category": "diverse",
+      "name": "Timglas",
+      "price": 875,
+      "weight": 0
+    },
+    {
+      "category": "diverse",
+      "name": "Trästege (2 m)",
+      "price": 250,
+      "weight": 0
+    },
+    {
+      "category": "diverse",
+      "name": "Väska",
+      "price": 90,
+      "weight": 0
+    },
+    {
+      "category": "diverse",
+      "name": "Signalhorn",
+      "price": 250,
+      "weight": 0
+    },
+    {
+      "category": "diverse",
+      "name": "Flöjt",
+      "price": 90,
+      "weight": 0
+    },
+    {
+      "category": "diverse",
+      "name": "Luta",
+      "price": 420,
+      "weight": 0
+    },
+    {
+      "category": "diverse",
+      "name": "Trumma",
+      "price": 190,
+      "weight": 0
+    },
+    {
+      "category": "verktyg",
+      "name": "Blåsbälg",
+      "price": 25,
+      "weight": 2
+    },
+    {
+      "category": "verktyg",
+      "name": "Bärbar smedja",
+      "price": 625,
+      "weight": 26
+    },
+    {
+      "category": "verktyg",
+      "name": "Bärbart städ",
+      "price": 40,
+      "weight": 2
+    },
+    {
+      "category": "verktyg",
+      "name": "Ficka",
+      "price": 10,
+      "weight": 0
+    },
+    {
+      "category": "verktyg",
+      "name": "Hacka",
+      "price": 40,
+      "weight": 1.5
+    },
+    {
+      "category": "verktyg",
+      "name": "Handelsvåg",
+      "price": 15,
+      "weight": 0.5
+    },
+    {
+      "category": "verktyg",
+      "name": "Handyxa",
+      "price": 60,
+      "weight": 3
+    },
+    {
+      "category": "verktyg",
+      "name": "Järnborrar (5 st)",
+      "price": 50,
+      "weight": 0
+    },
+    {
+      "category": "verktyg",
+      "name": "Järnkilar (3 st)",
+      "price": 15,
+      "weight": 0
+    },
+    {
+      "category": "verktyg",
+      "name": "Kniv",
+      "price": 5,
+      "weight": 0
+    },
+    {
+      "category": "verktyg",
+      "name": "Kofot",
+      "price": 25,
+      "weight": 2
+    },
+    {
+      "category": "verktyg",
+      "name": "Skogsyxa",
+      "price": 125,
+      "weight": 5
+    },
+    {
+      "category": "verktyg",
+      "name": "Skära",
+      "price": 40,
+      "weight": 1
+    },
+    {
+      "category": "verktyg",
+      "name": "Slägga",
+      "price": 40,
+      "weight": 8
+    },
+    {
+      "category": "verktyg",
+      "name": "Småspik (100 st)",
+      "price": 10,
+      "weight": 0
+    },
+    {
+      "category": "verktyg",
+      "name": "Snickarhammare",
+      "price": 18,
+      "weight": 1
+    },
+    {
+      "category": "verktyg",
+      "name": "Spade",
+      "price": 75,
+      "weight": 2
+    },
+    {
+      "category": "verktyg",
+      "name": "Trähammare",
+      "price": 2,
+      "weight": 1
+    },
+    {
+      "category": "verktyg",
+      "name": "Träsåg",
+      "price": 60,
+      "weight": 1
+    },
+    {
+      "category": "fordon",
+      "name": "Tvåhjulig vagn",
+      "price": 1000,
+      "weight": 0
+    },
+    {
+      "category": "fordon",
+      "name": "Fyrhjulig vagn",
+      "price": 3000,
+      "weight": 0
+    },
+    {
+      "category": "fordon",
+      "name": "Stridsvagn",
+      "price": 8000,
+      "weight": 0
+    },
+    {
+      "category": "fordon",
+      "name": "Rodd/segeldäck (4 m)",
+      "price": 1000,
+      "weight": 0
+    },
+    {
+      "category": "fordon",
+      "name": "Hundsläde",
+      "price": 650,
+      "weight": 0
+    },
+    {
+      "category": "fordon",
+      "name": "Kustskepp (10 m)",
+      "price": 10000,
+      "weight": 0
+    },
+    {
+      "category": "fordon",
+      "name": "Åsna",
+      "price": 1900,
+      "weight": 0
+    },
+    {
+      "category": "fordon",
+      "name": "Mula",
+      "price": 3750,
+      "weight": 0
+    },
+    {
+      "category": "fordon",
+      "name": "Ponny",
+      "price": 2500,
+      "weight": 0
+    },
+    {
+      "category": "fordon",
+      "name": "Ridhäst",
+      "price": 3000,
+      "weight": 0
+    },
+    {
+      "category": "fordon",
+      "name": "Arbetshäst",
+      "price": 5000,
+      "weight": 0
+    },
+    {
+      "category": "fordon",
+      "name": "Stridshäst",
+      "price": 7000,
+      "weight": 0
+    },
+    {
+      "category": "fordon",
+      "name": "Oxe",
+      "price": 3500,
+      "weight": 0
+    },
+    {
+      "category": "fordon",
+      "name": "Vakthund (tränad)",
+      "price": 600,
+      "weight": 0
+    },
+    {
+      "category": "fordon",
+      "name": "Stridshund (tränad)",
+      "price": 1000,
+      "weight": 0
+    },
+    {
+      "category": "fordon",
+      "name": "Slädhund (tränad)",
+      "price": 900,
+      "weight": 0
+    },
+    {
+      "category": "fordon",
+      "name": "Sadel",
+      "price": 40,
+      "weight": 0
+    },
+    {
+      "category": "fordon",
+      "name": "Sadelsäckar",
+      "price": 30,
+      "weight": 0
+    },
+    {
+      "category": "fordon",
+      "name": "Seldon & betsel",
+      "price": 20,
+      "weight": 0
+    },
+    {
+      "category": "fordon",
+      "name": "Hästrustning (läder)",
+      "price": 300,
+      "weight": 0
+    },
+    {
+      "category": "fordon",
+      "name": "Hästrustning (ringbrynja)",
+      "price": 1000,
+      "weight": 0
+    },
+    {
+      "category": "fordon",
+      "name": "Hästrustning (metall)",
+      "price": 2000,
+      "weight": 0
+    },
+    {
+      "category": "fordon",
+      "name": "Schabrak",
+      "price": 100,
+      "weight": 0
+    }
+  ],
+  "lodging": [
+    {
+      "name": "Sovsal",
+      "pricePerDay": 10
+    },
+    {
+      "name": "Dubbelrum",
+      "pricePerDay": 20
+    },
+    {
+      "name": "Enkelrum",
+      "pricePerDay": 35
+    },
+    {
+      "name": "Åsna/mula",
+      "pricePerDay": 5
+    },
+    {
+      "name": "Ponny",
+      "pricePerDay": 6
+    },
+    {
+      "name": "Ridhäst",
+      "pricePerDay": 15
+    },
+    {
+      "name": "Stridshäst",
+      "pricePerDay": 25
+    },
+    {
+      "name": "Vagn/kärra",
+      "pricePerDay": 5
+    }
+  ],
+  "ruleset": "dod91"
+}

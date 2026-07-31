@@ -1,0 +1,27 @@
+{
+  "checksums": {
+    "armor.json": "b175f9bc18ce50ff2b98565afdf27ed427c9cf705e1d8998353d5e00199a935c",
+    "equipment.json": "7637848a8e4cb2d4a69cda5985c1b8d1e0621cd0df94dd615b82cf5868f86542",
+    "lakedroger.json": "025bb600a1dd8abe48177e4d8143f95f5f6e58c1889847565ca527248399c21f",
+    "provisions.json": "8035ecdfefb541bde82516095ff393bb7c86f6c52c9d395664c94fadef774510",
+    "shields.json": "ac5b7add51cc80977d591203ee7a2a0032a2ae58e8f3b7f950063b8a868de024",
+    "skills.json": "7b4cbb9e9a8334cff7dc30ac5d0cf4af1b2eb7b709b2d18d327f9752df0532ce",
+    "tables.json": "84f74872b9b986403f1f9b15df9f393388f1f1b344a0e7f7b97cc836e1acedf0",
+    "weapons.json": "1287c4a89562dd158fd28af2afe59651ae16f76f52a0f7251ade66965a0ea1ff"
+  },
+  "generated": "2026-07-25T18:22:55Z",
+  "ruleset": "dod91",
+  "source_checksums": {
+    "Drakar och Demoner 1991 - Rollpersonen.md": "03253c0df312633e3207b39c0053e61523395470fd48a87588a10a84e8f5e5a8",
+    "Drakar och Demoner 1991 - Spelledarboken.md": "a0774e480ff72109a2a6379a610f27f09d7f9e3026ee1a93ab2fb5d5c597318d",
+    "equipment.ts": "d7f41599745211e3a1ec78408b236bdb864e445148293e16a8ce3fa290d1914f",
+    "lakedroger.ts": "19113033f0e489df06e4678d13bc23673e116f916c2d138b8680f3c544302e10",
+    "provisions.ts": "9cf8db7cf7c55c181fcb904ce8736a76e5175a73c2654d0ff345930f2bd8fd1a",
+    "skillChoices.ts": "34ea949a6635631e77389100a3401f57b58b752baee8ad1a07f956b44e5ffb50",
+    "skills.ts": "9bc1517eb4fc7bee2e02abaecf74361b97a870a736c4fa2551b3b780d7edc63d",
+    "tables.ts": "da9f492cce025908920a9844813b6a1a75c59021cd5d1798b3674d8abfe93e22"
+  },
+  "source_commit": "53730e6b77bdb641b70bc6004e217a4f1bbc0261",
+  "source_path": "/Users/kalle.windefalk/Claude/private/Drakar och Demoner 1991",
+  "source_repository": "Drakar och Demoner 1991"
+}

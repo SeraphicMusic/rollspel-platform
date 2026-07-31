@@ -173,6 +173,28 @@ class TestEndToEnd(unittest.TestCase):
         second = read_json(page_file(self.wd, 1, "validated.json"))
         self.assertEqual(first, second)
 
+    def test_illustrationssida_bevaras_utan_korrekturjobb(self):
+        out = page_file(self.wd, 1, "transcript.json")
+        out.write_text(json.dumps({
+            "page": 1,
+            "layout": {"columns": 0},
+            "elements": [],
+            "skipped": {"reason": "illustration_only"},
+        }), encoding="utf-8")
+        ok, rejected = ingest_transcripts(self.wd)
+        self.assertEqual(ok, [1])
+        self.assertEqual(rejected, [])
+
+        validate(self.wd, DOD)
+        validated = read_json(page_file(self.wd, 1, "validated.json"))
+        self.assertEqual(validated["skipped"]["reason"], "illustration_only")
+        self.assertEqual(review_jobs(self.wd), [])
+
+        book, _ = merge(self.wd)
+        page = [p for p in book["pages"] if p["page"] == 1][0]
+        self.assertEqual(page["elements"], [])
+        self.assertEqual(page["skipped"]["reason"], "illustration_only")
+
 
 if __name__ == "__main__":
     unittest.main()

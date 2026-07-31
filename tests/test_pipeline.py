@@ -151,6 +151,30 @@ class TestTranscriptIngest(PipelineCase):
         self.assertEqual(rejected, [])
         self.assertEqual(Manifest.load(wd).page(1)["state"], "transcribed")
 
+    def test_ren_illustrationssida_kan_hoppas_over(self):
+        wd = self._setup_scanned()
+        out = page_file(wd, 1, "transcript.json")
+        out.write_text(json.dumps({
+            "page": 1,
+            "layout": {"columns": 0},
+            "elements": [],
+            "skipped": {"reason": "illustration_only"},
+        }), encoding="utf-8")
+        ok, rejected = ingest_transcripts(wd)
+        self.assertEqual(ok, [1])
+        self.assertEqual(rejected, [])
+        self.assertEqual(Manifest.load(wd).page(1)["state"], "transcribed")
+
+    def test_tomt_transkript_utan_bildmarkering_avvisas(self):
+        wd = self._setup_scanned()
+        out = page_file(wd, 1, "transcript.json")
+        out.write_text(json.dumps({"page": 1, "elements": []}),
+                       encoding="utf-8")
+        ok, rejected = ingest_transcripts(wd)
+        self.assertEqual(ok, [])
+        self.assertEqual(len(rejected), 1)
+        self.assertIn("illustration_only", rejected[0][1])
+
     def test_trasigt_transkript_avvisas(self):
         wd = self._setup_scanned()
         out = page_file(wd, 1, "transcript.json")

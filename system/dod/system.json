@@ -44,10 +44,11 @@
   ],
   "derived_labels": {
     "BV": "Brytvärde",
-    "CL": "Chansläge",
+    "CL": "Chans att lyckas",
     "FV": "Färdighetsvärde",
     "KP": "Kroppspoäng",
     "SB": "Skadebonus",
+    "SG": "Svårighetsgrad",
     "SV": "Skyddsvärde"
   },
   "editions": [

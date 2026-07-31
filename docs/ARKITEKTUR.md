@@ -76,6 +76,10 @@ sidor — förbehandling är ett steg i kedjan, inte ett obligatoriskt pass.
 - Skillen `/rippa` (ersätter `extrahera`s inre) instruerar Claude att transkribera **en sida
   i taget** till `page_NNN.transcript.json` enligt elementmodellen (§ 3), med läsdisciplin:
   *gissa aldrig — markera `[?]` med confidence; ange region/position; modernisera inte språk.*
+- Illustrationer analyseras eller beskrivs inte. Text som ingår i själva bildmotivet
+  hoppas också över; endast typografiskt separat boktext transkriberas. En sida som
+  enbart är en illustration bokförs med tom `elements` och
+  `skipped.reason = "illustration_only"`.
 - Pipelinen validerar JSON-schema direkt vid inbokning; trasig output → sidan behåller
   status `rendered` och dyker upp i `jobb` igen.
 

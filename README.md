@@ -9,11 +9,10 @@ Bakgrund och design: [docs/ANALYS.md](docs/ANALYS.md) →
 
 ## Installation
 
-Krav: Python 3.9+, Node.js (endast för DOCX-export).
+Krav: Python 3.9+.
 
 ```bash
 python3 -m pip install --user pymupdf
-cd .claude/skills/extrahera && npm install   # docx + pdf-lib för DOCX-export
 ```
 
 ## Körning
@@ -38,7 +37,10 @@ python3 -m pipeline bokfor --workdir "arbete/min-bok"   # bokför inkomna transk
 # 4. Validera mot systemadaptern (spårbara OCR-rättningar)
 python3 -m pipeline validera --workdir "arbete/min-bok"
 
-# 5. Korrektur med agent-team (körs i Claude Code): /korrekturläs
+# 5a. Förbesiktning: deterministiska korrekturkandidater (ingen LLM)
+python3 -m pipeline forbesikta --workdir "arbete/min-bok"
+
+# 5b. Korrektur med agent-team (körs i Claude Code): /korrekturläs
 
 # 6. Sammanfoga, rapportera, exportera
 python3 -m pipeline sammanfoga --workdir "arbete/min-bok"
@@ -52,13 +54,31 @@ python3 -m pipeline status --workdir "arbete/min-bok"
 I Claude Code räcker det med `/extrahera path="böcker/Min Bok.pdf"` — skillen
 kör stegen ovan och agerar vision-modell i transkriptionssteget.
 
+### Explicit konvertering till DoD91
+
+Ett färdigrippat Drakar och Demoner-äventyr kan konverteras separat. Kommandot
+läser endast den angivna `bok.json` och ändrar aldrig extraktionskällan:
+
+```bash
+python3 -m pipeline konvertera \
+  --source "arbete/min-bok/export/bok.json" \
+  --from dod-t100 \
+  --to dod91
+```
+
+Internt state hamnar i `arbete/<slug>/konvertering/dod91/`. En konvertering
+utan blockerande beslut publiceras under `konverterat/dod91/`; annars finns
+resultatet endast i statekatalogen och kommandot avslutas med kod 3.
+`--dry-run` skriver bara manifest, analys och rapport. DoD91-katalogerna
+regenereras uttryckligen med adapterkommandot nedan och läses enbart från
+`system/dod/reference/dod91/` vid konvertering.
+
 ## Output (i `arbete/<slug>/export/`)
 
 | Fil | Innehåll |
 | --- | --- |
 | `bok.json` | Kanoniskt format: alla element med proveniens (sida, region, metod), confidence och korrektionsposter |
 | `bok.md` | Läsbar Markdown (artefakter som sidhuvuden/vattenstämplar bortfiltrerade) |
-| `bok.docx` | Word-dokument |
 | `tabeller/*.csv` | En CSV per extraherad tabell |
 | `granskningsrapport.md` | Alla osäkra element, ej applicerade förslag och applicerade korrektioner |
 
@@ -93,7 +113,7 @@ formler), `lexicon.json` (termer/färdigheter/vapen/egennamn + kända felvariant
 Adaptrarna kan regenereras från referensrepona:
 
 ```bash
-python3 scripts/bygg_adapter.py dod        --ref "/sökväg/till/DoD RPG"
+python3 scripts/bygg_adapter.py dod        --ref "/sökväg/till/Drakar och Demoner 1991"
 python3 scripts/bygg_adapter.py mutant2089 --ref "/sökväg/till/Mutant 2089 RPG"
 ```
 

@@ -1,0 +1,1174 @@
+{
+  "bfv_table": [
+    {
+      "bfv": 0,
+      "fv_max": 0,
+      "fv_min": 0
+    },
+    {
+      "bfv": 1,
+      "fv_max": 5,
+      "fv_min": 1
+    },
+    {
+      "bfv": 2,
+      "fv_max": 10,
+      "fv_min": 6
+    },
+    {
+      "bfv": 3,
+      "fv_max": 15,
+      "fv_min": 11
+    },
+    {
+      "bfv": 4,
+      "fv_max": 19,
+      "fv_min": 16
+    },
+    {
+      "bfv": 5,
+      "fv_max": 20,
+      "fv_min": 20
+    }
+  ],
+  "choices": {
+    "crafts": [
+      {
+        "linkedAttribute": "STY",
+        "name": "Smide"
+      },
+      {
+        "linkedAttribute": "SMI",
+        "name": "Läderarbete"
+      },
+      {
+        "linkedAttribute": "SMI",
+        "name": "Träsnideri"
+      },
+      {
+        "linkedAttribute": "SMI",
+        "name": "Finmekanik"
+      },
+      {
+        "linkedAttribute": "SMI",
+        "name": "Instrumentmakeri"
+      },
+      {
+        "linkedAttribute": "INT",
+        "name": "Kartografi"
+      },
+      {
+        "linkedAttribute": "SMI",
+        "name": "Smyckeskonst"
+      },
+      {
+        "linkedAttribute": "STY",
+        "name": "Stenhuggeri"
+      }
+    ],
+    "instrument_groups": [
+      {
+        "examples": [
+          "luta",
+          "harpa",
+          "lyra"
+        ],
+        "name": "Stränginstrument"
+      },
+      {
+        "examples": [
+          "fiol",
+          "rebec"
+        ],
+        "name": "Stråkinstrument"
+      },
+      {
+        "examples": [
+          "orgel",
+          "psalmodikon",
+          "vevlira"
+        ],
+        "name": "Nyckelinstrument"
+      },
+      {
+        "examples": [
+          "flöjt",
+          "horn",
+          "obo",
+          "trumpet",
+          "säckpipa"
+        ],
+        "name": "Blåsinstrument"
+      },
+      {
+        "examples": [
+          "trumma",
+          "tamburin",
+          "kastanjetter",
+          "bjällra",
+          "xylofon"
+        ],
+        "name": "Slagverk"
+      },
+      {
+        "examples": [
+          "munspel",
+          "mungiga"
+        ],
+        "name": "Tunginstrument"
+      }
+    ],
+    "languages": [
+      "Alviska",
+      "Dvärgspråk",
+      "Svartiska",
+      "Uråldriga språk",
+      "Drakspråk"
+    ],
+    "magic_schools": [
+      "Animism",
+      "Elementarmagi",
+      "Mentalism"
+    ],
+    "martial_techniques": [
+      {
+        "damage": "1T3",
+        "description": "Slag mot huvud eller bröstkorg",
+        "epCost": 0.5,
+        "id": "normalt_slag",
+        "name": "Normalt slag"
+      },
+      {
+        "damage": "1T6",
+        "description": "Spark mot ben, bröstkorg eller huvud",
+        "epCost": 0.5,
+        "id": "normal_spark",
+        "name": "Normal spark"
+      },
+      {
+        "damage": "1T3×2",
+        "description": "Två slag mot olika motståndare i samma SR",
+        "epCost": 1.0,
+        "id": "dubbelslag",
+        "name": "Dubbelslag"
+      },
+      {
+        "damage": "1T6×2",
+        "description": "Hoppande spark mot två motståndare, max 1m isär",
+        "epCost": 1.0,
+        "id": "dubbelspark",
+        "name": "Dubbelspark"
+      },
+      {
+        "damage": "1T6",
+        "description": "Slag mot vitala punkter: tinning, strupe, njurar",
+        "epCost": 1.0,
+        "id": "krosslag",
+        "name": "Krosslag"
+      },
+      {
+        "damage": "1T8",
+        "description": "Hopp + spark mot huvud/bröstkorg. −2 initiativ",
+        "epCost": 1.0,
+        "id": "hoppspark",
+        "name": "Hoppspark"
+      },
+      {
+        "damage": "1T8",
+        "description": "Roterande spark. Miss = tappar balans. −2 initiativ",
+        "epCost": 1.0,
+        "id": "rundspark",
+        "name": "Rundspark"
+      },
+      {
+        "damage": "1T6",
+        "description": "Spark riktad mot motståndare bakom",
+        "epCost": 0.5,
+        "id": "bakatspark",
+        "name": "Bakåtspark"
+      },
+      {
+        "damage": "1T3",
+        "description": "Slag mot nervknutar. Målet tappar nästa attack/parering vid misslyckad FYS",
+        "epCost": 1.0,
+        "id": "bedovningsslag",
+        "name": "Bedövningsslag"
+      },
+      {
+        "description": "Parera obeväpnad och slå bort motståndarens vapen 1T3m",
+        "epCost": 1.0,
+        "id": "avvapning",
+        "name": "Avväpning"
+      },
+      {
+        "description": "Kasta motståndare 1T3 rutor, landar liggande. 1T3 skada vid missad FYS",
+        "epCost": 1.0,
+        "id": "hogt_kast",
+        "name": "Högt kast"
+      },
+      {
+        "description": "Kasta motståndare liggande utan skada. Reser sig efter 1T2 SR",
+        "epCost": 0.5,
+        "id": "lagt_kast",
+        "name": "Lågt kast"
+      },
+      {
+        "description": "Lås motståndare och dra ner. Kan pareras",
+        "epCost": 1.0,
+        "id": "lasning",
+        "name": "Låsning/Neddragning"
+      },
+      {
+        "description": "Halvera motståndarens parerchans (avrunda nedåt)",
+        "epCost": 0.5,
+        "id": "fint",
+        "name": "Fint"
+      },
+      {
+        "description": "Parera alla närstridsvapen utan vapen",
+        "epCost": 0.5,
+        "id": "obevapnad_parering",
+        "name": "Obeväpnad vapenparer."
+      },
+      {
+        "description": "Halvera skada (ej huvudträff). Kräver lyckat slag",
+        "epCost": 1.0,
+        "id": "stalsattning",
+        "name": "Stålsättning"
+      },
+      {
+        "description": "Alltid aktiv. Kan strida i totalt mörker",
+        "epCost": 2.0,
+        "id": "blind_strid",
+        "name": "Blind strid"
+      },
+      {
+        "description": "Alltid aktiv. +5 SMI vid stridsordning",
+        "epCost": 0.5,
+        "id": "initiativbonus",
+        "name": "Initiativbonus"
+      },
+      {
+        "description": "Halvera fallskada. Kan röra sig 5 rutor i samma SR",
+        "epCost": 0.5,
+        "id": "fallteknik",
+        "name": "Fallteknik/Rullning"
+      },
+      {
+        "description": "Slå, sparka och parera liggande. Ingen bonus mot dig",
+        "epCost": 1.0,
+        "id": "liggande_strid",
+        "name": "Liggande strid"
+      },
+      {
+        "description": "Resa sig omedelbart efter fall. Akrobatiskt manöver",
+        "epCost": 0.5,
+        "id": "uppresning",
+        "name": "Uppresning"
+      },
+      {
+        "description": "Bryt motståndarens handled efter lyckad parering",
+        "epCost": 1.0,
+        "id": "vristbrott",
+        "name": "Vristbrott"
+      }
+    ],
+    "weapon_groups": [
+      {
+        "id": "dolkar",
+        "name": "Dolkar"
+      },
+      {
+        "id": "enhandssward",
+        "name": "Enhandssvärd"
+      },
+      {
+        "id": "enhands_krosvapen",
+        "name": "Enhands krossvapen"
+      },
+      {
+        "id": "enhandsyxor",
+        "name": "Enhandsyxor"
+      },
+      {
+        "id": "tvahandsvapen",
+        "name": "Tvåhandsvapen"
+      },
+      {
+        "id": "stickvapen",
+        "name": "Stickvapen"
+      },
+      {
+        "id": "kattingvapen",
+        "name": "Kättingvapen"
+      },
+      {
+        "id": "stangvapen",
+        "name": "Stångvapen"
+      },
+      {
+        "id": "bagar",
+        "name": "Bågar"
+      },
+      {
+        "id": "armborst",
+        "name": "Armborst"
+      },
+      {
+        "id": "slunga",
+        "name": "Slunga"
+      },
+      {
+        "id": "kastvapen",
+        "name": "Kastvapen"
+      },
+      {
+        "id": "piska",
+        "name": "Piska"
+      },
+      {
+        "id": "skoldar",
+        "name": "Sköldar"
+      },
+      {
+        "id": "blasror",
+        "name": "Blåsrör"
+      }
+    ]
+  },
+  "ruleset": "dod91",
+  "skills": [
+    {
+      "description": "Lura någon med ord, gester eller förklädnad.",
+      "id": "bluffa",
+      "isPrimary": true,
+      "linkedAttribute": "KAR",
+      "name": "Bluffa",
+      "scale": "A"
+    },
+    {
+      "description": "Hitta gömda föremål, hemliga dörrar och fack.",
+      "id": "finna_dolda_ting",
+      "isPrimary": true,
+      "linkedAttribute": "INT",
+      "name": "Finna dolda ting",
+      "scale": "A"
+    },
+    {
+      "description": "Stoppa blödningar och stabilisera skadade.",
+      "id": "forsta_hjalpen",
+      "isPrimary": true,
+      "linkedAttribute": "INT",
+      "name": "Första hjälpen",
+      "scale": "A"
+    },
+    {
+      "description": "Hålla sig dold och undvika att bli upptäckt.",
+      "id": "gomma_sig",
+      "isPrimary": true,
+      "linkedAttribute": "INT",
+      "name": "Gömma sig",
+      "scale": "A"
+    },
+    {
+      "description": "Hoppa långt, högt eller landa säkert efter fall.",
+      "id": "hoppa",
+      "isPrimary": true,
+      "linkedAttribute": "SMI",
+      "name": "Hoppa",
+      "scale": "A"
+    },
+    {
+      "description": "Klättra upp för väggar, klippor och träd.",
+      "id": "klatra",
+      "isPrimary": true,
+      "linkedAttribute": "SMI",
+      "name": "Klättra",
+      "scale": "A"
+    },
+    {
+      "description": "Pruta och förhandla om priser vid handel.",
+      "id": "kopsla",
+      "isPrimary": true,
+      "linkedAttribute": "KAR",
+      "name": "Köpslå",
+      "scale": "A"
+    },
+    {
+      "description": "Uppfatta ljud, viskningar och fotsteg.",
+      "id": "lyssna",
+      "isPrimary": true,
+      "linkedAttribute": "INT",
+      "name": "Lyssna",
+      "scale": "A"
+    },
+    {
+      "description": "Rida häst och andra riddjur.",
+      "id": "rida",
+      "isPrimary": true,
+      "linkedAttribute": "SMI",
+      "name": "Rida",
+      "scale": "A"
+    },
+    {
+      "description": "Sjunga melodier och ballader.",
+      "id": "sjunga",
+      "isPrimary": true,
+      "linkedAttribute": "KAR",
+      "name": "Sjunga",
+      "scale": "A"
+    },
+    {
+      "description": "Obeväpnad strid med knytnävar och sparkar.",
+      "id": "slagsmal",
+      "isPrimary": true,
+      "linkedAttribute": "STY",
+      "name": "Slagsmål",
+      "scale": "A"
+    },
+    {
+      "description": "Röra sig tyst och obemärkt.",
+      "id": "smyga",
+      "isPrimary": true,
+      "linkedAttribute": "SMI",
+      "name": "Smyga",
+      "scale": "A"
+    },
+    {
+      "description": "Följa spår efter djur eller människor i terräng.",
+      "id": "spara",
+      "isPrimary": true,
+      "linkedAttribute": "INT",
+      "name": "Spåra",
+      "scale": "A"
+    },
+    {
+      "description": "Ficktjuveri och diskret stöld av föremål.",
+      "id": "stjala_foremal",
+      "isPrimary": true,
+      "linkedAttribute": "SMI",
+      "name": "Stjäla föremål",
+      "scale": "A"
+    },
+    {
+      "description": "Instinktivt känna när fara hotar.",
+      "id": "upptacka_fara",
+      "isPrimary": true,
+      "linkedAttribute": "PSY",
+      "name": "Upptäcka fara",
+      "scale": "A"
+    },
+    {
+      "description": "Bedöma värdet på föremål, ädelstenar och gods.",
+      "id": "vardera",
+      "isPrimary": true,
+      "linkedAttribute": "INT",
+      "name": "Värdera",
+      "scale": "A"
+    },
+    {
+      "description": "Övertyga andra med argument och charm.",
+      "id": "overtala",
+      "isPrimary": true,
+      "linkedAttribute": "KAR",
+      "name": "Övertala",
+      "scale": "A"
+    },
+    {
+      "description": "Strid med dolkar och knivar i närstrid.",
+      "id": "dolkar",
+      "isPrimary": false,
+      "linkedAttribute": "SMI",
+      "name": "Dolkar",
+      "scale": "A"
+    },
+    {
+      "description": "Strid med enhandssvärd av alla typer.",
+      "id": "enhandssward",
+      "isPrimary": false,
+      "linkedAttribute": "STY",
+      "name": "Enhandssvärd",
+      "scale": "A"
+    },
+    {
+      "description": "Strid med klubbor, morgonstjärnor och stridshammare.",
+      "id": "enhands_krosvapen",
+      "isPrimary": false,
+      "linkedAttribute": "STY",
+      "name": "Enhands krosvapen",
+      "scale": "A"
+    },
+    {
+      "description": "Strid med stridsyxor och handyxor.",
+      "id": "enhandsyxor",
+      "isPrimary": false,
+      "linkedAttribute": "STY",
+      "name": "Enhandsyxor",
+      "scale": "A"
+    },
+    {
+      "description": "Strid med tvåhandssvärd och stora stridsyxor.",
+      "id": "tvahandsvapen",
+      "isPrimary": false,
+      "linkedAttribute": "STY",
+      "name": "Tvåhandsvapen",
+      "scale": "A"
+    },
+    {
+      "description": "Strid med rapir, stilett och liknande stickvapen.",
+      "id": "stickvapen",
+      "isPrimary": false,
+      "linkedAttribute": "STY",
+      "name": "Stickvapen",
+      "scale": "A"
+    },
+    {
+      "description": "Strid med stridsgissel och morgonstjärnor på kedja.",
+      "id": "kattingvapen",
+      "isPrimary": false,
+      "linkedAttribute": "SMI",
+      "name": "Kättingvapen",
+      "scale": "A"
+    },
+    {
+      "description": "Strid med hillebarder, lansar och andra stångvapen.",
+      "id": "stangvapen",
+      "isPrimary": false,
+      "linkedAttribute": "STY",
+      "name": "Stångvapen",
+      "scale": "A"
+    },
+    {
+      "description": "Skjuta med kort- och långbåge.",
+      "id": "bagar",
+      "isPrimary": false,
+      "linkedAttribute": "SMI",
+      "name": "Bågar",
+      "scale": "A"
+    },
+    {
+      "description": "Skjuta med armborst av alla typer.",
+      "id": "armborst",
+      "isPrimary": false,
+      "linkedAttribute": "SMI",
+      "name": "Armborst",
+      "scale": "A"
+    },
+    {
+      "description": "Slunga stenar och blyklot med slunga.",
+      "id": "slunga",
+      "isPrimary": false,
+      "linkedAttribute": "SMI",
+      "name": "Slunga",
+      "scale": "A"
+    },
+    {
+      "description": "Kasta yxor, spjut och andra kastvapen.",
+      "id": "kastvapen",
+      "isPrimary": false,
+      "linkedAttribute": "SMI",
+      "name": "Kastvapen",
+      "scale": "A"
+    },
+    {
+      "description": "Strid med piska, kan snärta vapen ur handen.",
+      "id": "piska",
+      "isPrimary": false,
+      "linkedAttribute": "SMI",
+      "name": "Piska",
+      "scale": "A"
+    },
+    {
+      "description": "Använda sköld för att parera och blocka anfall.",
+      "id": "skoldar",
+      "isPrimary": false,
+      "linkedAttribute": "SMI",
+      "name": "Sköldar",
+      "scale": "A"
+    },
+    {
+      "description": "Använda blåsrör, ofta med förgiftade pilar.",
+      "id": "blasror",
+      "isPrimary": false,
+      "linkedAttribute": "SMI",
+      "name": "Blåsrör",
+      "scale": "A"
+    },
+    {
+      "description": "Strid med en enkel dolk i närstrid.",
+      "id": "dolk",
+      "isPrimary": false,
+      "linkedAttribute": "SMI",
+      "name": "Dolk",
+      "scale": "A"
+    },
+    {
+      "description": "Strid med trästav, ett mångsidigt stångvapen.",
+      "id": "trastav",
+      "isPrimary": false,
+      "linkedAttribute": "SMI",
+      "name": "Trästav",
+      "scale": "A"
+    },
+    {
+      "description": "Slå vapnet ur motståndarens hand.",
+      "id": "avvapna",
+      "isPrimary": false,
+      "linkedAttribute": "SMI",
+      "name": "Avväpna",
+      "scale": "A"
+    },
+    {
+      "description": "Gå bärsärk för ökad styrka men minskad kontroll.",
+      "id": "barsarkagang",
+      "isPrimary": false,
+      "linkedAttribute": "PSY",
+      "name": "Bärsärkagång",
+      "scale": "A"
+    },
+    {
+      "description": "Dra vapen blixtsnabbt och slå i samma runda.",
+      "id": "dra_vapen",
+      "isPrimary": false,
+      "linkedAttribute": "SMI",
+      "name": "Dra vapen",
+      "scale": "A"
+    },
+    {
+      "description": "Avancerade stridskonster och obeväpnad teknik.",
+      "id": "stridskonster",
+      "isPrimary": false,
+      "linkedAttribute": "SMI",
+      "name": "Stridskonster",
+      "scale": "A"
+    },
+    {
+      "description": "Strida med ett vapen i varje hand.",
+      "id": "tva_vapen",
+      "isPrimary": false,
+      "linkedAttribute": "SMI",
+      "name": "Två vapen",
+      "scale": "A"
+    },
+    {
+      "description": "Kullerbytta, saltomortal och balansgång.",
+      "id": "akrobatik",
+      "isPrimary": false,
+      "linkedAttribute": "SMI",
+      "name": "Akrobatik",
+      "scale": "A"
+    },
+    {
+      "description": "Dansa formella och folkliga danser.",
+      "id": "dans",
+      "isPrimary": false,
+      "linkedAttribute": "SMI",
+      "name": "Dans",
+      "scale": "A"
+    },
+    {
+      "description": "Hitta, desarmera och bygga mekaniska fällor.",
+      "id": "hantera_fallor",
+      "isPrimary": false,
+      "linkedAttribute": "SMI",
+      "name": "Hantera fällor",
+      "scale": "A"
+    },
+    {
+      "description": "Knyta och lösa knopar, surra rep.",
+      "id": "knopar",
+      "isPrimary": false,
+      "linkedAttribute": "SMI",
+      "name": "Knopar",
+      "scale": "A"
+    },
+    {
+      "description": "Dyrka lås med dietriker och verktyg.",
+      "id": "lasdyrkning",
+      "isPrimary": false,
+      "linkedAttribute": "SMI",
+      "name": "Låsdyrkning",
+      "scale": "A"
+    },
+    {
+      "description": "Hitta rätt i terräng med karta, kompass eller stjärnor.",
+      "id": "orientering",
+      "isPrimary": false,
+      "linkedAttribute": "INT",
+      "name": "Orientering",
+      "scale": "A"
+    },
+    {
+      "description": "Klara sig i vildmarken genom att jaga, fiska och bygga skydd.",
+      "id": "overlevnad",
+      "isPrimary": false,
+      "linkedAttribute": "INT",
+      "name": "Överlevnad",
+      "scale": "A"
+    },
+    {
+      "description": "Hoppa med stav över hinder och vattendrag.",
+      "id": "stavhopp",
+      "isPrimary": false,
+      "linkedAttribute": "SMI",
+      "name": "Stavhopp",
+      "scale": "A"
+    },
+    {
+      "description": "Simma i vatten, även i ström och vågor.",
+      "id": "simma",
+      "isPrimary": false,
+      "linkedAttribute": "SMI",
+      "name": "Simma",
+      "scale": "A"
+    },
+    {
+      "description": "Kasta änterhake och klättra med rep.",
+      "id": "anterhake",
+      "isPrimary": false,
+      "linkedAttribute": "SMI",
+      "name": "Änterhake",
+      "scale": "A"
+    },
+    {
+      "description": "Erbjuda mutor diskret och effektivt.",
+      "id": "muta",
+      "isPrimary": false,
+      "linkedAttribute": "KAR",
+      "name": "Muta",
+      "scale": "A"
+    },
+    {
+      "description": "Spela teater, imitera och anta roller.",
+      "id": "skadespeleri",
+      "isPrimary": false,
+      "linkedAttribute": "KAR",
+      "name": "Skådespeleri",
+      "scale": "A"
+    },
+    {
+      "description": "Försätta en person i hypnotiskt tillstånd.",
+      "id": "hypnotisera",
+      "isPrimary": false,
+      "linkedAttribute": "PSY",
+      "name": "Hypnotisera",
+      "scale": "A"
+    },
+    {
+      "description": "Tala utan att röra läpparna, kasta rösten.",
+      "id": "buktala",
+      "isPrimary": false,
+      "linkedAttribute": "KAR",
+      "name": "Buktala",
+      "scale": "A"
+    },
+    {
+      "description": "Läsa av vad någon säger genom att se läpparna.",
+      "id": "lapplasning",
+      "isPrimary": false,
+      "linkedAttribute": "INT",
+      "name": "Läppläsning",
+      "scale": "A"
+    },
+    {
+      "description": "Kommunicera med handtecken och gester.",
+      "id": "teckensprak",
+      "isPrimary": false,
+      "linkedAttribute": "INT",
+      "name": "Teckenspråk",
+      "scale": "B"
+    },
+    {
+      "description": "Jonglering, trolleritrick och underhållning.",
+      "id": "gyckelkonster",
+      "isPrimary": false,
+      "linkedAttribute": "SMI",
+      "name": "Gyckelkonster",
+      "scale": "A"
+    },
+    {
+      "description": "Sköta bokföring, dokument och organisera verksamhet.",
+      "id": "administration",
+      "isPrimary": false,
+      "linkedAttribute": "INT",
+      "name": "Administration",
+      "scale": "B"
+    },
+    {
+      "description": "Kunskap om kemiska processer och framställning av elixir.",
+      "id": "alkemi",
+      "isPrimary": false,
+      "linkedAttribute": "INT",
+      "name": "Alkemi",
+      "scale": "B"
+    },
+    {
+      "description": "Läsa stjärnor och tolka himmelska tecken.",
+      "id": "astrologi",
+      "isPrimary": false,
+      "linkedAttribute": "INT",
+      "name": "Astrologi",
+      "scale": "B"
+    },
+    {
+      "description": "Känna till drogers effekter, dosering och framställning.",
+      "id": "drogkunskap",
+      "isPrimary": false,
+      "linkedAttribute": "INT",
+      "name": "Drogkunskap",
+      "scale": "B"
+    },
+    {
+      "description": "Förfalska dokument, sigill och mynt.",
+      "id": "forfalskning",
+      "isPrimary": false,
+      "linkedAttribute": "SMI",
+      "name": "Förfalskning",
+      "scale": "B"
+    },
+    {
+      "description": "Kunskap om länder, folk och platser.",
+      "id": "geografi",
+      "isPrimary": false,
+      "linkedAttribute": "INT",
+      "name": "Geografi",
+      "scale": "B"
+    },
+    {
+      "description": "Kunskap om bergarter, mineraler och grottsystem.",
+      "id": "geologi",
+      "isPrimary": false,
+      "linkedAttribute": "INT",
+      "name": "Geologi",
+      "scale": "B"
+    },
+    {
+      "description": "Känna igen, framställa och motverka gifter.",
+      "id": "giftkunskap",
+      "isPrimary": false,
+      "linkedAttribute": "INT",
+      "name": "Giftkunskap",
+      "scale": "B"
+    },
+    {
+      "description": "Spela hasardspel, fuska och beräkna odds.",
+      "id": "hasardspel",
+      "isPrimary": false,
+      "linkedAttribute": "PSY",
+      "name": "Hasardspel",
+      "scale": "A"
+    },
+    {
+      "description": "Känna igen vapensköldar, adelssläkter och ordnar.",
+      "id": "heraldik",
+      "isPrimary": false,
+      "linkedAttribute": "INT",
+      "name": "Heraldik",
+      "scale": "B"
+    },
+    {
+      "description": "Kunskap om historiska händelser, folk och epoker.",
+      "id": "historia",
+      "isPrimary": false,
+      "linkedAttribute": "INT",
+      "name": "Historia",
+      "scale": "B"
+    },
+    {
+      "description": "Förstå seder, bruk och traditioner i olika kulturer.",
+      "id": "kulturkannedom",
+      "isPrimary": false,
+      "linkedAttribute": "INT",
+      "name": "Kulturkännedom",
+      "scale": "B"
+    },
+    {
+      "description": "Kunskap om demoner, deras namn och egenskaper.",
+      "id": "kunskap_demoner",
+      "isPrimary": false,
+      "linkedAttribute": "INT",
+      "name": "Kunskap om demoner",
+      "scale": "B"
+    },
+    {
+      "description": "Teoretisk förståelse av magi och dess principer.",
+      "id": "kunskap_magi",
+      "isPrimary": false,
+      "linkedAttribute": "INT",
+      "name": "Kunskap om magi",
+      "scale": "B"
+    },
+    {
+      "description": "Kunskap om vampyrer, licher och andra odöda.",
+      "id": "kunskap_ododa",
+      "isPrimary": false,
+      "linkedAttribute": "INT",
+      "name": "Kunskap om odöda",
+      "scale": "B"
+    },
+    {
+      "description": "Räkna, kalkylera och hantera siffror.",
+      "id": "rakning",
+      "isPrimary": false,
+      "linkedAttribute": "INT",
+      "name": "Räkning",
+      "scale": "B"
+    },
+    {
+      "description": "Lära sig och förstå främmande språk.",
+      "id": "sprakkunskap",
+      "isPrimary": false,
+      "linkedAttribute": "INT",
+      "name": "Språkkunskap",
+      "scale": "B"
+    },
+    {
+      "description": "Kunskap om djur, deras beteenden och habitat.",
+      "id": "zoologi",
+      "isPrimary": false,
+      "linkedAttribute": "INT",
+      "name": "Zoologi",
+      "scale": "B"
+    },
+    {
+      "description": "Känna igen örter och växter samt deras användning.",
+      "id": "ortkunskap",
+      "isPrimary": false,
+      "linkedAttribute": "INT",
+      "name": "Örtkunskap",
+      "scale": "B"
+    },
+    {
+      "description": "Kunskap om kriminella nätverk och svart marknad.",
+      "id": "undre_varlden",
+      "isPrimary": false,
+      "linkedAttribute": "INT",
+      "name": "Undre världen",
+      "scale": "B"
+    },
+    {
+      "description": "Bota och vårda skadade och sjuka djur.",
+      "id": "djurhelning",
+      "isPrimary": false,
+      "linkedAttribute": "INT",
+      "name": "Djurhelning",
+      "scale": "A"
+    },
+    {
+      "description": "Tämja och träna djur att lyda kommandon.",
+      "id": "djurtraning",
+      "isPrimary": false,
+      "linkedAttribute": "KAR",
+      "name": "Djurträning",
+      "scale": "A"
+    },
+    {
+      "description": "Behandla sjukdomar och svåra skador med kunskap.",
+      "id": "lakekonst",
+      "isPrimary": false,
+      "linkedAttribute": "INT",
+      "name": "Läkekonst",
+      "scale": "A"
+    },
+    {
+      "description": "Lindra spänningar och smärta genom massage.",
+      "id": "massage",
+      "isPrimary": false,
+      "linkedAttribute": "SMI",
+      "name": "Massage",
+      "scale": "A"
+    },
+    {
+      "description": "Navigera till havs med karta, kompass och stjärnor.",
+      "id": "navigation",
+      "isPrimary": false,
+      "linkedAttribute": "INT",
+      "name": "Navigation",
+      "scale": "B"
+    },
+    {
+      "description": "Kunskap om hav, strömmar, vindar och segling.",
+      "id": "sjokunnighet",
+      "isPrimary": false,
+      "linkedAttribute": "INT",
+      "name": "Sjökunnighet",
+      "scale": "B"
+    },
+    {
+      "description": "Förutse väderförändringar genom att läsa tecken.",
+      "id": "spa_vader",
+      "isPrimary": false,
+      "linkedAttribute": "INT",
+      "name": "Spå väder",
+      "scale": "A"
+    },
+    {
+      "description": "Animistisk magi för att kommunicera med andar och naturen.",
+      "id": "animism",
+      "isPrimary": false,
+      "linkedAttribute": "INT",
+      "name": "Animism",
+      "scale": "A"
+    },
+    {
+      "description": "Manipulera elementen eld, vatten, jord och luft.",
+      "id": "elementarmagi",
+      "isPrimary": false,
+      "linkedAttribute": "INT",
+      "name": "Elementarmagi",
+      "scale": "A"
+    },
+    {
+      "description": "Psykisk magi med telepati, telekinesi och sinnesförmågor.",
+      "id": "mentalism",
+      "isPrimary": false,
+      "linkedAttribute": "INT",
+      "name": "Mentalism",
+      "scale": "A"
+    },
+    {
+      "description": "Kanalisera magisk kraft genom ritualer och fokus.",
+      "id": "magisk_kanalisering",
+      "isPrimary": false,
+      "linkedAttribute": "INT",
+      "name": "Magisk kanalisering",
+      "scale": "A"
+    },
+    {
+      "description": "Måla tavlor, porträtt och illustrationer.",
+      "id": "malning",
+      "isPrimary": false,
+      "linkedAttribute": "SMI",
+      "name": "Målning",
+      "scale": "A"
+    },
+    {
+      "description": "Utöva hantverk som smedja, snickeri eller garvning.",
+      "id": "hantverk",
+      "isPrimary": false,
+      "linkedAttribute": "SMI",
+      "name": "Hantverk",
+      "scale": "A"
+    },
+    {
+      "description": "Spela schack och andra strategiska brädspel.",
+      "id": "schack_bradspel",
+      "isPrimary": false,
+      "linkedAttribute": "INT",
+      "name": "Schack & brädspel",
+      "scale": "A"
+    },
+    {
+      "dynamic": "instrument",
+      "id": "spela_stranginstrument",
+      "isPrimary": false,
+      "linkedAttribute": "KAR",
+      "name": "Spela stränginstrument",
+      "scale": "A"
+    },
+    {
+      "dynamic": "instrument",
+      "id": "spela_strakinstrument",
+      "isPrimary": false,
+      "linkedAttribute": "KAR",
+      "name": "Spela stråkinstrument",
+      "scale": "A"
+    },
+    {
+      "dynamic": "instrument",
+      "id": "spela_nyckelinstrument",
+      "isPrimary": false,
+      "linkedAttribute": "KAR",
+      "name": "Spela nyckelinstrument",
+      "scale": "A"
+    },
+    {
+      "dynamic": "instrument",
+      "id": "spela_blasinstrument",
+      "isPrimary": false,
+      "linkedAttribute": "KAR",
+      "name": "Spela blåsinstrument",
+      "scale": "A"
+    },
+    {
+      "dynamic": "instrument",
+      "id": "spela_slagverk",
+      "isPrimary": false,
+      "linkedAttribute": "KAR",
+      "name": "Spela slagverk",
+      "scale": "A"
+    },
+    {
+      "dynamic": "instrument",
+      "id": "spela_tunginstrument",
+      "isPrimary": false,
+      "linkedAttribute": "KAR",
+      "name": "Spela tunginstrument",
+      "scale": "A"
+    },
+    {
+      "dynamic": "craft",
+      "id": "hantverk:smide",
+      "isPrimary": false,
+      "linkedAttribute": "STY",
+      "name": "Smide",
+      "scale": "A"
+    },
+    {
+      "dynamic": "craft",
+      "id": "hantverk:laderarbete",
+      "isPrimary": false,
+      "linkedAttribute": "SMI",
+      "name": "Läderarbete",
+      "scale": "A"
+    },
+    {
+      "dynamic": "craft",
+      "id": "hantverk:trasnideri",
+      "isPrimary": false,
+      "linkedAttribute": "SMI",
+      "name": "Träsnideri",
+      "scale": "A"
+    },
+    {
+      "dynamic": "craft",
+      "id": "hantverk:finmekanik",
+      "isPrimary": false,
+      "linkedAttribute": "SMI",
+      "name": "Finmekanik",
+      "scale": "A"
+    },
+    {
+      "dynamic": "craft",
+      "id": "hantverk:instrumentmakeri",
+      "isPrimary": false,
+      "linkedAttribute": "SMI",
+      "name": "Instrumentmakeri",
+      "scale": "A"
+    },
+    {
+      "dynamic": "craft",
+      "id": "hantverk:kartografi",
+      "isPrimary": false,
+      "linkedAttribute": "INT",
+      "name": "Kartografi",
+      "scale": "A"
+    },
+    {
+      "dynamic": "craft",
+      "id": "hantverk:smyckeskonst",
+      "isPrimary": false,
+      "linkedAttribute": "SMI",
+      "name": "Smyckeskonst",
+      "scale": "A"
+    },
+    {
+      "dynamic": "craft",
+      "id": "hantverk:stenhuggeri",
+      "isPrimary": false,
+      "linkedAttribute": "STY",
+      "name": "Stenhuggeri",
+      "scale": "A"
+    }
+  ]
+}

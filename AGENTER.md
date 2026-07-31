@@ -10,7 +10,13 @@ arbetssätt. Följ dem SLAVISKT — se [CLAUDE.md](CLAUDE.md).
 ## Regel 1: Billigaste modell som klarar uppgiften — sätt modellen EXPLICIT
 
 Underagenter ärver sessionsmodellen (dyraste) om inget anges. Sätt alltid
-`model:` uttryckligen i agentens frontmatter (aldrig i Task-anropet — se Regel 4):
+`model:` uttryckligen i agentens frontmatter (aldrig i Task-anropet — se Regel 4).
+
+Verktygsbegränsningen skrivs under nyckeln **`tools:`** — `allowed-tools:` hedras
+INTE för subagenter (den hör till slash-kommandon). Alla tre korrekturagenter låg
+med `allowed-tools:` fram till 2026-07-30 och hade därför i praktiken hela
+verktygsuppsättningen, tvärtemot kontraktet att bara advokaten applicerar.
+Kontrollera i agentregistret att begränsningen faktiskt syns.
 
 | Uppgift | Modell | Var |
 |---|---|---|
@@ -52,7 +58,16 @@ frontmatter äger modellvalet (se Regel 1).
 Allt som kan göras deterministiskt görs med Python i `pipeline/`, inte med en
 språkmodell: rendering, textlagerextraktion, systemdetektering, sammanfogning,
 export, rapport. En modell tittar ENDAST på sidor som saknar textlager (`jobb`
-listar dessa) och på korrektur mot PNG:n. Hitta aldrig på egna tempmappar eller
+listar dessa) och på korrektur mot PNG:n.
+
+Detta gäller även **inne i** korrekturen. Kör `python3 -m pipeline forbesikta`
+före agenterna: fem felmönster som återkom på varje sida i DoD-grundreglerna är
+rent mekaniska och hittas gratis — linjeregel-prefix (`- LYSSNA`), raka
+citattecken, `±0`-garbel (`t0`/`I0`/`*0`), kolumnsammanslagning (bbox-bredd mot
+spaltbredden) och läsordningsfel (arrayordning mot bbox-y, samt högerspaltsrader
+inklämda före vänsterspalten). Agenterna ska **verifiera** kandidatlistan, inte
+leta upp mönstren igen. En layoutverifierare brände 105k tokens på att korrekt
+konstatera noll strukturfel på en sida — det svaret ger skriptet på en sekund. Hitta aldrig på egna tempmappar eller
 batchindelningar — pipelinen äger allt state i `arbete/<slug>/`.
 
 ## Regel 6: Inga skal-loopar i Bash-anrop (Claude Code-specifikt)
@@ -77,13 +92,50 @@ Agenter hänger sig ibland tyst.
   osäkert innehåll flaggas `needs_review` i stället för att gissas.
 - PNG:n (`pages/page_NNN.png`) är ALLTID sanningskällan — inte den inbäddade
   textledtråden, inte draften.
-- **Print-faithful:** originaltryckets egna läsbara stavfel BEHÅLLS oförändrade
-  och flaggas `needs_review` — de emenderas inte. Endast (a) upplösning av
-  `[?]`-osäkerhetsmarkörer mot vad som faktiskt står, och (b) äkta felavläsningar
-  (OCR-fel: ö↔o, å↔a, ä↔a, rn↔m, 0↔O, 1↔l/I, 5↔S, 8↔B, ihopslagna ord) appliceras.
+- **Läs alltid tryckets faktiska lydelse först.** Vad som står i PNG:n avgörs
+  före frågan om det ska rättas. En transkription som tyst normaliserar ett
+  sättningsfel är ett fel i sig — trycket måste först fastställas, sedan
+  eventuellt emenderas.
 - **Inga tysta korrigeringar** — varje ändring är en korrektionspost
-  `{original, corrected, confidence, reason, source, applied}`. Endast djävulens
-  advokat sätter `applied: true`; avvisade poster behålls (`applied: false`) för
-  spårbarhet.
+  `{original, corrected, confidence, reason, source, kind, applied}`. Endast
+  djävulens advokat sätter `applied: true`; avvisade poster behålls
+  (`applied: false`) för spårbarhet. `kind` är `"ocr"` (återställer vad som
+  står tryckt) eller `"emendering"` (avviker medvetet från trycket).
+
+### Regel 8a: Uppenbara sättningsfel emenderas automatiskt
+
+Beslut av användaren 2026-07-28. Trycket bevaras alltid i postens `original`,
+så den print-trogna lydelsen går att återskapa — men bastexten rättas, och
+emenderingen listas i granskningsrapportens egen sektion *Emenderingar*.
+
+**Emenderas automatiskt** (`kind: "emendering"`, `applied: true`) när rättningen
+är den enda rimliga:
+
+| Klass | Exempel |
+|---|---|
+| Entydigt stavfel — bara ett svenskt ord passar | `betelar`→`betalar`, `lungt`→`lugnt`, `nätan`→`nästan`, `musikinstument`, `tredimentionell`, `kraten`→`kratern` |
+| Egennamn som avviker från bokens egen genomgående form | `Ertbolsus`→`Erbolsus`, `PRna`→`RPna`, `Lannis`→`Lannos` |
+| Saknad bokstav/ord som krävs för grammatisk fullständighet | `Ing försök`→`Inget försök`, `Brev är`→`Brevet är`, `passiva åse`→`passivt åse` |
+| Felaktigt ordmellanrum | `Ispetsen`→`I spetsen`, `Spring källan`→`Springkällan` |
+| Typografi enligt boknivåbeslutet | raka→typografiska citattecken, halvfyrkant |
+
+**Emenderas ALDRIG** — behålls print-troget och flaggas `needs_review`:
+
+- **Siffror och spelvärden i alla former** — statblocks, FV, skada, tärnings-
+  notation, priser, avstånd, antal. Ett tryckt räknefel är ett *fynd*, inte ett
+  fel att rätta. Gäller även när `derived_checks` säger att värdet inte går ihop.
+- **Dialekt och medveten talspråksform** — `hävaså`, `papprena`,
+  `Fö att di int sa rulla åv redet`. Repliker normaliseras inte.
+- **Ålderdomliga men korrekta former** — `officieren`, `däven`, `till dags äro`.
+  Slå upp innan du dömer; arkaism är inte stavfel.
+- **Egennamn och världstermer som är attesterade i trycket** — `Ôdvinsson`,
+  `Morëlvidyn`, `Tyreskyrkan`. Avvikande diakriter är data, inte brus.
+- **Allt där två eller fler rättningar är lika rimliga.** Kan du inte peka ut
+  en enda korrekt lydelse är det inte uppenbart — då gäller flagga, inte gissning.
+- **Partier som inte går att läsa säkert i PNG:n** — `[?]` kvarstår.
+
+Tvivlar du på vilken kolumn ett fall hör till: det hör till högerkolumnen.
+Överemendering förstör arkivvärdet; en kvarstående flagga kostar bara en rad
+i rapporten.
 - Domänvärden som ser fel ut men står tryckta så (t.ex. skelett med INT=0/FYS=0)
   rättas INTE — det är advokatens domänkontroll som avgör, inte specialisterna.

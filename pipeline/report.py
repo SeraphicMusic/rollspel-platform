@@ -1,6 +1,7 @@
 """Granskningsrapport: allt som behöver mänskliga ögon, sorterat per sida."""
 from pathlib import Path
 
+from .corrections import KIND_EMENDATION, KIND_OCR
 from .log import setup_logging
 from .manifest import Manifest, export_dir, page_file, pages_dir, read_json
 from .merge import best_page_file, merge
@@ -29,6 +30,22 @@ def _agent_model(agent_name):
 def _model_from_source(source):
     name = source.split(":", 1)[1] if source and ":" in source else source
     return _agent_model(name or "")
+
+
+def _correction_kind(correction):
+    """Korrektionsslag, med härledning för poster skrivna före fältet fanns.
+
+    Boknivåbesluten var per definition avsteg från trycket, så de klassas som
+    emenderingar även utan explicit `kind`. Övriga äldre poster antas vara
+    OCR-rättelser — det var den enda sortens applicerade ändring som Regel 8
+    tillät innan 8a infördes.
+    """
+    kind = correction.get("kind")
+    if kind:
+        return kind
+    if str(correction.get("source", "")).startswith("anvandare:boknivabeslut"):
+        return KIND_EMENDATION
+    return KIND_OCR
 
 
 def build_report(workdir):
@@ -98,11 +115,7 @@ def build_report(workdir):
                                 c["confidence"], c["reason"]))
         lines.append("")
 
-    lines.append("## Applicerade korrektioner (spårbarhet)")
-    lines.append("")
-    lines.append("| Sida | Original | Rättat | Confidence | Källa | Modell | Orsak |")
-    lines.append("| --- | --- | --- | --- | --- | --- | --- |")
-    n_corr = 0
+    applied_rows = []
     for no in m.page_numbers():
         path, _ = best_page_file(workdir, no)
         if path is None:
@@ -110,17 +123,48 @@ def build_report(workdir):
         for el in read_json(path).get("elements", []):
             for c in el.get("corrections", []):
                 if c.get("applied"):
-                    n_corr += 1
-                    lines.append("| %d | `%s` | `%s` | %.2f | %s | %s | %s |"
-                                 % (no, c["original"], c["corrected"],
-                                    c["confidence"], c["source"],
-                                    _model_from_source(c["source"]),
-                                    c["reason"].replace("|", "/")))
-    if n_corr == 0:
+                    applied_rows.append((no, el, c))
+
+    emendations = [row for row in applied_rows
+                   if _correction_kind(row[2]) == KIND_EMENDATION]
+
+    lines.append("## Emenderingar — avsteg från trycket")
+    lines.append("")
+    lines.append("Sättningsfel i originalet som rättats automatiskt enligt "
+                 "AGENTER.md Regel 8. Trycket står kvar i kolumnen *Trycket*, "
+                 "så den print-trogna lydelsen går alltid att återskapa. "
+                 "Läs igenom och säg till om något ska tillbaka.")
+    lines.append("")
+    lines.append("| Sida | Element | Trycket | Rättat till | Confidence "
+                 "| Källa | Orsak |")
+    lines.append("| --- | --- | --- | --- | --- | --- | --- |")
+    for no, el, c in emendations:
+        lines.append("| %d | `%s` | `%s` | `%s` | %.2f | %s | %s |"
+                     % (no, el.get("id", "?"), c["original"], c["corrected"],
+                        c["confidence"], c["source"],
+                        c["reason"].replace("|", "/")))
+    if not emendations:
         lines.append("| — | — | — | — | — | — | — |")
     lines.append("")
-    lines.append("*%d granskningsposter, %d applicerade korrektioner.*"
-                 % (n_items, n_corr))
+
+    lines.append("## Applicerade korrektioner (spårbarhet)")
+    lines.append("")
+    lines.append("| Sida | Typ | Original | Rättat | Confidence | Källa "
+                 "| Modell | Orsak |")
+    lines.append("| --- | --- | --- | --- | --- | --- | --- | --- |")
+    for no, _el, c in applied_rows:
+        lines.append("| %d | %s | `%s` | `%s` | %.2f | %s | %s | %s |"
+                     % (no, _correction_kind(c), c["original"],
+                        c["corrected"], c["confidence"], c["source"],
+                        _model_from_source(c["source"]),
+                        c["reason"].replace("|", "/")))
+    n_corr = len(applied_rows)
+    if n_corr == 0:
+        lines.append("| — | — | — | — | — | — | — | — |")
+    lines.append("")
+    lines.append("*%d granskningsposter, %d applicerade korrektioner "
+                 "(varav %d emenderingar).*"
+                 % (n_items, n_corr, len(emendations)))
     lines.append("")
 
     lines.append("## Agenter & modeller per sida")

@@ -4,6 +4,12 @@ Grundprinciper (se docs/ARKITEKTUR.md §3.3):
   * Originaltexten bevaras alltid i posten — inga tysta korrigeringar.
   * En rättning appliceras bara vid entydig kandidat och confidence >= tröskeln.
   * Tvetydiga/osäkra fall flaggas för manuell granskning i stället.
+
+Två slag av rättningar, åtskilda av fältet `kind` (se AGENTER.md Regel 8):
+  * KIND_OCR — återställer vad som faktiskt står tryckt (felavläsning).
+  * KIND_EMENDATION — avviker medvetet FRÅN trycket för att rätta ett
+    sättningsfel. Tryckets lydelse finns kvar i `original`, så den
+    print-trogna texten går alltid att återskapa ur posterna.
 """
 import itertools
 import re
@@ -13,13 +19,20 @@ from .systems import normalize
 
 APPLY_THRESHOLD = 0.9
 
+KIND_OCR = "ocr"
+KIND_EMENDATION = "emendering"
+CORRECTION_KINDS = (KIND_OCR, KIND_EMENDATION)
+
 CANONICAL_DICE = re.compile(r"^(\d+)T(\d+)([+-]\d+)?$")
 
 
 def make_correction(original, corrected, confidence, reason, source,
-                    applied=None):
+                    applied=None, kind=KIND_OCR):
     if applied is None:
         applied = confidence >= APPLY_THRESHOLD
+    if kind not in CORRECTION_KINDS:
+        raise ValueError("okänt korrektionsslag: %r (tillåtna: %s)"
+                         % (kind, ", ".join(CORRECTION_KINDS)))
     return {
         "original": original,
         "corrected": corrected,
@@ -27,6 +40,7 @@ def make_correction(original, corrected, confidence, reason, source,
         "confidence": round(confidence, 3),
         "reason": reason,
         "source": source,
+        "kind": kind,
         "timestamp": now_iso(),
     }
 
@@ -59,6 +73,10 @@ def dice_candidates(token, dice_cfg, max_count=50):
         return []
     # Rena siffertal repareras aldrig (t.ex. årtal "1984" får inte bli tärning)
     if token.isdigit():
+        return []
+    # Sifferlös token måste ha en bokstavlig separator (T/D) kvar för att få
+    # repareras. Annars blir vanliga versalord tärningar: "SIG" -> "5T6".
+    if not any(ch.isdigit() for ch in token) and not any(ch in "TtDd" for ch in token):
         return []
     per_char = [_char_candidates(ch, misread) for ch in token]
     if any(not c for c in per_char):
@@ -175,14 +193,35 @@ def repair_word(word, adapter):
     canonical = candidates[0]
     if word == canonical or word.lower() == canonical.lower():
         return "ok", None  # endast skiftlägesskillnad — rätta inte
+    # Diakritisk normalisering får inte ensam bära en matchning när ordet OCH
+    # systemtermen dessutom skiljer sig i versalisering. OCR förväxlar å/ä/ö
+    # med a/o, men byter sällan skiftläge — ett gement vanligt svenskt ord som
+    # normaliserar till en versal systemterm är därför nästan alltid just ett
+    # vanligt ord: "läser" mot vapentermen "Laser", "vardera" mot färdigheten
+    # "Värdera", "laga" mot "Låga". Lämna det orört i stället för att
+    # auto-applicera. Gäller bara det härledda ordindexet — handkurerade
+    # aliasposter ("fardighet" -> "Färdighet") är avsiktliga och passerar ovan.
+    if word[:1].isupper() != canonical[:1].isupper():
+        return "skip", None
     # Ordet skiljer sig i diakritiska tecken e.d. men normaliserar lika
     subs = sum(1 for a, b in zip(word, canonical) if a != b) + \
         abs(len(word) - len(canonical))
     confidence = max(0.85, 0.98 - 0.02 * subs)
+    # Härledda ordindexmatchningar FÖRESLÅS, de appliceras aldrig tyst.
+    # Versaliseringsspärren ovan fångar bara en del av felklassen: när både
+    # ordet och systemtermen är versalstartade passerar den, och då har
+    # valideraren rättat tryckets korrekta plural `Halvlängdsmän` till singular
+    # `Halvlängdsman` (DoD-grundreglerna s. 43 — krävde en advokatkörning att
+    # revertera). Böjningsformer och besläktade ord kan aldrig skiljas från
+    # diakritikfel utan att se trycket, så domen hör hos advokaten. Endast
+    # handkurerade aliasposten ovan appliceras direkt.
     return "fixed", make_correction(
         word, canonical, confidence,
-        "Matchar systemterm %r efter diakritisk normalisering" % canonical,
-        "validator:lexicon")
+        "Matchar systemterm %r efter diakritisk normalisering — FÖRSLAG som "
+        "kräver verifiering mot PNG:n. Är ordet en egen böjningsform eller ett "
+        "besläktat ord som står korrekt i trycket ska posten avvisas "
+        "(applied: false) och lexikonet kompletteras i stället." % canonical,
+        "validator:lexicon", applied=False)
 
 
 def scan_words_in_text(text, adapter):

@@ -197,6 +197,13 @@ def validate_element(el, adapter):
                 flags.extend("%(issue)s: %(token)r" % f for f in cell_flags)
 
     el.setdefault("corrections", []).extend(corrections)
+    # Ej applicerade valideringsposter är förslag — de måste synas i
+    # granskningsrapporten, annars ligger de tysta i filen och ingen dömer dem.
+    for corr in corrections:
+        if not corr.get("applied"):
+            flags.append("valideringsförslag ej applicerat (%s): %r → %r"
+                         % (corr.get("source", "?"), corr["original"],
+                            corr["corrected"]))
     if flags:
         el["needs_review"] = True
         el.setdefault("review_reasons", []).extend(flags)
@@ -241,6 +248,8 @@ def validate(workdir, adapter, pages=None, force=False):
                       "source_file": src.name,
                       "elements": elements,
                       "stats": {"corrections": page_corr, "flags": page_flags}}
+            if page_data.get("skipped"):
+                result["skipped"] = page_data["skipped"]
             atomic_write_json(out, result)
             p["needs_review"] = page_flags + sum(
                 1 for el in elements
