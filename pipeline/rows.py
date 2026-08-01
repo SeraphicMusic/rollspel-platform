@@ -138,12 +138,18 @@ MIN_BAND_FACTOR = 0.25
 # `LÄRD MAN` s. 16), och sammanslagna tabellband däremellan. Vid 3,0 föll varje
 # uppslagsrubrik bort; svepet 6/8/10/12/16 gav 97,5/97,6/97,9/97,9/98,1 %.
 GRAPHIC_HEIGHT_FACTOR = 16.0
-# Smalaste band som räknas som en tryckt rad, som andel av sidbredden. En
-# foliosiffra mäter 0,015-0,021; det som ligger under är stänk i skanningen.
+# Smalaste band som räknas som en tryckt rad, som andel av sidbredden.
 # Guarden behövs först sedan kantzonerna fick sitt eget brusgolv (D 3): mot
 # sidans radhöjd sållades stänket bort på köpet, mot zonens egen median gör
 # det inte det.
-MIN_ROW_WIDTH = 0.008
+#
+# Nivån är uppmätt, inte gissad. Bokens smala kantband fördelar sig
+# 1, 1, 1, 2, 3, 4, 5 px (stänk) — sedan 12 px, som är s. 2:s folio `1` —
+# sedan 16 och 17 px (s. 22:s sidhuvud, s. 4:s folio `3`). Tröskeln måste
+# ligga i luckan mellan 5 och 12; en ensam smal siffra är den svåraste
+# verkliga raden på en sida. Vid 0,008 (16 px) kastades folion `1`, vilket
+# tog tillbaka en del av det defekt 3 just hade vunnit.
+MIN_ROW_WIDTH = 0.004
 # Bandets bakgrundsnivå i `_extent` tas som den här percentilen av svärtan
 # längs bandet — låg nog att träffa pappret på en vanlig rad, hög nog att inte
 # fastna i en enstaka ljus pixel mitt i en tonplatta.

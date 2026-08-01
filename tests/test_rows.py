@@ -303,9 +303,24 @@ class TestMatdefekterBok2(unittest.TestCase):
     def test_stank_i_sidfoten_ar_ingen_rad(self):
         """Zonens eget brusgolv får inte släppa igenom enstaka stänk."""
         page, _ = page_with_lines(6, top0=200)
-        page[HEIGHT - 40:HEIGHT - 37, 300:303] = 20   # 3 px brett stänk
+        # Tryckets proportioner: stänk mäter 1-5 px av 1980, folion 12 px.
+        page[HEIGHT - 40:HEIGHT - 37, 300:300 + int(0.0025 * WIDTH)] = 20
         rows, _ = measure_dark(darkness(page))
         self.assertEqual([r for r in rows if r["region"] == "sidfot"], [])
+
+    def test_ensam_smal_foliosiffra_kastas_inte_av_breddsparren(self):
+        """En folio `1` är den smalaste VERKLIGA raden på en sida.
+
+        Bokens smala kantband ligger på 1-5 px (stänk) och sedan 12 px, som
+        är s. 2:s folio. En spärr satt över 12 px tar tillbaka just det som
+        kantzonernas egna brusgolv (D 3) nyss vunnit.
+        """
+        page, _ = page_with_lines(6, top0=200)
+        bredd = int(0.0061 * WIDTH)                   # s. 2:s folio: 12/1980
+        page[HEIGHT - 40:HEIGHT - 34, 300:300 + bredd] = 20
+        rows, _ = measure_dark(darkness(page))
+        fot = [r for r in rows if r["region"] == "sidfot"]
+        self.assertTrue(fot, "den smala folion kastades som stänk")
 
     # -- D 4 -------------------------------------------------------------
     def test_linjeornament_och_folio_blir_skilda_band(self):

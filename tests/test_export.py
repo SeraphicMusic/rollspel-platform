@@ -175,6 +175,27 @@ class TestReflow(unittest.TestCase):
         self.assertIn("En rad som fyller hela spalten. Sista raden.\n\n"
                       "Ett nytt stycke tar vid.", md)
 
+    def test_exempelrutans_stycken_blir_ETT_citatblock(self):
+        """En tryckt ruta är EN ruta även när den rymmer flera stycken.
+
+        Skiljs styckena av en tom rad blir de två citatblock i markdown och
+        rutan går synligt itu. Felet blev synligt först när raderna började
+        mätas på sin egen bredd i stället för på rutans ram: dessförinnan var
+        varje rad i rutan lika bred, och kortradsregeln kunde aldrig bryta
+        stycket alls (del II s. 10, HINDER och SLUMPMÄSSIGA MÖTEN).
+        """
+        md = self.render([
+            line("e01", "Exempel: hindret är att finna den glömda dalen.",
+                 etype="boxed_text"),
+            line("e02", "Sista raden.", w=0.18, etype="boxed_text"),
+            line("e03", "Vad som än händer måste RPna till borgen.",
+                 etype="boxed_text"),
+        ])
+        rutan = [rad for rad in md.split("\n") if rad.startswith(">")]
+        self.assertEqual(len(rutan), 3, md)
+        self.assertEqual(rutan[1], ">", "styckena blev tva citatblock:\n" + md)
+        self.assertNotIn("\n\n>", md.split("Exempel")[1])
+
     def test_hyphenation_at_line_break_is_healed(self):
         md = self.render([line("e01", "Texten korrigerades och komplette-"),
                           line("e02", "rades inför utgåvan.")])

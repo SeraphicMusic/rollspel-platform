@@ -461,12 +461,21 @@ def export_markdown(workdir, include_artifacts=False):
                     # varje punkt en egen lista i markdown.
                     lines += ["- %s" % text]
                 elif etype == "boxed_text":
-                    lines += ["> " + text.replace("\n", "\n> "), ""]
+                    # En tryckt exempelruta är EN ruta även när den rymmer
+                    # flera stycken. Skiljs styckena av en TOM rad blir de två
+                    # citatblock i markdown och rutan går synligt itu — s. 10:s
+                    # HINDER- och SLUMPMÄSSIGA MÖTEN-exempel bröt av precis så
+                    # sedan raderna började mätas på sin egen bredd i stället
+                    # för på rutans ram. Separatorn är därför en CITERAD
+                    # tomrad, samma grepp som håller ihop punktlistorna.
+                    if lines and lines[-1].startswith(">"):
+                        lines += [">"]
+                    lines += ["> " + text.replace("\n", "\n> ")]
                 elif style == "italic":
                     lines += ["*%s*" % text, ""]
                 else:
                     lines += [text, ""]
-            if blocks and etype in _BULLET_TYPES:
+            if blocks and (etype in _BULLET_TYPES or etype == "boxed_text"):
                 lines += [""]
             continue
         index += 1
