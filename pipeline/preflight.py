@@ -78,6 +78,10 @@ ORDER_TOLERANCE = 0.05
 # vanlig spaltväxling mitt på sidan.
 INTERLEAVE_SHARE = 0.8
 
+# Ett element bredare än så här (mot spaltbredden) spänner över båda spalterna
+# och tillhör därför ingendera — sidhuvud, linjaler och sidbreda tabeller.
+WIDE_ELEMENT = 1.2
+
 # Vertikal radsammanslagning: ett element som spänner över två tryckta rader
 # men bara återger den ena. Uppmätt på s. 60 (0,0336 mot medianen 0,0161 =
 # 2,09×) och bekräftat som mönster på s. 68. Faktorn ligger med avsikt högt:
@@ -309,6 +313,26 @@ def rule_column_merge(elements):
     return hits
 
 
+def _column_of(el, elements):
+    """Vilken spalt elementets bbox FAKTISKT ligger i — etiketten struntar vi i.
+
+    Regionnamnet kommer ur uppmätningen och kan vara fel. På sida 4 låg
+    högerspaltens avsnittsrubrik som element nr 2, före hela vänsterspalten,
+    med regionen felaktigt satt till `sidhuvud` — och eftersom regeln filtrerade
+    på etiketten passerade läsordningsfelet obemärkt. Geometrin ljuger inte:
+    ett element vars vänsterkant ligger bortom sidans mitt hör till högerspalten,
+    oavsett vad etiketten påstår.
+    """
+    box = _bbox(el)
+    if not box:
+        return None
+    colw = column_width(elements)
+    # Utan uppmätt spaltbredd finns ingen tvåspaltsgeometri att döma mot.
+    if not colw or box[2] > colw * WIDE_ELEMENT:
+        return None
+    return "högerkolumn" if box[0] >= 0.5 else "vänsterkolumn"
+
+
 def rule_column_interleaving(elements):
     """Högerkolumnselement som ligger före vänsterkolumnen i arrayen.
 
@@ -319,9 +343,9 @@ def rule_column_interleaving(elements):
     y-baserade kontrollen nedan, eftersom elementet ligger först i sin egen spalt.
     """
     left_idx = [i for i, el in enumerate(elements)
-                if _region(el) == "vänsterkolumn" and _bbox(el)]
+                if _column_of(el, elements) == "vänsterkolumn"]
     right = [(i, el) for i, el in enumerate(elements)
-             if _region(el) == "högerkolumn" and _bbox(el)]
+             if _column_of(el, elements) == "högerkolumn"]
     if len(left_idx) < MIN_COLUMN_ELEMENTS or len(right) < MIN_COLUMN_ELEMENTS:
         return []
     hits = []
@@ -331,8 +355,13 @@ def rule_column_interleaving(elements):
         # spaltväxling mitt i sidan utan en rad som hamnat i början av arrayen.
         if after < INTERLEAVE_SHARE * len(left_idx):
             continue
-        # Korta element är sidhuvud/tabellceller, inte brödtextrader ur spalten.
-        if len(el.get("text") or "") < MIN_MERGE_TEXT:
+        # Korta element är sidhuvud/tabellceller, inte brödtextrader ur spalten
+        # — men en RUBRIK undantas: den är kort av naturen, och det är just
+        # rubriker som hamnar först i arrayen (s. 4: högerspaltens
+        # `ATT LEDA SPELET` låg som element nr 2, så hela vänsterspalten
+        # renderades under en rubrik den inte tillhör).
+        if (el.get("type") != "heading"
+                and len(el.get("text") or "") < MIN_MERGE_TEXT):
             continue
         hits.append((el,
                      "Heuristik (läsordning): elementet hör till högerkolumnen "

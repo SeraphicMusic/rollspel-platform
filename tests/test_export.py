@@ -98,6 +98,20 @@ class TestExportMarkdown(unittest.TestCase):
         self.assertIn("**Skydd:** 4 poäng hud", md)
         self.assertNotIn("attacktabell_rubrik", md)
 
+    def test_nested_statblock_field_is_rendered_readably(self):
+        """Spöket (s. 47) bär en hel kolumn ur rutan i `extraStats`.
+
+        Utan uppackning föll den ut som en rå Python-dict i `bok.md`:
+        `- **Multipel:** {'STY': '0', 'STO': 'x1'}`.
+        """
+        md = self.render([{
+            "id": "e01", "type": "statblock", "text": "",
+            "data": {"name": "SPÖKE", "stats": {"STO": 11},
+                     "extraStats": {"Multipel": {"STY": "0", "STO": "x1"}}},
+        }])
+        self.assertIn("**Multipel:** STY 0, STO x1", md)
+        self.assertNotIn("{", md)
+
     def test_genuinely_unknown_type_is_kept_and_warned(self):
         md = self.render([
             {"id": "e01", "type": "nyuppfunnen_typ", "text": "Viktigt värde"},
@@ -173,6 +187,42 @@ class TestReflow(unittest.TestCase):
                           line("e02", "växt- och mineralriket.")])
         self.assertIn("från djur- växt- och mineralriket.", md)
         self.assertNotIn("djurväxt", md)
+
+    def test_field_lines_are_not_glued_together(self):
+        """Örtposterna (s. 53–61) sätts `Etikett: värde`, en per tryckt rad.
+
+        Raderna fyller inte spalten, men breddreferensen räknas ur dem själva,
+        så varken kortrads- eller utslutningsregeln biter. Utan en egen regel
+        föll hela posten ut som en rad.
+        """
+        md = self.render([
+            line("e01", "Tillredning: Brygges", w=0.16),
+            line("e02", "Intagning: Dricks", w=0.14),
+            line("e03", "Växtplats: Ljus lövskog", w=0.19),
+        ])
+        self.assertIn("Tillredning: Brygges\n\nIntagning: Dricks\n\n"
+                      "Växtplats: Ljus lövskog", md)
+
+    def test_prose_with_a_colon_is_still_reflowed(self):
+        """En löptextrad som råkar bära ett kolon är ingen fältrad."""
+        md = self.render([
+            line("e01", "Han sade följande till spelledaren i stridens hetta:"),
+            line("e02", "att en parering alltid kostar en handling."),
+        ])
+        self.assertIn("stridens hetta: att en parering", md)
+
+    def test_slash_at_line_break_is_healed(self):
+        """`(liten/medelstor/` + `stor)` fick ett felaktigt mellanslag."""
+        md = self.render([line("e01", "Välj storlek (liten/medelstor/"),
+                          line("e02", "stor) innan slaget.")])
+        self.assertIn("(liten/medelstor/stor) innan slaget.", md)
+        self.assertNotIn("medelstor/ stor", md)
+
+    def test_spaced_slash_is_a_separator_and_keeps_its_space(self):
+        """`Teknik /` + `Grundkostnad` skiljer två fält åt — ingen bindning."""
+        md = self.render([line("e01", "Slå mot Smyga /"),
+                          line("e02", "Gömma sig i strid.", w=0.18)])
+        self.assertIn("Slå mot Smyga / Gömma sig i strid.", md)
 
     def test_toc_entries_are_never_reflowed(self):
         """En innehållspost är en rad; fogas de ihop förstörs uppställningen."""

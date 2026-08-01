@@ -165,6 +165,109 @@ class TestTranscriptIngest(PipelineCase):
         self.assertEqual(rejected, [])
         self.assertEqual(Manifest.load(wd).page(1)["state"], "transcribed")
 
+    def _measure(self, wd, rows):
+        page_file(wd, 1, "radboxar.json").write_text(json.dumps(
+            {"page": 1, "rows": rows}, ensure_ascii=False), encoding="utf-8")
+
+    def _write(self, wd, elements):
+        page_file(wd, 1, "transcript.json").write_text(json.dumps(
+            {"page": 1, "elements": elements}, ensure_ascii=False),
+            encoding="utf-8")
+
+    def _ingested(self, wd):
+        return json.loads(page_file(wd, 1, "transcript.json")
+                          .read_text(encoding="utf-8"))["elements"]
+
+    def test_radindex_blir_uppmatt_bbox(self):
+        """Transkriberaren pekar ut RADER; pipelinen räknar fram boxen.
+
+        En påhittad koordinat är ett fel som ser ut som data, så modellen
+        får aldrig skriva bbox själv.
+        """
+        wd = self._setup_scanned()
+        self._measure(wd, [
+            {"region": "vänsterkolumn", "bbox": [0.06, 0.90, 0.42, 0.01]},
+            {"region": "vänsterkolumn", "bbox": [0.07, 0.88, 0.41, 0.01]},
+        ])
+        self._write(wd, [{"type": "paragraph", "text": "En rad",
+                          "source": {"rader": [0]}}])
+        ok, rejected = ingest_transcripts(wd)
+        self.assertEqual((ok, rejected), ([1], []))
+        src = self._ingested(wd)[0]["source"]
+        self.assertEqual(src["bbox"], [0.06, 0.9, 0.42, 0.01])
+        self.assertEqual(src["bbox_source"], "pipeline.rows")
+        self.assertEqual(src["region"], "vänsterkolumn")
+
+    def test_flera_rader_ger_unionens_box(self):
+        """Tabell, statblock och list är ETT element — unionens box."""
+        wd = self._setup_scanned()
+        self._measure(wd, [
+            {"region": "vänsterkolumn", "bbox": [0.06, 0.90, 0.42, 0.01]},
+            {"region": "vänsterkolumn", "bbox": [0.07, 0.86, 0.41, 0.01]},
+        ])
+        self._write(wd, [{"type": "table", "source": {"rader": [0, 1]},
+                          "data": {"headers": [""], "rows": [["1"]]}}])
+        ingest_transcripts(wd)
+        self.assertEqual(self._ingested(wd)[0]["source"]["bbox"],
+                         [0.06, 0.86, 0.42, 0.05])
+
+    def test_tom_radlista_ger_bbox_saknas(self):
+        """Mätningen missar ~1,5 % av raderna — då utelämnas boxen."""
+        wd = self._setup_scanned()
+        self._measure(wd, [{"region": "sidfot", "bbox": [0.5, 0.05, 0.02, 0.01]}])
+        self._write(wd, [{"type": "paragraph", "text": "Slutrad",
+                          "source": {"region": "vänsterkolumn", "rader": []}}])
+        ingest_transcripts(wd)
+        src = self._ingested(wd)[0]["source"]
+        self.assertNotIn("bbox", src)
+        self.assertIn("bbox_saknas", src)
+        self.assertEqual(src["region"], "vänsterkolumn")
+
+    def test_radindex_utanfor_matningen_avvisar_sidan(self):
+        """Hellre en omkörd sida än ett transkript mot fel koordinater."""
+        wd = self._setup_scanned()
+        self._measure(wd, [{"region": "sidbredd", "bbox": [0.06, 0.9, 0.4, 0.01]}])
+        self._write(wd, [{"type": "paragraph", "text": "Rad",
+                          "source": {"rader": [7]}}])
+        ok, rejected = ingest_transcripts(wd)
+        self.assertEqual(ok, [])
+        self.assertIn("utanför mätningens", rejected[0][1])
+
+    def test_egen_bbox_lamnas_orord(self):
+        """Sidor som redan har uppmätt bbox (t.ex. bok 2:s s. 27) rörs inte."""
+        wd = self._setup_scanned()
+        self._write(wd, [{"type": "paragraph", "text": "Rad", "source": {
+            "region": "vänsterkolumn", "bbox": [0.1, 0.2, 0.3, 0.01]}}])
+        ok, rejected = ingest_transcripts(wd)
+        self.assertEqual((ok, rejected), ([1], []))
+        self.assertEqual(self._ingested(wd)[0]["source"]["bbox"],
+                         [0.1, 0.2, 0.3, 0.01])
+
+    def test_tabellens_reservform_bokfors(self):
+        """`table_header`/`table_cell` är kontraktets egen reservform.
+
+        Avvisas de blir enda utvägen att typa tabellen som `paragraph` —
+        och då är rad- och kolumnstrukturen förlorad för gott.
+        """
+        wd = self._setup_scanned()
+        out = page_file(wd, 1, "transcript.json")
+        out.write_text(json.dumps({
+            "page": 1,
+            "elements": [
+                {"type": "table_caption", "text": "TABELL ÖVER SKADA"},
+                {"type": "table_header", "text": "Teknik"},
+                {"type": "table_header", "text": "Grundkostnad"},
+                {"type": "table_cell", "text": "Avväpning"},
+                {"type": "table_cell", "text": "1,0"},
+                {"type": "table_note", "text": "†: endast mot människor"},
+                {"type": "list_item", "text": "• Köpa ras"},
+                {"type": "requirement", "text": "(INT 12, PSY 12)"},
+            ],
+        }, ensure_ascii=False), encoding="utf-8")
+        ok, rejected = ingest_transcripts(wd)
+        self.assertEqual(rejected, [])
+        self.assertEqual(ok, [1])
+
     def test_tomt_transkript_utan_bildmarkering_avvisas(self):
         wd = self._setup_scanned()
         out = page_file(wd, 1, "transcript.json")

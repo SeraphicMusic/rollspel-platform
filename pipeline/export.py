@@ -64,6 +64,21 @@ def _warn_unknown_types(book, log):
     return unknown
 
 
+def _field_value(value):
+    """Läsbar text för ett statblockfält som inte är en enkel sträng.
+
+    `extraStats` bär ibland en hel kolumn ur rutan — spöket på s. 47 har
+    multiplikatorerna `{"STY": "0", "STO": "x1", …}` som härleder attributen ur
+    offrets egna värden. Utan detta föll de ut som en rå Python-dict i
+    `bok.md` (`- **Multipel:** {'STY': '0', …}`).
+    """
+    if isinstance(value, dict):
+        return ", ".join("%s %s" % (k, v) for k, v in value.items())
+    if isinstance(value, (list, tuple)):
+        return ", ".join(str(v) for v in value)
+    return value
+
+
 def _statblock_md(el):
     data = el.get("data") or {}
     lines = []
@@ -80,7 +95,7 @@ def _statblock_md(el):
         for k, v in (data.get(section) or {}).items():
             if k in _INTERNAL_KEYS:
                 continue
-            lines.append("- **%s:** %s" % (k, v))
+            lines.append("- **%s:** %s" % (k, _field_value(v)))
     skills = data.get("skills") or {}
     if skills:
         lines.append("- **Färdigheter:** " + ", ".join(
@@ -171,19 +186,34 @@ _X_BUCKET = 0.005
 # ser ut som en avstavning men får inte fogas ihop.
 _HANGING_HYPHEN = re.compile(r"^\S*-(?:\s|$)")
 
+# `Tillredning:`, `Växtplats:`, `Effekt:` — en kort inledande etikett med
+# kolon. Ett eller två ord räcker (`Naturligt skydd:`); längre än så är det
+# löptext med ett kolon i sig, inte en fältrad.
+_FIELD_LINE = re.compile(r"^[A-ZÅÄÖ][\wåäöÅÄÖ]*(?: [\wåäöÅÄÖ]+)?:(?:\s|$)")
+
 
 def _bbox(el):
     return (el.get("source") or {}).get("bbox")
 
 
 def _join_text(prev, nxt):
-    """Foga ihop två tryckta rader och läk avstavningen vid radslutet."""
+    """Foga ihop två tryckta rader och läk radbrytningen vid radslutet.
+
+    Två radslut binder ihop orden utan mellanslag: avstavningens bindestreck
+    (som faller bort) och sättarens snedstreck (som står kvar). Trycket bryter
+    gärna en uppräkning mitt i — `(liten/medelstor/` + `stor)` — och utan
+    läkningen faller den ut som `(liten/medelstor/ stor)`. Ett snedstreck som
+    är satt MED mellanslag omkring sig (`Teknik / Grundkostnad`) är en
+    avskiljare, inte en bindning, och läks därför inte.
+    """
     prev, nxt = (prev or "").rstrip(), (nxt or "").lstrip()
     if not prev or not nxt:
         return prev or nxt
     if (prev.endswith("-") and not prev.endswith((" -", "--"))
             and nxt[:1].islower() and not _HANGING_HYPHEN.match(nxt)):
         return prev[:-1] + nxt
+    if prev.endswith("/") and not prev.endswith((" /", "//")):
+        return prev + nxt
     return prev + " " + nxt
 
 
@@ -239,6 +269,14 @@ def _starts_paragraph(el, prev, nxt, boxes, prev_boxes):
     löper över en sidbrytning har en rad på var sida, och sidorna kan ha olika
     spaltgeometri.
     """
+    # 0. En fältrad inleder alltid sitt eget block. Örtposterna (s. 53–61) sätts
+    #    `Etikett: värde` med en etikett per tryckt rad, och raderna fyller inte
+    #    spalten — men på en sådan sida räknas breddreferensen ur etikettraderna
+    #    själva, så varken kortradsregeln eller utslutningsregeln nedan biter.
+    #    Utan detta faller hela posten ut som en enda rad:
+    #    `Tillredning: Brygges Intagning: Appliceras Växtplats: Ljus lövskog`.
+    if _FIELD_LINE.match((el.get("text") or "").lstrip()):
+        return True
     bb, pbb = _bbox(el), _bbox(prev)
     if bb is None or pbb is None:
         # Utan geometri finns inget facit — då fogas ingenting ihop.

@@ -245,6 +245,38 @@ class TestColumnInterleaving(unittest.TestCase):
                        region="text") for i in range(10)]
         self.assertEqual(rule_column_interleaving(elements), [])
 
+    def test_felmarkt_region_doljer_inte_felet(self):
+        """Geometrin gäller, inte etiketten.
+
+        På s. 4 låg högerspaltens avsnittsrubrik som element nr 2, före hela
+        vänsterspalten, med regionen felaktigt satt till `sidhuvud`. Filtrerar
+        regeln på etiketten passerar läsordningsfelet obemärkt — exporten följer
+        arrayordningen literalt, så vänsterspalten hamnade under fel rubrik.
+        """
+        elements = self._sida("de färdigheter, t. ex. Hantverk. Det som avgör")
+        elements[1]["source"]["region"] = "sidhuvud"
+        hits = rule_column_interleaving(elements)
+        self.assertEqual([e["id"] for e, _ in hits], ["e02"])
+
+    def test_felplacerad_rubrik_flaggas_trots_kort_text(self):
+        """Sida 4:s verkliga fel: `ATT LEDA SPELET` (15 tecken) i högerspalten,
+        placerad före hela vänsterspalten. Längdfiltret får inte tysta den —
+        exporten renderar då vänsterspalten under fel rubrik."""
+        elements = self._sida("x")
+        elements[1]["type"] = "heading"
+        elements[1]["text"] = "ATT LEDA SPELET"
+        elements[1]["source"]["region"] = "sidhuvud"
+        elements[1]["source"]["bbox"] = [0.58788, 0.91286, 0.2702, 0.015]
+        hits = rule_column_interleaving(elements)
+        self.assertEqual([e["id"] for e, _ in hits], ["e02"])
+
+    def test_sidbrett_element_tillhor_ingen_spalt(self):
+        """Ett sidhuvud som verkligen ÄR sidbrett ska inte dömas som spaltrad."""
+        elements = self._sida("de färdigheter, t. ex. Hantverk. Det som avgör")
+        elements[1]["source"]["region"] = "sidhuvud"
+        elements[1]["source"]["bbox"] = [0.06, 0.95, 0.87, 0.018]
+        self.assertEqual(rule_column_interleaving(elements), [])
+
 
 def rutnat(prefix, rows, xs, y0=0.70, dy=0.0155, h=0.0145,
            region="vänsterkolumn", regions=None):

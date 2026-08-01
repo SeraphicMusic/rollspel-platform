@@ -107,7 +107,8 @@ def ingest_transcripts(workdir):
         transcript = page_file(workdir, no, "transcript.json")
         if not transcript.is_file() or m.state_at_least(no, "transcribed"):
             continue
-        problem = _check_transcript(transcript, no)
+        problem = _resolve_row_boxes(workdir, no, transcript) \
+            or _check_transcript(transcript, no)
         if problem:
             transcript.rename(str(transcript) + ".rejected")
             m.page(no)["error"] = "transkript avvisat: %s" % problem
@@ -117,6 +118,84 @@ def ingest_transcripts(workdir):
             ok.append(no)
     m.save()
     return ok, rejected
+
+
+BBOX_SAKNAS = ("Ingen uppmätt rad täcker elementet (pipeline/rows.py) — "
+               "bbox utelämnas hellre än gissas.")
+
+
+def _resolve_row_boxes(workdir, page_no, transcript):
+    """Lös upp `source.rader` (radindex) till `source.bbox` ur mätningen.
+
+    Transkriberaren anger VILKA uppmätta rader ett element täcker, aldrig
+    koordinaterna själva — en påhittad box är ett fel som ser ut som data.
+    Unionen räknas här, deterministiskt, ur `page_NNN.radboxar.json`:
+    en brödtextrad ger sin egen box, en tabell eller ett statblock unionen av
+    alla rader den spänner över. Tom lista betyder "mätningen missade raden"
+    och ger `bbox_saknas` i stället för en gissning.
+
+    Returnerar en felsträng om hänvisningen inte går att lösa (då avvisas
+    sidan och transkriberas om) — annars None.
+    """
+    from .manifest import atomic_write_json, read_json
+    try:
+        data = read_json(transcript)
+    except Exception:
+        return None  # _check_transcript ger det bättre felmeddelandet
+    elements = data.get("elements")
+    if not isinstance(elements, list):
+        return None
+    pending = [el for el in elements if isinstance(el, dict)
+               and isinstance(el.get("source"), dict)
+               and "rader" in el["source"]]
+    if not pending:
+        return None
+
+    measured = page_file(workdir, page_no, "radboxar.json")
+    if not measured.is_file():
+        return ("transkriptet hänvisar till radindex men "
+                "page_%03d.radboxar.json saknas" % page_no)
+    rows = read_json(measured).get("rows") or []
+
+    for i, el in enumerate(elements):
+        src = el.get("source") if isinstance(el, dict) else None
+        if not (isinstance(src, dict) and "rader" in src):
+            continue
+        idx = src["rader"]
+        if not isinstance(idx, list) or \
+                not all(isinstance(n, int) for n in idx):
+            return "element %d: source.rader måste vara en lista med radindex" % i
+        if not idx:
+            src.pop("rader")
+            src["bbox_saknas"] = BBOX_SAKNAS
+            continue
+        if any(n < 0 or n >= len(rows) for n in idx):
+            return ("element %d: source.rader %r ligger utanför mätningens "
+                    "%d rader" % (i, idx, len(rows)))
+        boxes = [rows[n]["bbox"] for n in idx]
+        x = min(b[0] for b in boxes)
+        y = min(b[1] for b in boxes)
+        width = max(b[0] + b[2] for b in boxes) - x
+        height = max(b[1] + b[3] for b in boxes) - y
+        src["bbox"] = [round(v, 5) for v in (x, y, width, height)]
+        src["bbox_source"] = "pipeline.rows"
+        src.setdefault("region", rows[idx[0]].get("region"))
+    atomic_write_json(transcript, data)
+    return None
+
+
+# Elementtyperna i transkriptionskontraktet (.claude/skills/extrahera/SKILL.md
+# §Transkriptionskontrakt). Listan måste rymma HELA kontraktet: tabellens
+# reservform (`table_header`/`table_cell`) och dess omgivning (`table_caption`,
+# `table_note`) är föreskrivna former, och en sida som använder dem får inte
+# avvisas — då är alternativet att typa tabellen som `paragraph`, vilket
+# förstör rad- och kolumnstrukturen för gott. `illustration` finns kvar för
+# bakåtkompatibilitet men skapas inte i nya transkript.
+_ELEMENT_TYPES = (
+    "heading", "paragraph", "boxed_text", "list", "list_item", "requirement",
+    "table", "table_header", "table_cell", "table_caption", "table_note",
+    "statblock", "toc_entry", "index_entry", "page_artifact", "illustration",
+)
 
 
 def _check_transcript(path, page_no):
@@ -141,9 +220,7 @@ def _check_transcript(path, page_no):
     for i, el in enumerate(elements):
         if not isinstance(el, dict) or "type" not in el:
             return "element %d saknar type" % i
-        if el["type"] not in ("heading", "paragraph", "table", "list",
-                              "statblock", "boxed_text", "toc_entry",
-                              "index_entry", "page_artifact", "illustration"):
+        if el["type"] not in _ELEMENT_TYPES:
             return "element %d har okänd type %r" % (i, el["type"])
         if el["type"] in ("heading", "paragraph", "boxed_text") \
                 and not (el.get("text") or "").strip():
