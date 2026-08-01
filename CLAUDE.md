@@ -32,6 +32,16 @@ Principer (bindande):
   faller ut som en rad per tryckt rad. `rapport` listar sådana sidor under
   *Sidor utan användbar geometri*. Se AGENTER.md Regel 9.
 
+Efterarbete på en färdig bok (kör skriptet FÖRE agenten, AGENTER.md Regel 5):
+
+- `python3 scripts/tabellkandidat.py <slug> [--verkstall]` — monterar de
+  tabellkandidater vars rutnät är en fullständig rektangel. Ragged block rörs
+  aldrig; tabellernas gränser (feta rubrikrader, flera tabeller i ett block)
+  avgörs av advokaten mot PNG:n.
+- `python3 scripts/rubriknivaer.py <slug> --toc <sida> [--verkstall]` — härleder
+  kapitel 1 / sektion 2 / underrubrik 3 ur bokens egen innehållsförteckning
+  genom att mäta dess indrag i sidbilden. Idempotent via `level_source`.
+
 Dokumentation: [README.md](README.md), design i [docs/](docs/).
 Tester: `python3 -m unittest discover -s tests -t .`
 

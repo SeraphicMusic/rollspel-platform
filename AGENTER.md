@@ -109,6 +109,25 @@ regler bygger på bbox, så deras utfall ändras när geometrin mäts om.
 `heuristik.json` bär numera `source_file`, så det går att se om en screening
 räknades ur draften eller ur den färdiga sidan.
 
+**Kör skripten före agenterna** (Regel 5) när du betar av en kandidatlista:
+
+```bash
+python3 scripts/tabellkandidat.py <slug>              # visa rutnäten
+python3 scripts/tabellkandidat.py <slug> --verkstall  # montera de rektangulära
+```
+
+`scripts/tabellkandidat.py` monterar de block där varje rad har exakt en cell
+i varje kolumn — den indelningen är uppmätt, inte tolkad. Ragged block rör den
+aldrig. Det som ändå kräver en advokat med PNG:n är tabellernas GRÄNSER: feta
+rubrikrader hamnar ofta utanför det uppmätta blocket, och ett block kan vara
+flera tryckta tabeller i följd (del I s. 42: ett block på 29 rader var fyra
+tabeller). Ge advokaten skriptets förslag i uppdraget så letar den inte upp
+rutnätet igen.
+
+`scripts/rubriknivaer.py` gör motsvarande för rubriknivåer: den läser skalan
+kapitel/sektion/underrubrik ur bokens egen innehållsförteckning i stället för
+att låta en agent bedöma varje rubriks grad för sig.
+
 ## Regel 8: Läsdisciplin (viktigast av allt)
 
 - **Gissa aldrig** — osäkra ord transkriberas med `[?]` och listas i `uncertain`;
