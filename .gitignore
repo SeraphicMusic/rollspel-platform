@@ -15,3 +15,6 @@ arkiv/*
 bibliotek/*
 !bibliotek/README.md
 .DS_Store
+
+# Användarens egna arbetsanteckningar
+feedback.md
