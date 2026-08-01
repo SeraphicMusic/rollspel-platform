@@ -541,21 +541,53 @@ def measure_dark(dark):
     return rows, columns
 
 
-def summarise(rows):
+def ink_share(dark):
+    """Andel svärtad yta i satsytan — hur mycket av sidan som är bläck.
+
+    Sidmarginalerna räknas bort; de är alltid papper och skulle bara späda ut
+    måttet.
+    """
+    height, width = dark.shape
+    area = dark[int(0.06 * height):int(0.94 * height),
+                int(0.05 * width):int(0.95 * width)]
+    return float((area > 128).mean()) if area.size else 0.0
+
+
+# Över så här mycket bläck i satsytan är sidan bilddominerad och mätningen
+# opålitlig, oavsett hur banden råkar fördela sig. Uppmätt över del II och III
+# (116 sidor): medianen ligger på 11 %, och svansen över 30 % är fjorton sidor
+# som ALLA är kända problemsidor — helsidesillustrationer och de sidor där
+# bilden fyller rännan så att spalterna inte hittas.
+GRAPHIC_INK_SHARE = 0.30
+
+
+def summarise(rows, share=None):
     """Sidsammanfattning — och en varning när mätningen inte går att lita på.
 
     En illustrationssida (pärmen, s. 66 i del I) ger hundratals band som inte
-    är rader alls: bildens toner bryts upp av profilen precis som sats. Det
-    syns på att grafikbanden och fullbreddsbanden dominerar. Flaggan säger
-    "läs PNG:n själv", den påstår inget om innehållet.
+    är rader alls: bildens toner bryts upp av profilen precis som sats.
+
+    Bandfördelningen ensam räcker inte som kriterium. En streckskrafferad
+    illustration ger band som ser ut som HELT VANLIGA spaltrader: del III s. 3
+    är en helsidesbild med bara en rubrik och en foliosiffra på, men mätningen
+    gav 176 "rader" varav 136 i spaltregioner — andelen grafik- och
+    fullbreddsband blev 24 % och flaggan tego. Bläckandelen avslöjar sidan
+    direkt: 52 % mot textsidornas 9-13 %.
+
+    Flaggan säger "läs PNG:n själv"; den påstår inget om innehållet.
     """
     body = [r for r in rows if r["region"] not in ("sidhuvud", "sidfot")]
     graphic = [r for r in body if r["kind"] == KIND_GRAPHIC]
     full = [r for r in body if r["region"] == "sidbredd"]
     andel = (len(graphic) + len(full)) / len(body) if body else 0.0
-    return {"rader": len([r for r in rows if r["kind"] == KIND_ROW]),
-            "grafik": len([r for r in rows if r["kind"] == KIND_GRAPHIC]),
-            "dominerande_grafik": bool(body) and andel > 0.5}
+    summary = {"rader": len([r for r in rows if r["kind"] == KIND_ROW]),
+               "grafik": len([r for r in rows if r["kind"] == KIND_GRAPHIC]),
+               "dominerande_grafik": bool(body) and andel > 0.5}
+    if share is not None:
+        summary["black_andel"] = round(share, 4)
+        if share > GRAPHIC_INK_SHARE:
+            summary["dominerande_grafik"] = True
+    return summary
 
 
 def measure_page(page, measure_dim=MEASURE_DIM):
@@ -565,9 +597,10 @@ def measure_page(page, measure_dim=MEASURE_DIM):
                           colorspace=fitz.csGRAY)
     gray = np.frombuffer(pix.samples, dtype=np.uint8).reshape(
         pix.height, pix.stride)[:, :pix.width]
-    rows, columns = measure_dark(darkness(gray))
+    dark = darkness(gray)
+    rows, columns = measure_dark(dark)
     return {"rows": rows, "columns": columns,
-            "sammanfattning": summarise(rows),
+            "sammanfattning": summarise(rows, ink_share(dark)),
             "source": {"measured_by": "pipeline.rows.measure_page",
                        "pixels": [pix.width, pix.height]}}
 

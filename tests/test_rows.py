@@ -10,6 +10,7 @@ import unittest
 import numpy as np
 
 from pipeline.rows import (EDGE_BAND, KIND_GRAPHIC, KIND_ROW, _extent,
+                           ink_share,
                            _merge_and_classify, _segments, darkness,
                            measure_dark, summarise)
 
@@ -199,6 +200,30 @@ class TestPageFurniture(unittest.TestCase):
                  {"region": "sidbredd", "kind": KIND_ROW},
                  {"region": "vänsterkolumn", "kind": KIND_ROW}]
         self.assertTrue(summarise(rader)["dominerande_grafik"])
+
+    def test_skrafferad_bild_flaggas_pa_blackandel(self):
+        """Bandfördelningen ensam missar en streckskrafferad illustration.
+
+        Del III s. 3 är en helsidesbild med bara en rubrik och en foliosiffra,
+        men mätningen gav 176 "rader" varav 136 i SPALTREGIONER — skrafferingen
+        ser ut som vanliga textrader. Andelen grafik- och fullbreddsband blev
+        24 % och flaggan tego. Bläckandelen avslöjar sidan direkt: 52 % mot
+        textsidornas 9-13 % (median över del II och III: 11 %).
+        """
+        rader = [{"region": "vänsterkolumn", "kind": KIND_ROW}] * 136
+        self.assertFalse(summarise(rader)["dominerande_grafik"])
+        self.assertFalse(summarise(rader, 0.11)["dominerande_grafik"])
+        flaggad = summarise(rader, 0.52)
+        self.assertTrue(flaggad["dominerande_grafik"])
+        self.assertEqual(flaggad["black_andel"], 0.52)
+
+    def test_blackandel_raknas_i_satsytan(self):
+        """Marginalerna räknas bort — de är alltid papper."""
+        page = blank()
+        page[100:700, 60:540] = 0            # svart platta mitt på sidan
+        andel = ink_share(darkness(page))
+        self.assertGreater(andel, 0.3)
+        self.assertLess(ink_share(darkness(blank())), 0.01)
 
     def test_summering_ar_tyst_pa_en_vanlig_textsida(self):
         rader = [{"region": "vänsterkolumn", "kind": KIND_ROW}] * 20
