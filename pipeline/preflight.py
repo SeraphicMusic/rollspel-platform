@@ -720,7 +720,17 @@ def preflight(workdir, pages=None, force=False):
     """Skriv page_NNN.review/heuristik.json för sidor som väntar på korrektur.
 
     Idempotent: en sida med befintlig heuristik.json hoppas över om inte
-    `force`. Sidor som redan har final.json besiktas inte.
+    `force`. En FÄRDIG sida (final.json) besiktas inte i normalflödet — den är
+    redan korrekturläst.
+
+    Med `force` besiktas den ändå, mot sin final.json. Utan det går en färdig
+    bok inte att screena alls, och det är ett verkligt hål: reglerna kommer
+    till efter hand, och en bok som extraherades innan en regel fanns blir
+    aldrig prövad mot den. DoD-grundreglernas del I är korrekturläst och klar
+    men aldrig screenad en enda gång — den ger 66 kandidater på sex regler,
+    däribland 16 tryckta tabeller som ligger som lösa `paragraph`. Samma sak
+    behövs efter en lagning av `pipeline/rows.py`: fyra av åtta regler bygger
+    på bbox, och deras utfall ändras när geometrin mäts om.
     """
     workdir = Path(workdir)
     m = Manifest.load(workdir)
@@ -728,10 +738,14 @@ def preflight(workdir, pages=None, force=False):
     for no in m.page_numbers():
         if pages and no not in pages:
             continue
+        final = page_file(workdir, no, "final.json")
         validated = page_file(workdir, no, "validated.json")
-        if not validated.is_file() or page_file(workdir, no, "final.json").is_file():
+        if final.is_file() and not force:
             continue
-        data = read_json(validated)
+        source = final if final.is_file() else validated
+        if not source.is_file():
+            continue
+        data = read_json(source)
         if (data.get("skipped") or {}).get("reason") == "illustration_only":
             continue
         target = Path(str(page_file(workdir, no, "review"))) / "heuristik.json"
@@ -739,6 +753,10 @@ def preflight(workdir, pages=None, force=False):
             results.append((no, None))
             continue
         out, counts = scan_page(data)
+        # Provenienssträngen måste följa med: en heuristik.json kan nu vara
+        # räknad antingen ur draften eller ur den färdiga sidan, och utan det
+        # går de två inte att skilja åt i efterhand.
+        out["source_file"] = source.name
         atomic_write_json(target, out)
         results.append((no, counts))
     ensure_decisions_file(workdir)

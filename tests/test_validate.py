@@ -84,6 +84,56 @@ class TestStatblockValidation(unittest.TestCase):
         self.assertEqual(el["data"]["rows"][0][1], "1T6+2")
 
 
+class TestGeometrirapport(unittest.TestCase):
+    """Sidor utan bbox måste synas — läsexporten tystnar annars om dem.
+
+    `export.py` fogar aldrig ihop rader utan geometri, så varje tryckt rad
+    blir ett eget stycke i `bok.md`. Det ser ut som smal, ihoptryckt sättning,
+    texten är komplett och ingenting flaggas. Del II s. 8 föll ut så: en
+    helsidesbred illustration i samma avsnitt som den tvåspaltiga satsen
+    fyllde rännan, spalterna hittades inte, och samtliga 42 element blev utan
+    bbox.
+    """
+
+    def setUp(self):
+        self.tmp = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, self.tmp, ignore_errors=True)
+        source = self.tmp / "kalla.pdf"
+        source.write_bytes(b"%PDF-1.4 attrapp")
+        Manifest.create(self.tmp, source, 2)
+        m = Manifest.load(self.tmp)
+        for no in (1, 2):
+            m.page(no)["state"] = "validated"
+        m.save()
+
+    def _skriv(self, no, elements):
+        path = page_file(self.tmp, no, "final.json")
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps({"page": no, "elements": elements}),
+                        encoding="utf-8")
+
+    def _rader(self, n, prefix, bbox=True):
+        return [{"id": "%s_e%d" % (prefix, i), "type": "paragraph",
+                 "text": "rad",
+                 "source": ({"bbox": [0.1, 0.5, 0.4, 0.01]} if bbox
+                            else {"bbox_saknas": "x"})} for i in range(n)]
+
+    def test_sida_utan_geometri_listas(self):
+        self._skriv(1, self._rader(4, "p1"))
+        self._skriv(2, self._rader(4, "p2", bbox=False))
+        rapport = build_report(self.tmp).read_text(encoding="utf-8")
+        self.assertIn("Sidor utan användbar geometri", rapport)
+        avsnitt = rapport.split("Sidor utan användbar geometri")[1]
+        self.assertIn("| 2 | 4 | 4 |", avsnitt)
+        self.assertNotIn("| 1 |", avsnitt.split("##")[0])
+
+    def test_tyst_nar_all_geometri_finns(self):
+        self._skriv(1, self._rader(4, "p1"))
+        self._skriv(2, self._rader(4, "p2"))
+        rapport = build_report(self.tmp).read_text(encoding="utf-8")
+        self.assertNotIn("Sidor utan användbar geometri", rapport)
+
+
 class TestEndToEnd(unittest.TestCase):
     """Skanning -> transkript -> validering -> sammanfogning -> export."""
 

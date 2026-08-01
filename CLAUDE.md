@@ -22,6 +22,15 @@ Principer (bindande):
 - Osäkert innehåll flaggas (`needs_review`) och hamnar i granskningsrapporten i stället för att gissas.
 - `source.bbox` mäts fram deterministiskt av `radboxar` (`pipeline/rows.py`) ur sidbilden — de inskannade PDF:erna har inget textlager utöver vattenstämpeln. Kör det för varje skannad bok: utan bbox är fyra av `forbesikta`s åtta regler verkningslösa. Transkriptionen hämtar bbox ur mätningen och **gissar aldrig koordinater**; saknas en rad utelämnas bbox.
 - Radera aldrig `arbete/`-kataloger — de är pipelinens state.
+- `forbesikta` hoppar över färdiga sidor; screena en avslutad bok med
+  `--sidor 1-N --force`. Reglerna kommer till efter hand, så en bok som
+  extraherades innan en regel fanns har aldrig prövats mot den (del I: 66
+  kandidater, varav 16 tryckta tabeller som lösa `paragraph`). Se AGENTER.md
+  Regel 7a.
+- Saknar de flesta av en sidas element bbox är det ett MÄTFEL, inte ett
+  transkriptionsfel: läsexporten fogar då inte ihop några stycken och sidan
+  faller ut som en rad per tryckt rad. `rapport` listar sådana sidor under
+  *Sidor utan användbar geometri*. Se AGENTER.md Regel 9.
 
 Dokumentation: [README.md](README.md), design i [docs/](docs/).
 Tester: `python3 -m unittest discover -s tests -t .`

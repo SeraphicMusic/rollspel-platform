@@ -88,6 +88,27 @@ Agenter hänger sig ibland tyst.
   att gissa vad som är klart — verifiera på disk innan nästa våg startar.
 - Kör om misslyckade agenter (schemafel, tom output) innan du går vidare till nästa sida.
 
+## Regel 7a: Screena en FÄRDIG bok innan du litar på att den är klar
+
+`forbesikta` hoppar över sidor som har `final.json` — i normalflödet rätt, de
+är ju korrekturlästa. Men reglerna kommer till efter hand, och en bok som
+extraherades innan en regel fanns blir aldrig prövad mot den. Kör därför
+
+```bash
+python3 -m pipeline forbesikta --workdir "WD" --sidor 1-N --force
+```
+
+på varje bok som förklarats klar. DoD-grundreglernas **del I** är
+korrekturläst och avslutad — och ger 66 kandidater på sex regler: 26 raka
+citattecken, **16 tryckta tabeller som ligger som lösa `paragraph`**, 9
+kolumnsammanslagningar, 8 `±0`-garbel, 6 läsordningsfel och 1 radsammanslagning.
+Tabellfallen är den oåterkalleliga klassen (CLAUDE.md §Tabeller).
+
+Samma sak gäller efter varje lagning av `pipeline/rows.py`: fyra av åtta
+regler bygger på bbox, så deras utfall ändras när geometrin mäts om.
+`heuristik.json` bär numera `source_file`, så det går att se om en screening
+räknades ur draften eller ur den färdiga sidan.
+
 ## Regel 8: Läsdisciplin (viktigast av allt)
 
 - **Gissa aldrig** — osäkra ord transkriberas med `[?]` och listas i `uncertain`;
@@ -141,3 +162,23 @@ Tvivlar du på vilken kolumn ett fall hör till: det hör till högerkolumnen.
 i rapporten.
 - Domänvärden som ser fel ut men står tryckta så (t.ex. skelett med INT=0/FYS=0)
   rättas INTE — det är advokatens domänkontroll som avgör, inte specialisterna.
+
+## Regel 9: En sida utan bbox är ett MÄTFEL, inte ett transkriptionsfel
+
+Saknar de flesta av en sidas element `source.bbox` har uppmätningen fallit,
+och då ska sidan flaggas — inte lappas för hand. Symptomet syns först i
+läsexporten och ser inte ut som ett fel: `pipeline/export.py` fogar aldrig ihop
+rader utan geometri ("utan geometri finns inget facit"), så varje TRYCKT rad
+blir ett eget stycke i `bok.md`. Resultatet läser som smal, ihoptryckt
+sättning. Texten är komplett — det är styckeindelningen som fattas.
+
+Den vanligaste orsaken är att en **helsidesbred illustration ligger i samma
+lodräta avsnitt som tvåspaltig sats**: bilden fyller rännan och sätter dessutom
+profilens tak, spalterna hittas inte, och hela sidan mäts som fullbreddsband
+som ingen spaltrad kan tilldelas. Del II s. 8, 15, 20, 36, 42, 65, 66 och del I
+s. 3, 33, 41, 64 är sådana sidor. `rapport` listar dem numera under
+*Sidor utan användbar geometri* — läs den sektionen innan en bok förklaras klar.
+
+Att låta boxen fattas är alltid tillåtet och aldrig fel; att mäta om den för
+hand kräver att `bbox_source` säger det rent ut, annars ljuger
+provenienssträngen.

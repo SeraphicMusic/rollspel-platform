@@ -48,6 +48,58 @@ def _correction_kind(correction):
     return KIND_OCR
 
 
+GEOMETRY_SHARE = 0.5
+
+
+def _geometry_section(workdir, m):
+    """Sidor utan användbar geometri — läsexporten tystnar annars om dem.
+
+    `pipeline/export.py` fogar aldrig ihop rader utan bbox: utan geometri
+    finns inget facit, och då blir varje TRYCKT rad ett eget stycke i
+    `bok.md`. Det ser ut som smal, ihoptryckt sättning och syns inte som ett
+    fel någonstans — texten är komplett, bara styckeindelad per rad. Den
+    tystnaden är farlig, för felet är osynligt i både `status` och
+    granskningsrapportens övriga sektioner.
+
+    Den vanligaste orsaken är att en helsidesbred illustration ligger i samma
+    lodräta avsnitt som tvåspaltig sats: den fyller rännan, spalterna hittas
+    inte, och hela sidan mäts som fullbreddsband som ingen spaltrad kan
+    tilldelas (del II s. 8, 15, 20, 36, 42, 65, 66).
+    """
+    lines, drabbade = [], []
+    for no in m.page_numbers():
+        path = None
+        for suffix in ("final.json", "validated.json"):
+            candidate = page_file(workdir, no, suffix)
+            if candidate.is_file():
+                path = candidate
+                break
+        if path is None:
+            continue
+        elements = [el for el in (read_json(path).get("elements") or [])
+                    if el.get("type") != "page_artifact"]
+        if not elements:
+            continue
+        utan = sum(1 for el in elements
+                   if not (el.get("source") or {}).get("bbox"))
+        if utan >= GEOMETRY_SHARE * len(elements):
+            drabbade.append((no, utan, len(elements)))
+    if not drabbade:
+        return lines
+    lines.append("## Sidor utan användbar geometri")
+    lines.append("")
+    lines.append("Läsexporten fogar inte ihop stycken utan bbox — på de här "
+                 "sidorna blir varje tryckt rad ett eget stycke i `bok.md`. "
+                 "Texten är komplett; det är styckeindelningen som fattas.")
+    lines.append("")
+    lines.append("| Sida | Element utan bbox | Av totalt |")
+    lines.append("| --- | --- | --- |")
+    for no, utan, totalt in drabbade:
+        lines.append("| %d | %d | %d |" % (no, utan, totalt))
+    lines.append("")
+    return lines
+
+
 def build_report(workdir):
     log = setup_logging(workdir)
     m = Manifest.load(workdir)
@@ -73,6 +125,8 @@ def build_report(workdir):
         for no, err in summary["errors"]:
             lines.append("- Sida %d: `%s`" % (no, err))
         lines.append("")
+
+    lines.extend(_geometry_section(workdir, m))
 
     n_items = 0
     lines.append("## Element som behöver granskning")

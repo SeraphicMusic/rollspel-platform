@@ -535,6 +535,28 @@ class TestPreflightKorning(unittest.TestCase):
         final.write_text('{"page": 1, "elements": []}', encoding="utf-8")
         self.assertEqual([no for no, _ in preflight(self.tmp)], [2])
 
+    def test_force_besiktar_aven_en_fardig_bok(self):
+        """En färdig bok måste gå att screena — reglerna kommer till efter hand.
+
+        Utan detta blir en bok som extraherades innan en regel fanns aldrig
+        prövad mot den. DoD-grundreglernas del I är korrekturläst och klar men
+        aldrig screenad: 66 kandidater på sex regler, däribland 16 tryckta
+        tabeller som ligger som lösa `paragraph`. Samma sak behövs sedan
+        `pipeline/rows.py` mätt om geometrin — fyra av åtta regler bygger på
+        bbox.
+        """
+        final = page_file(self.tmp, 1, "final.json")
+        final.write_text(json.dumps(
+            {"page": 1, "elements": [el("p1_e1", "- LYSSNA")]}),
+            encoding="utf-8")
+        self.assertEqual([no for no, _ in preflight(self.tmp)], [2])
+        results = dict(preflight(self.tmp, force=True))
+        self.assertIn(1, results)
+        data = read_json(self._heuristik(1))
+        self.assertEqual(data["elements"][0]["corrections"][0]["corrected"],
+                         "LYSSNA")
+        self.assertEqual(data["source_file"], "page_001.final.json")
+
     def test_beslutsfil_skrivs_inte_over(self):
         path = ensure_decisions_file(self.tmp)
         path.write_text("# Mina beslut\n", encoding="utf-8")
