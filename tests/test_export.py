@@ -349,3 +349,53 @@ class TestCrossPageTables(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestTomNyttolast(unittest.TestCase):
+    """Ett strukturelement vars nyttolast hamnat fel renderar ingenting.
+
+    Del I s. 56 föll ur `bok.md` precis så: `rows` skrevs på elementets
+    toppnivå i stället för under `data`, exportören läste `data` och skrev
+    inget — och eftersom elementet varken hade `text` eller okänd typ sa
+    ingen varning ifrån. Sju tabellrader försvann tyst.
+    """
+
+    def lost(self, elements):
+        from pipeline.export import warn_empty_payloads
+
+        class Log:
+            def __init__(self):
+                self.lines = []
+
+            def warning(self, *args):
+                self.lines.append(args)
+
+        log = Log()
+        return warn_empty_payloads(book(elements), log), log.lines
+
+    def test_rader_pa_toppnivan_flaggas(self):
+        lost, lines = self.lost([{"type": "table", "id": "p001_e01",
+                                  "rows": [["FN", "Förflyttning"]]}])
+        self.assertEqual(len(lost), 1)
+        self.assertEqual(lost[0][3], ["rows"])
+        self.assertIn("toppnivå", str(lines[0]))
+
+    def test_tabell_med_data_rows_ar_tyst(self):
+        lost, _ = self.lost([{"type": "table", "id": "p001_e01",
+                              "data": {"headers": ["a"], "rows": [["1"]]}}])
+        self.assertEqual(lost, [])
+
+    def test_tom_lista_flaggas(self):
+        lost, _ = self.lost([{"type": "list", "id": "p001_e01",
+                              "data": {"items": []}}])
+        self.assertEqual(len(lost), 1)
+
+    def test_borttaget_element_flaggas_inte(self):
+        lost, _ = self.lost([{"type": "table", "id": "p001_e01",
+                              "removed": True}])
+        self.assertEqual(lost, [])
+
+    def test_statblock_racker_med_ett_falt(self):
+        lost, _ = self.lost([{"type": "statblock", "id": "p001_e01",
+                              "data": {"stats": {"STY": 10}}}])
+        self.assertEqual(lost, [])

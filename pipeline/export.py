@@ -46,6 +46,40 @@ _HANDLED_TYPES = frozenset(
      "table_cell", "table_header") + _CAPTION_TYPES + _BULLET_TYPES)
 
 
+# Element vars innehåll ligger i `data`, med nyckeln som bär det. Hamnar
+# nyttolasten på elementets toppnivå i stället — `el["rows"]` i stället för
+# `el["data"]["rows"]` — renderar exportören ingenting alls, och eftersom
+# elementet varken har `text` eller okänd typ säger ingen varning ifrån.
+# Del I s. 56 föll ur `bok.md` precis så: sju tabellrader borta, och bara en
+# ordmängdsdiff mot en tidigare export avslöjade det.
+_PAYLOAD_KEYS = {"table": ("rows",), "list": ("items",),
+                 "statblock": ("stats", "skills", "weapons", "other")}
+
+
+def warn_empty_payloads(book, log):
+    """Strukturelement som inte renderar något — innehållet är tappat."""
+    lost = []
+    for page in book["pages"]:
+        for el in page["elements"]:
+            keys = _PAYLOAD_KEYS.get(el.get("type"))
+            if not keys or el.get("removed"):
+                continue
+            data = el.get("data") or {}
+            if any(data.get(k) for k in keys):
+                continue
+            misplaced = [k for k in keys if el.get(k)]
+            lost.append((page["page"], el.get("id"), el.get("type"),
+                         misplaced))
+    for page, eid, etype, misplaced in lost:
+        log.warning(
+            "%s %s (sida %d) renderar INGENTING: %s. Innehållet hamnar inte i "
+            "bok.md — lägg nyttolasten under `data`.", etype, eid, page,
+            ("nyttolasten ligger på elementets toppnivå (%s) i stället för "
+             "under `data`" % ", ".join(misplaced)) if misplaced
+            else "`data` saknar innehåll")
+    return lost
+
+
 def _warn_unknown_types(book, log):
     """Logga elementtyper exportören inte har någon egen rendering för."""
     unknown = {}
@@ -510,6 +544,7 @@ def export_markdown(workdir, include_artifacts=False):
         elif text:
             lines += [text, ""]
     _warn_unknown_types(book, log)
+    warn_empty_payloads(book, log)
     out = export_dir(workdir) / "bok.md"
     out.write_text("\n".join(lines), encoding="utf-8")
     log.info("export markdown -> %s", out)
