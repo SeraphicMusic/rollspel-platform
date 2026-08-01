@@ -23,7 +23,13 @@ KIND_OCR = "ocr"
 KIND_EMENDATION = "emendering"
 CORRECTION_KINDS = (KIND_OCR, KIND_EMENDATION)
 
-CANONICAL_DICE = re.compile(r"^(\d+)T(\d+)([+-]\d+)?$")
+# Tecken som kan bära modifikatorns minus. Sättningen använder TANKSTRECK
+# (U+2013) lika ofta som bindestreck-minus — `3T6–2` (del II s. 34) är tryckt
+# så. Båda är giltig notation; teckenvalet är sättning, inte ett fel, och
+# normaliseras därför ALDRIG bort (det vore en tyst ändring av trycket).
+# Grammatiken speglas i system/<id>/dice.json:notation.
+DICE_MINUS = "-–"
+CANONICAL_DICE = re.compile(r"^(\d+)T(\d+)([+\-–]\d+)?$")
 
 
 def make_correction(original, corrected, confidence, reason, source,
@@ -52,7 +58,7 @@ def make_correction(original, corrected, confidence, reason, source,
 def _char_candidates(ch, misread):
     """Möjliga kanoniska tecken för ett observerat tecken (inkl. det själv)."""
     cands = []
-    if ch.isdigit() or ch in "+-":
+    if ch.isdigit() or ch == "+" or ch in DICE_MINUS:
         cands.append(ch)
     if ch in ("T", "t", "D", "d"):
         cands.append("T")
@@ -138,7 +144,7 @@ def repair_dice_token(token, dice_cfg):
 
 # Token som kan vara feltolkad tärningsnotation: minst en siffra eller
 # versalblandning, begränsad teckenmängd.
-DICE_TOKEN = re.compile(r"^[0-9IlOoQSsBbGgZzTtDd|+]{2,7}(?:[+-][0-9IlOSB]{1,2})?$")
+DICE_TOKEN = re.compile(r"^[0-9IlOoQSsBbGgZzTtDd|+]{2,7}(?:[+\-–][0-9IlOSB]{1,2})?$")
 
 
 def scan_dice_in_text(text, dice_cfg, lexicon_words):

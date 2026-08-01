@@ -42,6 +42,14 @@
       "note": "DoD 1991; äldre utgåvor använder andra formler"
     }
   ],
+  "derived_checks_excluded": [
+    {
+      "evidence": "Del I:s tabell (STO+FYS+SMI -> Förflyttning, 0-11:7, sedan +1 per steg om 9) gäller rollpersoner, inte varelser. Prövad mot del II:s varelsekapitel avviker 18 av 29 landvarelser med hela STO/FYS/SMI: KENTAUR 48 -> tabell 12 mot tryckt L24, ENHÖRNING 60 -> 13 mot L26, DRAKE 157 -> 25 mot L14, HARPYA 39 -> 11 mot L4, SKORPION 18 -> 8 mot L2. Kroppsbyggnad (fyrbent, bevingad, krypande) styr värdet, och den finns inte i statblocket.",
+      "field": "Förflyttning",
+      "reason": "Går inte att härleda konsekvent ur del I:s tabell för varelsestatblock. En kontroll här skulle larma på korrekt tryckta värden i majoriteten av varelserna.",
+      "source": "del II s. 36; beslut.md F (2026-08-01)"
+    }
+  ],
   "derived_labels": {
     "BV": "Brytvärde",
     "CL": "Chans att lyckas",
@@ -49,7 +57,7 @@
     "KP": "Kroppspoäng",
     "SB": "Skadebonus",
     "SG": "Svårighetsgrad",
-    "SV": "Skyddsvärde"
+    "SV": "Skolvärde"
   },
   "editions": [
     {
@@ -76,6 +84,7 @@
   "publisher": "Äventyrsspel / Riot Minds",
   "sb_table": {
     "input": "STY + STO",
+    "note": "Raden 181-220 står inte i del I:s tryckta tabell utan följer dess egen steglängd (de två sista tryckta stegen är 40 breda: 101-140 och 141-180). Belagd av DRAKE, del II s. 31: STY 100 + STO 100 = 200 med tryckt SB +6T6.",
     "rows": [
       {
         "bonus": "0",
@@ -126,6 +135,12 @@
         "bonus": "+5T6",
         "max": 180,
         "min": 141
+      },
+      {
+        "bonus": "+6T6",
+        "extrapolated": true,
+        "max": 220,
+        "min": 181
       }
     ]
   },
