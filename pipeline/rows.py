@@ -67,9 +67,15 @@ from .manifest import Manifest, atomic_write_json, page_file
 # suddar ihop rader som ligger tätt.
 MEASURE_DIM = 2800
 
-# Övre/nedre andel av sidan där ett ensamt band räknas som sidhuvud/sidfot.
-# Samma tal som extract_text.EDGE_BAND, av samma skäl.
+# Övre/nedre andel av sidan där ett band ÖVER HUVUD TAGET kan vara sidhuvud
+# eller sidfot. Samma tal som extract_text.EDGE_BAND, av samma skäl. Läget
+# ensamt räcker dock inte som kriterium — se `_edge_block`.
 EDGE_BAND = 0.08
+# Luckan (i radhöjder) som skiljer sidhuvud/sidfot från satsytan. Ett sidhuvud
+# är ISOLERAT, inte bara högt upp: mellan kolumntiteln och första textraden
+# ligger alltid mer än ett radavstånd, mellan två textrader mindre. Uppmätt på
+# del II: separerande luckor 1,1-5,5 radhöjder, luckor inne i satsen 0,2-0,8.
+EDGE_GAP_FACTOR = 1.0
 
 # Fönstret som lokalt golv och lokal topp mäts över, som andel av sidhöjden.
 # ~3 % är två radavstånd vid den här sättningen: tillräckligt för att fånga
@@ -106,6 +112,22 @@ SEGMENT_GAP_FACTOR = 2.5
 # Band som ligger närmare varandra än så här (av medianbandhöjden) hör till
 # samma tryckta rad — annars bryts diakriter och understrukna rader loss.
 MERGE_GAP_FACTOR = 0.4
+# ... men medianBANDHÖJDEN duger inte ensam som mått. På sidor med liten grad
+# (registret, s. 63) delas varje tryckt rad i två band — versalernas/staplarnas
+# fragment och x-höjdens kropp — och då blir medianhöjden fragmentets, inte
+# radens: 5 px i stället för 26. Tröskeln 0,4 x 5 = 2 px fogar inte ihop något,
+# medianen förblir fel, `_segments` bryter sidan i ETT segment PER RAD (luckan
+# 21 px > 2,5 x 5), och spaltprofilen mäts då över 26 px höga skivor där den
+# lokala tröskeln inte har något att arbeta med. Resultatet är kapade band och
+# en tappad sista rad i vardera spalten (beslut.md D 6).
+# Luckorna är däremot bimodala och robusta: inom en rad 5 px, mellan rader
+# 21 px. Degenerationen känns igen på att medianhöjden UNDERSTIGER mediangapet
+# — ett band som är lägre än luckan till nästa kan inte vara en tryckt rad.
+# Bara då byts måttet ut; på varje sida där medianhöjden är en verklig radhöjd
+# gäller höjdregeln oförändrad. (Att i stället ta MAX av de två måtten fogar
+# ihop de sista raderna i en spalt på sidor med gles sättning — uppmätt: s. 2,
+# 60 och del I s. 61 tappade då 4-6 element var.)
+MERGE_GAP_SHARE = 0.5
 # Band lägre än så här (av medianen) är skanningsbrus, inte en rad.
 MIN_BAND_FACTOR = 0.25
 # Band högre än så här (mot SIDANS radhöjd) är en illustration, inte en textrad.
@@ -116,6 +138,20 @@ MIN_BAND_FACTOR = 0.25
 # `LÄRD MAN` s. 16), och sammanslagna tabellband däremellan. Vid 3,0 föll varje
 # uppslagsrubrik bort; svepet 6/8/10/12/16 gav 97,5/97,6/97,9/97,9/98,1 %.
 GRAPHIC_HEIGHT_FACTOR = 16.0
+# Smalaste band som räknas som en tryckt rad, som andel av sidbredden. En
+# foliosiffra mäter 0,015-0,021; det som ligger under är stänk i skanningen.
+# Guarden behövs först sedan kantzonerna fick sitt eget brusgolv (D 3): mot
+# sidans radhöjd sållades stänket bort på köpet, mot zonens egen median gör
+# det inte det.
+MIN_ROW_WIDTH = 0.008
+# Bandets bakgrundsnivå i `_extent` tas som den här percentilen av svärtan
+# längs bandet — låg nog att träffa pappret på en vanlig rad, hög nog att inte
+# fastna i en enstaka ljus pixel mitt i en tonplatta.
+SHADE_PERCENTILE = 10
+# Ligger bakgrunden så här högt mot bandets mörkaste kolumn är bandet satt på
+# en fylld platta (tonad tabellrad, ornament) och tröskeln räknas relativt
+# bakgrunden. Uppmätt på del II s. 62: oskuggad rad 0,07, skuggad rad 0,45.
+SHADE_SHARE = 0.3
 
 KIND_ROW = "rad"
 KIND_GRAPHIC = "grafik"
@@ -202,46 +238,131 @@ def zone_profile(block, window):
     return trimmed.std(axis=2).max(axis=1)
 
 
-def _merge_and_classify(bands, page_median=None):
+def _median_gap(bands):
+    """Medianlucka mellan på varandra följande band."""
+    gaps = sorted(bands[i + 1][0] - bands[i][1] for i in range(len(bands) - 1))
+    return gaps[len(gaps) // 2] if gaps else 0
+
+
+def _merge_and_classify(bands, page_median=None, noise_from_page=True):
     """Foga ihop band som hör till samma rad och skilj text från grafik.
 
     `page_median` är SIDANS radhöjd och måste komma utifrån när anropet gäller
     ett enskilt avsnitt: ett avsnitt som bara innehåller en illustration får
     annars illustrationen som sin egen median, och 160 px är aldrig sex gånger
     160 px — bildpartiet klassas då som en textrad.
+
+    `noise_from_page=False` mäter brusgolvet mot ZONENS egen median i stället
+    för sidans. Kantzonerna behöver det: en foliosiffra ger genom
+    `zone_profile` band på 2-4 px, och mätt mot brödtextens 22 px stämplas de
+    som skanningsbrus och kastas — därför mättes folion nästan aldrig upp, och
+    det som märktes `sidfot` blev i stället föregående rads underlängder eller
+    vattenstämpeln (beslut.md D 3). Grafikklassningen använder alltid sidans
+    median: "hög" ska betyda hög mot sidans sats.
     """
     if not bands:
         return []
-    median = _median_height(bands)
+    median, gap = _median_height(bands), _median_gap(bands)
+    threshold = (median * MERGE_GAP_FACTOR if median >= gap
+                 else gap * MERGE_GAP_SHARE)
     merged = [list(bands[0])]
     for a, b in bands[1:]:
-        if a - merged[-1][1] < median * MERGE_GAP_FACTOR:
+        if a - merged[-1][1] < threshold:
             merged[-1][1] = b
         else:
             merged.append([a, b])
-    median = _median_height(merged)
-    if page_median:
-        median = page_median
+    own_median = _median_height(merged)
+    graphic_median = page_median or own_median
+    noise_median = graphic_median if noise_from_page else own_median
     out = []
     for a, b in merged:
         height = b - a
-        if height < median * MIN_BAND_FACTOR:
+        if height < noise_median * MIN_BAND_FACTOR:
             continue  # skanningsbrus
-        kind = (KIND_GRAPHIC if height > median * GRAPHIC_HEIGHT_FACTOR
+        kind = (KIND_GRAPHIC if height > graphic_median * GRAPHIC_HEIGHT_FACTOR
                 else KIND_ROW)
         out.append((a, b, kind))
     return out
 
 
 def _extent(dark, top, bottom, lo, hi):
-    """Bandets faktiska x-utsträckning inom sin spalt."""
-    prof = dark[top:bottom, lo:hi].max(axis=0)
+    """Bandets faktiska x-utsträckning inom sin spalt.
+
+    Tröskeln måste läggas mot bandets EGEN bakgrund, inte mot noll. En
+    gråtonad tabellrad ligger på en platta som är nästan lika mörk som satsen,
+    så en nollrelaterad tröskel släpper igenom hela plattan: den skuggade raden
+    mättes ut till cellens fulla bredd (0,408) medan den oskuggade raden under
+    mättes till bläckets (0,219-0,395). Samma tabell fick alltså två olika
+    bredder, och `forbesikta`s kolumnsammanslagningsregel — som jämför
+    bboxbredd mot spaltbredd — larmade på var och en av de skuggade
+    raderna (beslut.md D 5).
+
+    Ett massivt ornament (linjeregeln) är också fyllt, men har ingen
+    glyfkontrast: där sammanfaller bakgrund och topp, tröskeln hamnar vid
+    plattans egen nivå och regeln behåller sin fulla bredd.
+    """
+    block = dark[top:bottom, lo:hi]
+    prof = block.max(axis=0)
     if not len(prof) or not prof.max():
         return None
+    if np.percentile(prof, SHADE_PERCENTILE) >= SHADE_SHARE * prof.max():
+        # Bandet är satt på en tonplatta. Svärtan kan inte skilja plattan från
+        # satsen — rastret når lika höga toppvärden — men KONTRASTEN kan, av
+        # exakt samma skäl som `row_profile` mäter kontrast i y-led: en jämn
+        # ton har låg spridning, en kolumn med bokstäver hög.
+        contrast = block.std(axis=0)
+        if contrast.max():
+            # Tröskeln sätts mitt emellan profilens golv och tak, inte vid en
+            # andel av taket: tonens egen spridning (uppmätt 19-25) ligger
+            # långt över 8 % av satsens (65-69) och skulle annars ta med hela
+            # plattan.
+            level = (contrast.min()
+                     + LOCAL_FRACTION * (contrast.max() - contrast.min()))
+            hits = np.flatnonzero(contrast >= level)
+            if len(hits):
+                return lo + int(hits[0]), lo + int(hits[-1]) + 1
+        # Ingen kontrast alls: ett massivt ornament, t.ex. linjeregeln. Det
+        # mäts på svärtan nedan och behåller sin fulla bredd.
     hits = np.flatnonzero(prof >= MIN_DARKNESS_SHARE * prof.max())
     if not len(hits):
         return None
     return lo + int(hits[0]), lo + int(hits[-1]) + 1
+
+
+def _edge_block(bands, height):
+    """(antal sidhuvudsband, antal sidfotsband) — mätt på LUCKAN, inte läget.
+
+    Ett fast kantband räcker inte som kriterium. Där satsytan börjar högt
+    hamnar spalternas översta rad innanför de 8 procenten, hela raden mäts då
+    om som en enda fullbreddsrad i sidhuvudzonen, och spalternas första element
+    blir antingen utan bbox eller — värre — får grannradens box, ett steg fel
+    (beslut.md D 1 och 2; ~16 respektive 7 sidor i del II).
+
+    Det som verkligen skiljer ett sidhuvud från satsen är att det står FÖR SIG:
+    under kolumntiteln ligger mer än ett radavstånd, mellan två textrader
+    mindre. Blocket är därför det längsta prefix (respektive suffix) som ryms
+    inom kantbandet OCH följs (föregås) av en lucka på minst en radhöjd.
+    Hittas ingen sådan lucka finns inget sidhuvud — att låta zonen vara tom är
+    alltid tillåtet.
+    """
+    median = _median_height(bands)
+    limit = EDGE_GAP_FACTOR * median
+
+    def block(order):
+        n = 0
+        for i in range(len(order) - 1):
+            top, bottom = bands[order[i]][0], bands[order[i]][1]
+            centre = (top + bottom) / 2 / height
+            if not (centre < EDGE_BAND or centre > 1 - EDGE_BAND):
+                break
+            nxt = bands[order[i + 1]]
+            gap = nxt[0] - bottom if order[i + 1] > order[i] else top - nxt[1]
+            if gap >= limit:
+                n = i + 1
+        return n
+
+    forward = list(range(len(bands)))
+    return block(forward), block(forward[::-1])
 
 
 def _segments(body):
@@ -255,13 +376,35 @@ def _segments(body):
         return []
     heights = sorted(b - a for a, b, _ in body)
     gap = (heights[len(heights) // 2] or 1) * SEGMENT_GAP_FACTOR
-    segments = [[body[0][0], body[0][1]]]
-    for top, bottom, _ in body[1:]:
-        if top - segments[-1][1] > gap:
-            segments.append([top, bottom])
+    groups = [[body[0]]]
+    for band in body[1:]:
+        if band[0] - groups[-1][-1][1] > gap:
+            groups.append([band])
         else:
-            segments[-1][1] = bottom
-    return [tuple(s) for s in segments]
+            groups[-1].append(band)
+    # Avsnitten TEGLAR ihop kroppen: gränsen läggs mitt i den brytande luckan i
+    # stället för vid bandens egna kanter. Annars blir mellanrummen hål som
+    # ingen spaltmätning tittar i, och en tryckt rad som helsidesprofilen
+    # missar — en blek rad som bara finns i den ena spalten syns inte i en
+    # profil som mäts över båda — går förlorad för gott. Uppmätt: s. 2 (sista
+    # posten i var och en av innehållsförteckningens tre spalter) och s. 60
+    # (tre rader). Teglingen kan inte ge dubbletter: avsnitten är disjunkta,
+    # så varje bläckrad ligger i exakt ett av dem.
+    #
+    # Spaltindelningen mäts däremot på avsnittets EGET bläck, inte på det
+    # teglade spannet. Drar man in grannens tomma yta i rännmätningen räcker
+    # det med att den innehåller en fullbredds rad för att rännan ska fyllas:
+    # spalterna hittas då inte, och vänster- och högerspaltens rader slås ihop
+    # till gemensamma fullbreddsband (uppmätt på s. 62). Varje avsnitt är
+    # alltså (mätspann, bläckspann).
+    segments, top = [], body[0][0]
+    for i, group in enumerate(groups):
+        ink_top, ink_bottom = group[0][0], group[-1][1]
+        bottom = (ink_bottom if i + 1 == len(groups)
+                  else (ink_bottom + groups[i + 1][0][0]) // 2)
+        segments.append((top, bottom, ink_top, ink_bottom))
+        top = bottom
+    return segments
 
 
 def _columns(dark, top, bottom, width):
@@ -323,8 +466,8 @@ def measure_dark(dark):
     # misslyckas. Bandet i kantzonerna mäts sedan om, var zon för sig.
     page_bands = _merge_and_classify(
         _profile_bands(row_profile(dark), height))
-    body = [(top, bottom, kind) for top, bottom, kind in page_bands
-            if EDGE_BAND <= (top + bottom) / 2 / height <= 1 - EDGE_BAND]
+    n_head, n_foot = _edge_block(page_bands, height)
+    body = page_bands[n_head:len(page_bands) - n_foot or None]
     # Sidans radhöjd, mätt på kroppen. Den är referens för ALLA senare anrop
     # till _merge_and_classify, så att "hög" betyder hög mot sidans sats och
     # inte mot vad som råkar finnas i samma avsnitt.
@@ -347,9 +490,12 @@ def measure_dark(dark):
             return
         prof = zone_profile(dark[top:bottom, :], ZONE_WINDOW * width)
         bands = [(a + top, b + top) for a, b in _profile_bands(prof, height)]
-        for a, b, kind in _merge_and_classify(bands, page_median):
+        for a, b, kind in _merge_and_classify(bands, page_median,
+                                              noise_from_page=False):
+            if a <= 0 or b >= height:
+                continue  # renderingens egen bildkant, inte tryck
             extent = _extent(dark, a, b, 0, width)
-            if extent:
+            if extent and extent[1] - extent[0] >= MIN_ROW_WIDTH * width:
                 rows.append({"region": region, "kind": kind,
                              "bbox": _box(extent[0], extent[1], a, b,
                                           width, height)})
@@ -357,12 +503,12 @@ def measure_dark(dark):
     zon(0, body_top, "sidhuvud")
 
     columns = []
-    for seg_top, seg_bottom in _segments(body):
+    for seg_top, seg_bottom, ink_top, ink_bottom in _segments(body):
         # Spaltindelningen mäts PER AVSNITT. På s. 61 är övre halvan tvåspaltig
         # löptext och nedre halvan en fullbredds tabell som fyller rännan — en
         # enda mätning för hela sidan ger då noll spalter och slår ihop
         # vänster- och högerspaltens rader till gemensamma band.
-        for lo, hi in _columns(dark, seg_top, seg_bottom, width):
+        for lo, hi in _columns(dark, ink_top, ink_bottom, width):
             region = _region_name(lo, hi, width)
             columns.append({"region": region,
                             "x": round(lo / width, 6),
