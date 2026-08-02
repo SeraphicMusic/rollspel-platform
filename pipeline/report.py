@@ -95,6 +95,46 @@ def _proposal_state(el, correction):
 GEOMETRY_SHARE = 0.5
 
 
+def _queue_section(workdir):
+    """Boknivåfrågor som skjutits upp och ännu inte besvarats.
+
+    En uppskjuten fråga utan mottagare är den tystaste av alla luckor: varje
+    enskild sida ser färdig ut, och boken går att kalla klar. Del I bar ett
+    trettiotal sådana i ett halvår. Kön står först i rapporten, före allt
+    annat, och boken redovisas inte som avslutad medan den har poster.
+    """
+    from .decisions import open_questions
+    oppna = open_questions(workdir)
+    if not oppna:
+        return []
+    lines = ["## Öppna boknivåfrågor — boken är INTE avslutad", ""]
+    lines.append("%d fråga%s har skjutits upp till boknivå och väntar på svar. "
+                 "De avgörs i ett svep, inte sida för sida — men de måste "
+                 "avgöras."
+                 % (len(oppna), "" if len(oppna) == 1 else "or"))
+    lines.append("")
+    for qid, text in oppna:
+        lines.append("- **%s** %s" % (qid, text))
+    lines.append("")
+    return lines
+
+
+def _drift_section(workdir):
+    """Typdrift: transkriptionen tappade sina egna konventioner mitt i boken."""
+    from .preflight import book_pages, scan_drift
+    try:
+        hits = scan_drift(book_pages(workdir))
+    except Exception:
+        return []
+    if not hits:
+        return []
+    lines = ["## Typdrift", ""]
+    for h in hits:
+        lines.append("- %s" % h)
+    lines.append("")
+    return lines
+
+
 def _geometry_section(workdir, m):
     """Sidor utan användbar geometri — läsexporten tystnar annars om dem.
 
@@ -170,6 +210,8 @@ def build_report(workdir):
             lines.append("- Sida %d: `%s`" % (no, err))
         lines.append("")
 
+    lines.extend(_queue_section(workdir))
+    lines.extend(_drift_section(workdir))
     lines.extend(_geometry_section(workdir, m))
 
     n_items = n_superseded = n_judged = n_resolved = 0

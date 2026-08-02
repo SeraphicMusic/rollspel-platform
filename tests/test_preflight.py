@@ -417,6 +417,22 @@ class TestRowMerge(unittest.TestCase):
         self.assertEqual([e["id"] for e, _ in rule_column_merge(elements)],
                          ["e99"])
 
+    def test_delad_matbox_ar_inte_sammanslagning(self):
+        """Bär två element SAMMA box har MÄTNINGEN slagit ihop bandet.
+
+        `pipeline.rows` mäter ibland två tätt satta rader som ett band, och
+        transkriptionen ger då båda elementen bandet. Båda de tryckta raderna
+        finns alltså i draften — regelns antagande ("återger bara den ena")
+        gäller inte. Del II s. 6 och 13: sex kandidater, sex falska positiver.
+        """
+        elements = self._sida()
+        box = [0.067, 0.60, 0.325, 0.0336]
+        elements.append(el("e98", "nästan känna sig utnyttjade av gänget",
+                           bbox=list(box)))
+        elements.append(el("e99", "jobba för att bli rika; de lever på dem",
+                           bbox=list(box)))
+        self.assertEqual(rule_row_merge(elements), [])
+
     def test_liten_sida_kraschar_inte(self):
         self.assertEqual(rule_row_merge([el("e1", "text", bbox=[0, 0, 1, 1])]),
                          [])
@@ -566,3 +582,41 @@ class TestPreflightKorning(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestKolumnsammanslagningPaBlankett(unittest.TestCase):
+    """Regeln mäter mot medianen av sidans elementbredder.
+
+    På en blankett är medianen de korta fältraderna ("Typ: Buske"), så
+    satsytans normalbreda rader ser ut att spänna över spaltrännan. Del II
+    s. 53 gav fyra kandidater och fyra falska positiver — spaltrännan
+    korsades aldrig.
+    """
+
+    def _blankett(self):
+        elements = []
+        for i, x in enumerate((0.057, 0.335, 0.62)):
+            elements += [el("f%d_%d" % (i, r), "Bärförmåga",
+                            bbox=[x, 0.80 - r * 0.061, 0.10, 0.016])
+                         for r in range(5)]
+        # Fältförklaringens fyra normalbreda rader inom vänsterspalten.
+        elements += [el("b%d" % r, LANG_RAD,
+                        bbox=[0.064, 0.95 - r * 0.02, 0.42, 0.016])
+                     for r in range(4)]
+        return elements
+
+    def test_regeln_hoppas_over_pa_blankett(self):
+        elements = self._blankett()
+        self.assertEqual(classify_page(elements), PAGE_FORM)
+        out, counts = scan_page({"page": 1, "elements": elements})
+        self.assertEqual(out["sidtyp"], PAGE_FORM)
+        self.assertEqual(counts["kolumnsammanslagning"], 0)
+
+    def test_regeln_gar_fortfarande_pa_loptext(self):
+        elements = loptext("v", n=8) + loptext("h", n=8, x=0.517,
+                                               region="högerkolumn")
+        elements.append(el("x1", (LANG_RAD + " ") * 2,
+                           bbox=[0.067, 0.30, 0.89, 0.016]))
+        out, counts = scan_page({"page": 1, "elements": elements})
+        self.assertEqual(out["sidtyp"], PAGE_PROSE)
+        self.assertEqual(counts["kolumnsammanslagning"], 1)

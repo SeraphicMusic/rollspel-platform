@@ -40,6 +40,11 @@ _INTERNAL_KEYS = {"attacktabell_rubrik"}
 # aldrig tappas) men loggas nu så att luckan syns.
 _CAPTION_TYPES = ("illustration", "table_caption", "table_note")
 _BULLET_TYPES = ("list_item", "requirement")
+# Punkttecken som trycket sätter i början av en listpunkt. De står kvar i
+# elementets `text` — den är print-trogen — men renderas inte, eftersom
+# markdownens egen `- ` betyder exakt samma sak. Utan det här visar bok.md två
+# punkttecken (`- • Köpa ras`) där boken har ett.
+_BULLET_GLYPHS = "•·●▪‣"
 _HANDLED_TYPES = frozenset(
     ("heading", "paragraph", "toc_entry", "index_entry", "boxed_text",
      "list", "table", "statblock", "page_artifact",
@@ -348,6 +353,10 @@ def _starts_paragraph(el, prev, nxt, boxes, prev_boxes):
 def _reflow(run):
     """Dela en rad-följd i stycken och foga ihop varje styckes rader.
 
+    Returnerar (sida, text, första_elementet) per stycke. Det sista behövs för
+    att en punktlista och den löptext som följer under den kan ligga i SAMMA
+    följd: blocket renderas efter vad det inleds av, inte efter följdens typ.
+
     `run` är (sida, element)-par och får spänna över en sidbrytning — det är
     just så ett stycke som fortsätter på nästa sida fogas ihop. Varje returnerat
     stycke bär därför sidan för sin EGEN första rad, inte följdens: annars
@@ -383,7 +392,7 @@ def _reflow(run):
         text = ""
         for _, el in block:
             text = _join_text(text, (el.get("text") or "").strip())
-        out.append((block[0][0], text))
+        out.append((block[0][0], text, block[0][1]))
     return out
 
 
@@ -479,22 +488,31 @@ def export_markdown(workdir, include_artifacts=False):
         # varje annan elementtyp, och av att stilen växlar (kursiv exempelruta).
         if etype in _REFLOW_TYPES:
             run, style = [], el.get("style")
+            # En listpunkt spänner ofta över flera tryckta rader: bara den
+            # första bär punkttecknet, resten är vanliga rader. Bryts följden
+            # vid typbytet hamnar fortsättningen i ett eget stycke, och ett
+            # avstavat ord över radslutet läker aldrig (`motstån-` / `daren.`,
+            # del I s. 51). Följden får därför svälja efterföljande löptext, och
+            # `_reflow` avgör var punkten slutar — blocket renderas sedan efter
+            # vad det INLEDS av, så löptexten under listan blir stycke igen.
+            svalj = (etype,) + (("paragraph",) if etype in _BULLET_TYPES
+                                else ())
             while index < len(items):
                 nxt_page, nxt = items[index]
-                if nxt.get("type") != etype or nxt.get("style") != style:
+                if nxt.get("type") not in svalj or nxt.get("style") != style:
                     break
                 run.append((nxt_page, nxt))
                 index += 1
             blocks = _reflow(run)
-            for blk_page, text in blocks:
+            for blk_page, text, lead in blocks:
                 if blk_page != last_page:
                     lines += ["<!-- sida %d -->" % blk_page, ""]
                     last_page = blk_page
-                if etype in _BULLET_TYPES:
+                if lead.get("type") in _BULLET_TYPES:
                     # Punkterna hålls ihop utan tomrad emellan, annars blir
                     # varje punkt en egen lista i markdown.
-                    lines += ["- %s" % text]
-                elif etype == "boxed_text":
+                    lines += ["- %s" % text.lstrip(_BULLET_GLYPHS).lstrip()]
+                elif lead.get("type") == "boxed_text":
                     # En tryckt exempelruta är EN ruta även när den rymmer
                     # flera stycken. Skiljs styckena av en TOM rad blir de två
                     # citatblock i markdown och rutan går synligt itu — s. 10:s

@@ -13,6 +13,7 @@ import unittest
 from pathlib import Path
 
 from scripts.materialisera_kind import sveep as sveep_kind
+from scripts.punktrader import sveep as sveep_punkt
 from scripts.materialisera_verdict import sveep as sveep_verdict
 from scripts.remappa_bbox import sveep as sveep_bbox
 from scripts.tomma_artefakter import sveep as sveep_artefakt
@@ -189,3 +190,39 @@ class TestRemappaBbox(Bokbadd):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestPunktrader(Bokbadd):
+    """En rad som börjar med punkttecken ÄR en listpunkt.
+
+    Låg den som `paragraph` fogade läsexportens omflödning in den i föregående
+    stycke: `bok.md` fick raden "Hjältepoäng kan användas till följande tre
+    saker: • Höja CL" där trycket har en mening och tre punkter under.
+    """
+
+    def test_punktrad_typas_om(self):
+        self.skriv([{"id": "e1", "type": "paragraph", "text": "• Höja CL"}])
+        self.assertEqual(len(sveep_punkt(self.wd, True)), 1)
+        el = self.las()[0]
+        self.assertEqual(el["type"], "list_item")
+        self.assertEqual(el["text"], "• Höja CL",
+                         "punkttecknet stannar i texten — den är print-trogen")
+
+    def test_vanlig_rad_ror_inte(self):
+        self.skriv([{"id": "e1", "type": "paragraph", "text": "vanlig text"}])
+        self.assertEqual(sveep_punkt(self.wd, True), [])
+
+    def test_bindestreck_ar_ingen_punkt(self):
+        """En rad som börjar med streck är oftare ett radbrutet led."""
+        self.skriv([{"id": "e1", "type": "paragraph",
+                     "text": "-dvärgar, -svartfolk"}])
+        self.assertEqual(sveep_punkt(self.wd, True), [])
+
+    def test_redan_list_item_ror_inte(self):
+        self.skriv([{"id": "e1", "type": "list_item", "text": "• Höja CL"}])
+        self.assertEqual(sveep_punkt(self.wd, True), [])
+
+    def test_idempotent(self):
+        self.skriv([{"id": "e1", "type": "paragraph", "text": "• Höja CL"}])
+        sveep_punkt(self.wd, True)
+        self.assertEqual(sveep_punkt(self.wd, True), [])

@@ -399,3 +399,51 @@ class TestTomNyttolast(unittest.TestCase):
         lost, _ = self.lost([{"type": "statblock", "id": "p001_e01",
                               "data": {"stats": {"STY": 10}}}])
         self.assertEqual(lost, [])
+
+
+class TestPunktlistor(unittest.TestCase):
+    """En listpunkt spänner ofta över flera tryckta rader.
+
+    Bara den första raden bär punkttecknet; resten är vanliga rader. Bröts
+    följden vid typbytet hamnade fortsättningen i ett eget stycke och ett
+    avstavat ord över radslutet läkte aldrig — del I s. 51 fick `motstån-` och
+    `daren.` som två stycken.
+    """
+
+    def render(self, elements):
+        with tempfile.TemporaryDirectory() as tmp:
+            workdir = Path(tmp)
+            (workdir / "export").mkdir()
+            (workdir / "export" / "bok.json").write_text(
+                json.dumps(book(elements), ensure_ascii=False),
+                encoding="utf-8")
+            return export_markdown(workdir).read_text(encoding="utf-8")
+
+    def test_punkttecknet_dubbleras_inte(self):
+        """Trycket har EN punkt; markdownens `- ` säger redan samma sak."""
+        md = self.render([line("e01", "• Köpa ras", etype="list_item")])
+        self.assertIn("- Köpa ras", md)
+        self.assertNotIn("- • Köpa ras", md)
+
+    def test_texten_i_datan_behaller_punkttecknet(self):
+        """Renderingen droppar glyfen — elementet är fortfarande print-troget."""
+        el = line("e01", "• Köpa ras", etype="list_item")
+        self.assertEqual(el["text"], "• Köpa ras")
+
+    def test_flerradig_punkt_fogas_ihop(self):
+        md = self.render([
+            line("e01", "• SL slår dolt 1T10 för rollpersonen och för motstån-",
+                 etype="list_item"),
+            line("e02", "daren och adderar resultaten.", y=0.88)])
+        self.assertIn("- SL slår dolt 1T10 för rollpersonen och för "
+                      "motståndaren och adderar resultaten.", md)
+
+    def test_loptext_under_listan_blir_stycke_igen(self):
+        """Följden sväljer löptexten, men blocket renderas efter vad det inleds av."""
+        md = self.render([
+            line("e01", "• Höja CL", etype="list_item"),
+            line("e02", "Nytt stycke som inte hör till listan.", x=0.085,
+                 y=0.86)])
+        self.assertIn("- Höja CL", md)
+        self.assertIn("\nNytt stycke som inte hör till listan.", md)
+        self.assertNotIn("- Nytt stycke", md)

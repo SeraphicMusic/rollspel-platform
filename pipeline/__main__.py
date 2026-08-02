@@ -11,6 +11,8 @@
     python3 -m pipeline forbesikta --workdir DIR [--sidor 40-44] [--force]
     python3 -m pipeline sammanfoga --workdir DIR
     python3 -m pipeline rapport --workdir DIR
+    python3 -m pipeline frys --workdir DIR
+    python3 -m pipeline diffa --workdir DIR
     python3 -m pipeline exportera --workdir DIR [--format md,csv,alla]
     python3 -m pipeline konvertera --source BOK.JSON --from dod-t100 --to dod91
     python3 -m pipeline status --workdir DIR
@@ -96,6 +98,8 @@ def main(argv=None):
                    help="skriv om även befintliga heuristik.json")
 
     add("sammanfoga", help="bygg export/bok.json av bästa version per sida")
+    add("frys", help="spara nuvarande bok.md som facit för ordkonservering")
+    add("diffa", help="jämför bok.md mot frysningen (ordfrekvenser)")
     add("rapport", help="generera granskningsrapport")
 
     p = add("exportera", help="exportera md/csv från bok.json")
@@ -248,6 +252,22 @@ def main(argv=None):
                       % (no, total,
                          ", ".join("%s=%d" % (k, v)
                                    for k, v in counts.items() if v)))
+        # Typdriften är en boknivåsignal och kan inte ses i sidloopen: varje
+        # enskild sida är rimlig, det är övergången mellan dem som är felet.
+        from .preflight import book_pages, scan_drift
+        for hit in scan_drift(book_pages(workdir)):
+            print("\nTYPDRIFT: %s" % hit)
+        return
+
+    if args.cmd == "frys":
+        from .freeze import freeze
+        path, antal = freeze(workdir)
+        print("fryst %d ord -> %s" % (antal, path))
+        return
+
+    if args.cmd == "diffa":
+        from .freeze import diff, format_diff
+        print(format_diff(diff(workdir)))
         return
 
     if args.cmd == "sammanfoga":
@@ -284,6 +304,12 @@ def main(argv=None):
         print("dokumenttyp:", m.data.get("doc_type", {}).get("class_counts"))
         print("states:", s["states"])
         print("needs_review:", s["needs_review"])
+        from .decisions import open_questions
+        oppna = open_questions(workdir)
+        if oppna:
+            print("ÖPPNA BOKNIVÅFRÅGOR: %d — boken är inte avslutad" % len(oppna))
+            for qid, text in oppna:
+                print("   %s %s" % (qid, text))
         if s["errors"]:
             print("fel:")
             for no, err in s["errors"]:

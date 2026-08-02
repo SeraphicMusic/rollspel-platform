@@ -454,9 +454,24 @@ def rule_row_merge(elements):
     colw = column_width(elements)
     if not med_h or not med_glyph:
         return []
+    # Bär två element SAMMA uppmätta box har mätningen slagit ihop två tätt
+    # satta rader till ETT band, och transkriptionen har gett båda elementen
+    # bandet. Då finns båda de tryckta raderna i draften — regelns antagande
+    # ("återger bara den ena") gäller inte, och larmet är alltid falskt.
+    # Uppmätt: del II s. 6 och 13, sex kandidater, sex falska positiver.
+    delad = set()
+    sedd = set()
+    for _, box in boxes:
+        nyckel = tuple(round(v, 6) for v in box)
+        if nyckel in sedd:
+            delad.add(nyckel)
+        sedd.add(nyckel)
+
     hits = []
     for el, box in boxes:
         if box[3] < med_h * ROW_MERGE_FACTOR:
+            continue
+        if tuple(round(v, 6) for v in box) in delad:
             continue
         # Ett element som också är för BRETT är en kolumnsammanslagning och
         # ägs av rule_column_merge — flagga inte samma element två gånger.
@@ -695,9 +710,14 @@ def scan_page(data):
             counts["plusminus"] += 1
 
     sidtyp = classify_page(elements)
-    sidnivå = [("kolumnsammanslagning", rule_column_merge),
-               ("radsammanslagning", rule_row_merge),
+    sidnivå = [("radsammanslagning", rule_row_merge),
                ("tabellkandidat", rule_table_candidate)]
+    # Kolumnsammanslagningen mäter mot medianen av sidans elementbredder. På en
+    # blankett är medianen de korta fältraderna ("Typ: Buske"), så satsytans
+    # normalbreda rader ser ut att spänna över rännan. Uppmätt: del II s. 53,
+    # fyra kandidater, fyra falska positiver — spaltrännan korsades aldrig.
+    if sidtyp != PAGE_FORM:
+        sidnivå.insert(0, ("kolumnsammanslagning", rule_column_merge))
     # Läsordningsreglerna gäller bara tvåspaltig löptext. På tabellsidor läses
     # raderna tvärs över spalterna och på blanketter fältgrupp för fältgrupp,
     # så där pekar de ut fel destination och kostar bara agenttid att avfärda.
@@ -798,3 +818,170 @@ def ensure_decisions_file(workdir):
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(DECISIONS_TEMPLATE, encoding="utf-8")
     return path
+
+
+# ---------------------------------------------------------------------------
+# Typdrift över boken
+# ---------------------------------------------------------------------------
+#
+# En lång transkription tappar sina egna typkonventioner mitt i boken. I
+# DoD-grundreglerna del I slutade `heading` förekomma efter s. 38, `boxed_text`
+# efter s. 32, och sidhuvudena bytte från `page_artifact` till `paragraph` vid
+# s. 40. Ingenting larmade: varje sida var för sig fullt rimlig, och boken
+# förklarades klar med hela sin andra halva strukturlös i läsexporten.
+#
+# Det krävs TVÅ signaler, för de tre fallen ser olika ut i datan:
+#
+#   * `heading` och `boxed_text` upphör helt — de fångas av att typen slutar
+#     förekomma.
+#   * Sidhuvudena gör det INTE. Foliesiffrorna håller `page_artifact` vid liv
+#     på varje sida, så typen försvinner aldrig. Signalen är i stället att en
+#     återkommande sträng på samma plats byter typ mitt i boken.
+#
+# Reglerna är boknivå och kan därför inte köras i sidloopen.
+
+# Hur många sidor en typ måste ha använts på innan ett upphörande är ett larm.
+DRIFT_MIN_PAGES = 5
+# Hur många sidor tystnaden måste vara för att inte vara ett kapitel utan tabeller.
+DRIFT_MIN_SILENCE = 8
+# Hur många sidor i rad ett sidhuvud måste stå på för att räknas som möblemang.
+FURNITURE_MIN_RUN = 3
+# Typer som är två representationer av SAMMA sak räknas ihop. Kontraktet
+# tillåter en lista som ett `list` med alla punkter i `data.items` eller som en
+# följd av `list_item`, och en tabell som `table` eller som reservformen
+# `table_header`/`table_cell`. Byter en bok representation är det ingen drift —
+# räknas de var för sig larmar regeln på varje bok som gör det.
+DRIFT_FAMILIES = (
+    ("heading", ("heading",)),
+    ("boxed_text", ("boxed_text",)),
+    ("table", ("table", "table_cell", "table_header")),
+    ("list", ("list", "list_item")),
+)
+# Hur mycket större grad som räcker för att skillnaden ska vara
+# typografisk och inte drift.
+GRADE_FACTOR = 1.5
+
+
+def _topmost(elements):
+    """Sidans översta element enligt mätningen (y räknas från nederkant)."""
+    med = [el for el in elements if _bbox(el)]
+    if not med:
+        return None
+    return max(med, key=lambda el: _bbox(el)[1])
+
+
+def drift_ceased_types(pages):
+    """Typer som användes stadigt och sedan slutade förekomma.
+
+    `pages` är [(sidnummer, elementlista)] i sidordning.
+    """
+    sidor = [no for no, _ in pages]
+    if not sidor:
+        return []
+    sista = sidor[-1]
+    # Tystnaden mäts i LÖPTEXTsidor. Ett register, en blankett och en pärm har
+    # inga exempelrutor, och en bok slutar nästan alltid med sådana sidor —
+    # räknas de med larmar regeln på var enda bok vid dess sista uppslag.
+    prosa = {no for no, els in pages if classify_page(els) == PAGE_PROSE}
+    hits = []
+    for typ, familj in DRIFT_FAMILIES:
+        med = [no for no, els in pages
+               if any(e.get("type") in familj for e in els)]
+        if len(med) < DRIFT_MIN_PAGES:
+            continue
+        tystnad = sum(1 for no in prosa if no > med[-1])
+        if tystnad < DRIFT_MIN_SILENCE:
+            continue
+        hits.append(
+            "Typdrift: `%s` användes på %d sidor upp till s. %d och förekommer "
+            "sedan inte alls på bokens %d återstående löptextsidor (s. %d–%d). En bok byter "
+            "sällan struktur så — kontrollera om transkriptionen tappade typen "
+            "mitt i körningen. I del I slutade `heading` efter s. 38 och "
+            "`boxed_text` efter s. 32, och hela andra halvan blev strukturlös "
+            "i läsexporten."
+            % (typ, len(med), med[-1], tystnad, med[-1] + 1, sista))
+    return hits
+
+
+def drift_furniture_retyped(pages):
+    """Återkommande sidmöblemang som byter elementtyp mitt i boken.
+
+    Ett löpande sidhuvud står med samma lydelse högst upp på sida efter sida.
+    Byter det typ är antingen den gamla eller den nya typningen fel, och båda
+    kan inte gälla i samma bok.
+    """
+    per_text = {}
+    for no, els in pages:
+        # Ett löpande sidhuvud är definierat i förhållande till en sida med
+        # sats. En kapitelavdelare — bara kapitelnamnet på en i övrigt tom sida
+        # — har inget sidhuvud, och dess titel har ofta samma lydelse. Räknas
+        # den med larmar regeln på varje kapitelöppning (del III s. 3: `MAGI`
+        # som heading på avdelarsidan, page_artifact på sidorna efter).
+        kropp = [e for e in els
+                 if e.get("type") != "page_artifact" and _bbox(e)
+                 and (e.get("text") or "").strip()]
+        if len(kropp) < MIN_COLUMN_ELEMENTS:
+            continue
+        topp = _topmost(els)
+        if topp is None:
+            continue
+        text = (topp.get("text") or "").strip()
+        if not text or len(text) > 60:
+            continue
+        per_text.setdefault(text, []).append((no, topp.get("type"),
+                                              _bbox(topp)[3]))
+
+    hits = []
+    for text, forekomster in sorted(per_text.items()):
+        if len(forekomster) < FURNITURE_MIN_RUN:
+            continue
+        typer = {}
+        for no, typ, _ in forekomster:
+            typer.setdefault(typ, []).append(no)
+        if len(typer) < 2:
+            continue
+        # Sektionens FÖRSTA sida bär ofta titeln med samma lydelse som det
+        # löpande sidhuvudet — men satt i egen grad. Då är typskillnaden
+        # typografiskt motiverad, inte drift. Del I: sidhuvuden mäter
+        # 0,010–0,015, sektionstitlarna 0,028–0,038; utan det testet larmar
+        # regeln på var enda sektionsöppning i boken.
+        hojder = sorted(h for _, _, h in forekomster if h)
+        if hojder and hojder[-1] >= hojder[len(hojder) // 2] * GRADE_FACTOR:
+            continue
+        beskrivning = "; ".join(
+            "`%s` på s. %s" % (typ, _sidlista(nos))
+            for typ, nos in sorted(typer.items(), key=lambda x: -len(x[1])))
+        hits.append(
+            "Typdrift: sidhuvudet %r står överst på %d sidor men är typat på "
+            "%d olika sätt — %s. Samma möblemang kan inte vara två saker i "
+            "samma bok. Kontraktet säger `page_artifact` för sidhuvud; i del I "
+            "typades det `paragraph` från s. 40 och sidhuvudena flöt då in i "
+            "läsexporten som brödtext, mitt i meningar och mitt i ett avstavat "
+            "ord över sidbrytningen."
+            % (text, len(forekomster), len(typer), beskrivning))
+    return hits
+
+
+def _sidlista(nos, max_visade=6):
+    if len(nos) <= max_visade:
+        return ", ".join(str(n) for n in nos)
+    return "%s … %s (%d st)" % (", ".join(str(n) for n in nos[:3]),
+                                nos[-1], len(nos))
+
+
+def scan_drift(pages):
+    """Alla boknivåsignaler om typdrift, i en lista."""
+    return drift_ceased_types(pages) + drift_furniture_retyped(pages)
+
+
+def book_pages(workdir):
+    """[(sidnummer, elementlista)] från bästa tillgängliga version per sida."""
+    from .merge import best_page_file
+    m = Manifest.load(workdir)
+    out = []
+    for no in m.page_numbers():
+        path, _ = best_page_file(workdir, no)
+        if path is None:
+            continue
+        out.append((no, read_json(path).get("elements", [])))
+    return out

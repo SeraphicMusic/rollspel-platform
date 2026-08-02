@@ -8,7 +8,7 @@ Deterministisk Python-pipeline i `pipeline/` — kör `python3 -m pipeline --hel
 Allt state per bok ligger i `arbete/<slug>/` (manifest + per-sida-filer + export).
 Kommandon: `analysera`, `rendera`, `extrahera-text`, `radboxar`,
 `identifiera-system`, `jobb`, `bokfor`, `validera`, `forbesikta`, `sammanfoga`,
-`rapport`, `exportera`, `status`, `system`.
+`frys`, `diffa`, `rapport`, `exportera`, `status`, `system`.
 
 Principer (bindande):
 
@@ -27,6 +27,21 @@ Principer (bindande):
   extraherades innan en regel fanns har aldrig prövats mot den (del I: 66
   kandidater, varav 16 tryckta tabeller som lösa `paragraph`). Se AGENTER.md
   Regel 7a.
+- **Typdrift är boknivå och syns aldrig på en enskild sida.** En lång
+  transkription tappar sina egna typkonventioner mitt i boken: i del I upphörde
+  `heading` efter s. 38, `boxed_text` efter s. 32, punktlistorna efter s. 37,
+  och sidhuvudena bytte från `page_artifact` till `paragraph` vid s. 40 — varje
+  sida för sig fullt rimlig. `forbesikta` larmar nu på två signaler: en typ som
+  användes stadigt och sedan upphör, och ett återkommande sidhuvud som byter
+  typ. Sektionens första sida bär ofta titeln med sidhuvudets lydelse men i
+  egen grad; den skillnaden mäts, den gissas inte.
+- **Frys läsexporten före varje strukturingrepp.** `python3 -m pipeline frys`
+  och sedan `diffa` jämför ordfrekvenser — formen får ändras, orden aldrig
+  oförklarat. Det var så de sju tabellrader upptäcktes som föll ur `bok.md`
+  utan att något varnade.
+- **En uppskjuten boknivåfråga måste i kön.** `beslut.md` under `## Öppen kö`,
+  som `- [ ] BQ-NNN <frågan>`. `rapport` och `status` redovisar inte boken som
+  avslutad medan kön har poster.
 - Saknar de flesta av en sidas element bbox är det ett MÄTFEL, inte ett
   transkriptionsfel: läsexporten fogar då inte ihop några stycken och sidan
   faller ut som en rad per tryckt rad. `rapport` listar sådana sidor under
@@ -55,8 +70,12 @@ Efterarbete på en färdig bok (kör skriptet FÖRE agenten, AGENTER.md Regel 5)
 - `python3 scripts/tomma_artefakter.py <arbete/slug> [--verkstall]` — höjer
   confidence på `page_artifact` som advokaten har tömt; de låg kvar på 0,30 och
   återkom som falska lågkonfidensposter i varje screening.
+- `python3 scripts/punktrader.py <arbete/slug> [--verkstall]` — typar om rader
+  som börjar med punkttecken från `paragraph` till `list_item`. Låg de som
+  löptext fogade omflödningen in dem i föregående stycke och listan försvann
+  som struktur.
 
-Alla fyra är idempotenta — en andra körning rör noll poster.
+Alla är idempotenta — en andra körning rör noll poster.
 
 **Avgjorda granskningsflaggor.** `review_reasons` är öppna frågor. Är en flagga
 avgjord flyttas den med `pipeline.corrections.close_review_reason()` till

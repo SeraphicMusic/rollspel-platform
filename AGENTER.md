@@ -129,6 +129,21 @@ python3 scripts/tomma_artefakter.py      arbete/<slug> --verkstall
 python3 scripts/remappa_bbox.py          arbete/<slug> --verkstall
 ```
 
+**Driftvakten körs på hela boken, inte per sida.** `forbesikta` avslutar med
+en boknivåkontroll av typdrift. Larmar den ska den utredas innan boken kallas
+klar: det som ser ut som en tyst konventionsändring är i praktiken alltid en
+transkription som tappat sitt kontrakt mitt i körningen, och felet är då
+systematiskt över alla sidor efter brytpunkten.
+
+**Skjuter en agent upp en fråga till boknivå ska den i kön** — `beslut.md`
+under `## Öppen kö`, som `- [ ] BQ-NNN <frågan>`. Ett uppskjutande utan
+mottagare är den tystaste av alla luckor: varje sida ser färdig ut och boken
+går att kalla klar. `rapport` och `status` vägrar redovisa boken som avslutad
+medan kön har poster.
+
+**Frys läsexporten före ett strukturingrepp** (`frys`, sedan `diffa`). Formen
+får ändras — rader, stycken, rubriker — men orden aldrig oförklarat.
+
 **En avgjord flagga raderas aldrig.** Använd
 `pipeline.corrections.close_review_reason()`: flaggan flyttas till
 `resolved_reasons` med sin lösning och sin upphovsman. Beläggstexten är det
