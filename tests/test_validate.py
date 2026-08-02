@@ -248,3 +248,59 @@ class TestEndToEnd(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestForslagensTreLagen(unittest.TestCase):
+    """Rapporten måste skilja odömda förslag från dömda och överspelade.
+
+    Ett avvisat förslag ligger kvar med `applied: false` för spårbarheten.
+    Listades allt utan åtskillnad drunknade det som verkligen väntade på
+    någon: del I hade 336 granskningsposter, varav 131 var förslag vars text
+    inte ens fanns kvar i elementet.
+    """
+
+    def _post(self, original, **extra):
+        post = {"original": original, "corrected": "rättat", "applied": False,
+                "confidence": 0.6, "reason": "…", "source": "agent:x",
+                "kind": "ocr"}
+        post.update(extra)
+        return post
+
+    def test_overspelat_nar_originalet_inte_finns_kvar(self):
+        from pipeline.report import VERDICT_SUPERSEDED, _proposal_state
+        el = {"type": "paragraph", "text": "texten är omskriven"}
+        post = self._post("gammal lydelse")
+        el["corrections"] = [post]
+        self.assertEqual(_proposal_state(el, post), VERDICT_SUPERSEDED)
+
+    def test_posten_matchar_inte_sig_sjalv(self):
+        """Utan undantaget för `corrections` blir inget någonsin överspelat."""
+        from pipeline.report import VERDICT_SUPERSEDED, _proposal_state
+        el = {"type": "paragraph", "text": "ny text",
+              "corrections": [self._post("gammal lydelse")]}
+        self.assertEqual(_proposal_state(el, el["corrections"][0]),
+                         VERDICT_SUPERSEDED)
+
+    def test_odomt_nar_forslaget_fortfarande_galler(self):
+        from pipeline.report import VERDICT_OPEN, _proposal_state
+        el = {"type": "paragraph", "text": "en gammal lydelse står kvar"}
+        post = self._post("gammal lydelse")
+        el["corrections"] = [post]
+        self.assertEqual(_proposal_state(el, post), VERDICT_OPEN)
+
+    def test_domt_nar_advokaten_skrivit_ned_domen(self):
+        from pipeline.report import VERDICT_JUDGED, _proposal_state
+        el = {"type": "paragraph", "text": "en gammal lydelse står kvar"}
+        post = self._post("gammal lydelse", verdict="avvisad",
+                          adjudicated_by="agent:djavulens-advokat")
+        el["corrections"] = [post]
+        self.assertEqual(_proposal_state(el, post), VERDICT_JUDGED)
+
+    def test_forslag_i_tabellceller_hittas(self):
+        """Originalet ligger i `data`, inte i `text`, för tabeller och listor."""
+        from pipeline.report import VERDICT_OPEN, _proposal_state
+        el = {"type": "table", "data": {"headers": ["a"],
+                                        "rows": [["gammal lydelse"]]}}
+        post = self._post("gammal lydelse")
+        el["corrections"] = [post]
+        self.assertEqual(_proposal_state(el, post), VERDICT_OPEN)

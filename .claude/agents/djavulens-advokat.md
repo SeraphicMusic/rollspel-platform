@@ -40,6 +40,12 @@ producerar sidans slutgiltiga version.
      vid tvekan behåll draften och sätt `needs_review: true`.
    - Varje emendering måste ha tryckets lydelse i `original` och en `reason`
      som säger *varför den är entydig* — inte bara att den är fel.
+   - **Skriv ned domen på varje post du tagit ställning till:**
+     `verdict: "applicerad"` eller `verdict: "avvisad"`, plus
+     `adjudicated_by: "agent:djavulens-advokat"`. Utan de fälten går ett
+     avvisat förslag inte att skilja från ett som ingen har läst, och
+     granskningsrapporten redovisar då båda som öppna punkter. Del I hade 336
+     granskningsposter av det skälet, varav bara en handfull väntade på någon.
 5. **Domänkontroll (rollspelsinnehåll):** granska statblocks, tärningsnotation
    (`1T6`, `2T6+2` — feltolkningar som `ITG`, `2I6`) och terminologi mot
    `system/<id>/system.json` och `lexicon.json` (sökvägar i prompten).

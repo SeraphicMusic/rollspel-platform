@@ -199,3 +199,24 @@ class TestCorrectionInvariants(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestDom(unittest.TestCase):
+    """Advokatens dom över ett förslag den inte applicerar."""
+
+    def test_utan_dom_ligger_falten_inte_med(self):
+        post = make_correction("a", "b", 0.5, "skäl", "agent:x", applied=False)
+        self.assertNotIn("verdict", post)
+        self.assertNotIn("adjudicated_by", post)
+
+    def test_dom_skrivs_ned(self):
+        post = make_correction("a", "b", 0.5, "skäl", "agent:x", applied=False,
+                               verdict="avvisad",
+                               adjudicated_by="agent:djavulens-advokat")
+        self.assertEqual(post["verdict"], "avvisad")
+        self.assertEqual(post["adjudicated_by"], "agent:djavulens-advokat")
+
+    def test_okand_dom_avvisas(self):
+        with self.assertRaises(ValueError):
+            make_correction("a", "b", 0.5, "skäl", "agent:x", applied=False,
+                            verdict="kanske")

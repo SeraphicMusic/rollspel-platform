@@ -23,6 +23,12 @@ KIND_OCR = "ocr"
 KIND_EMENDATION = "emendering"
 CORRECTION_KINDS = (KIND_OCR, KIND_EMENDATION)
 
+# Advokatens dom över ett förslag den inte applicerar. Ett förslag utan dom är
+# oläst — det är den enda skillnad granskningsrapporten kan gå på.
+VERDICT_APPLIED = "applicerad"
+VERDICT_REJECTED = "avvisad"
+VERDICTS = (VERDICT_APPLIED, VERDICT_REJECTED)
+
 # Tecken som kan bära modifikatorns minus. Sättningen använder TANKSTRECK
 # (U+2013) lika ofta som bindestreck-minus — `3T6–2` (del II s. 34) är tryckt
 # så. Båda är giltig notation; teckenvalet är sättning, inte ett fel, och
@@ -33,13 +39,24 @@ CANONICAL_DICE = re.compile(r"^(\d+)T(\d+)([+\-–]\d+)?$")
 
 
 def make_correction(original, corrected, confidence, reason, source,
-                    applied=None, kind=KIND_OCR):
+                    applied=None, kind=KIND_OCR, verdict=None,
+                    adjudicated_by=None):
+    """En korrektionspost.
+
+    `verdict` och `adjudicated_by` sätts av advokaten när den tagit ställning
+    till ett förslag den INTE applicerar. Utan dem går ett avvisat förslag inte
+    att skilja från ett som ingen har läst — och granskningsrapporten måste
+    kunna skilja dem åt, annars drunknar det som verkligen väntar på någon.
+    """
     if applied is None:
         applied = confidence >= APPLY_THRESHOLD
     if kind not in CORRECTION_KINDS:
         raise ValueError("okänt korrektionsslag: %r (tillåtna: %s)"
                          % (kind, ", ".join(CORRECTION_KINDS)))
-    return {
+    if verdict is not None and verdict not in VERDICTS:
+        raise ValueError("okänd dom: %r (tillåtna: %s)"
+                         % (verdict, ", ".join(VERDICTS)))
+    post = {
         "original": original,
         "corrected": corrected,
         "applied": bool(applied),
@@ -49,6 +66,11 @@ def make_correction(original, corrected, confidence, reason, source,
         "kind": kind,
         "timestamp": now_iso(),
     }
+    if verdict:
+        post["verdict"] = verdict
+    if adjudicated_by:
+        post["adjudicated_by"] = adjudicated_by
+    return post
 
 
 # ---------------------------------------------------------------------------
