@@ -41,6 +41,28 @@ Efterarbete på en färdig bok (kör skriptet FÖRE agenten, AGENTER.md Regel 5)
 - `python3 scripts/rubriknivaer.py <slug> --toc <sida> [--verkstall]` — härleder
   kapitel 1 / sektion 2 / underrubrik 3 ur bokens egen innehållsförteckning
   genom att mäta dess indrag i sidbilden. Idempotent via `level_source`.
+- `python3 scripts/remappa_bbox.py <arbete/slug> [--verkstall]` — kopplar om
+  boxar från en föråldrad mätning till den lagade. Fragmentet ligger inuti den
+  riktiga raden, så den nya mätningens rad hittas på att den täcker fragmentets
+  mittpunkt. Täcker ingen rad den tas boxen BORT — en saknad box är en lucka i
+  en heuristik, en påhittad är ett fel som ser ut som data.
+- `python3 scripts/materialisera_kind.py <arbete/slug> [--verkstall]` — skriver
+  ut `kind` på poster från tiden före fältet, med samma regel rapporten redan
+  tillämpar vid läsning.
+- `python3 scripts/materialisera_verdict.py <arbete/slug> [--verkstall]` —
+  fältsätter `verdict: avvisad` där domen står i prosa (`AVVISAD`, `DUBBLETT`)
+  men inte i fältet. Förslag utan nedskriven dom rörs aldrig.
+- `python3 scripts/tomma_artefakter.py <arbete/slug> [--verkstall]` — höjer
+  confidence på `page_artifact` som advokaten har tömt; de låg kvar på 0,30 och
+  återkom som falska lågkonfidensposter i varje screening.
+
+Alla fyra är idempotenta — en andra körning rör noll poster.
+
+**Avgjorda granskningsflaggor.** `review_reasons` är öppna frågor. Är en flagga
+avgjord flyttas den med `pipeline.corrections.close_review_reason()` till
+`resolved_reasons` tillsammans med sin lösning och vem som fällde den, och
+slutar hålla elementet öppet. Radera aldrig beläggstexten — den är det som gör
+kontrollen spårbar. Rapporten räknar de avgjorda separat.
 
 Dokumentation: [README.md](README.md), design i [docs/](docs/).
 Tester: `python3 -m unittest discover -s tests -t .`

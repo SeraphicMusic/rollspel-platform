@@ -172,7 +172,7 @@ def build_report(workdir):
 
     lines.extend(_geometry_section(workdir, m))
 
-    n_items = n_superseded = n_judged = 0
+    n_items = n_superseded = n_judged = n_resolved = 0
     lines.append("## Element som behöver granskning")
     lines.append("")
     for no in m.page_numbers():
@@ -184,6 +184,10 @@ def build_report(workdir):
         page_items = []
         for el in elements:
             reasons = list(el.get("review_reasons", []))
+            # En avgjord flagga ligger kvar i `resolved_reasons` med sin
+            # lösning. Den håller inte elementet öppet, men den räknas — annars
+            # ser en stängd fråga ut som en fråga som aldrig ställdes.
+            n_resolved += len(el.get("resolved_reasons") or [])
             open_props, judged = [], []
             for c in el.get("corrections", []):
                 if c.get("applied"):
@@ -230,9 +234,9 @@ def build_report(workdir):
                                 c["original"], c["corrected"]))
         lines.append("")
     lines.append("*%d överspelade förslag (originalet finns inte kvar i "
-                 "elementet) och %d förslag med nedskriven dom är utelämnade "
-                 "ur listan ovan — de väntar inte på någon.*"
-                 % (n_superseded, n_judged))
+                 "elementet), %d förslag med nedskriven dom och %d avgjorda "
+                 "flaggor är utelämnade ur listan ovan — de väntar inte på "
+                 "någon.*" % (n_superseded, n_judged, n_resolved))
     lines.append("")
 
     applied_rows = []

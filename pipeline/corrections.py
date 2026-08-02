@@ -74,6 +74,46 @@ def make_correction(original, corrected, confidence, reason, source,
 
 
 # ---------------------------------------------------------------------------
+# Granskningsflaggor: öppen fråga eller avgjord anteckning
+# ---------------------------------------------------------------------------
+#
+# `review_reasons` behandlades länge som om varje post vore en obesvarad fråga.
+# Det stämmer inte: en del av dem är protokoll över kontroller som är UTFÖRDA
+# ("tabellens 671 celler omlästa, inga fynd") eller beslut som redan är fattade.
+# Så länge de ligger kvar bland de öppna drunknar de verkliga frågorna, och att
+# radera beläggstexten vore att kasta bort det som gör kontrollen spårbar.
+#
+# Samma lösning som för korrektionsposterna: flaggan blir kvar, men får en dom.
+# En avgjord flagga flyttas till `resolved_reasons` tillsammans med sin lösning
+# och vem som fällde den, och slutar därmed hålla elementet öppet.
+
+def close_review_reason(element, reason, resolution, closed_by):
+    """Avgör en granskningsflagga utan att kasta bort den.
+
+    Flaggan flyttas från `review_reasons` till `resolved_reasons`. Är det den
+    sista öppna flaggan släcks även `needs_review` — fältet betyder "en
+    människa bör titta på flaggorna", och finns inga öppna flaggor kvar finns
+    inget att titta på. Eventuella odömda korrektionsförslag lyfter fortfarande
+    in elementet i rapporten på egen hand.
+
+    Returnerar True om flaggan fanns och stängdes.
+    """
+    oppna = [str(r) for r in element.get("review_reasons") or []]
+    if reason not in oppna:
+        return False
+    element["review_reasons"] = [r for r in oppna if r != reason]
+    element.setdefault("resolved_reasons", []).append({
+        "reason": reason,
+        "resolution": resolution,
+        "closed_by": closed_by,
+        "timestamp": now_iso(),
+    })
+    if not element["review_reasons"]:
+        element["needs_review"] = False
+    return True
+
+
+# ---------------------------------------------------------------------------
 # Tärningsnotation
 # ---------------------------------------------------------------------------
 

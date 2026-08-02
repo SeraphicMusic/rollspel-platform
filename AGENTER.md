@@ -116,6 +116,25 @@ python3 scripts/tabellkandidat.py <slug>              # visa rutnäten
 python3 scripts/tabellkandidat.py <slug> --verkstall  # montera de rektangulära
 ```
 
+En färdigscreenad bok bär ofta ett lager poster som ser ut som öppna frågor
+men inte är det: protokoll över kontroller som ÄR gjorda, domar som står i
+prosa men inte i fältet, boxar från en mätning som sedan lagats. Städa dem
+maskinellt innan du sätter en advokat på listan, annars läser agenten samma
+avslutade ärende en gång till:
+
+```bash
+python3 scripts/materialisera_kind.py    arbete/<slug> --verkstall
+python3 scripts/materialisera_verdict.py arbete/<slug> --verkstall
+python3 scripts/tomma_artefakter.py      arbete/<slug> --verkstall
+python3 scripts/remappa_bbox.py          arbete/<slug> --verkstall
+```
+
+**En avgjord flagga raderas aldrig.** Använd
+`pipeline.corrections.close_review_reason()`: flaggan flyttas till
+`resolved_reasons` med sin lösning och sin upphovsman. Beläggstexten är det
+enda som gör kontrollen spårbar i efterhand — försvinner den ser en avslutad
+utredning ut som en utredning som aldrig gjordes.
+
 `scripts/tabellkandidat.py` monterar de block där varje rad har exakt en cell
 i varje kolumn — den indelningen är uppmätt, inte tolkad. Ragged block rör den
 aldrig. Det som ändå kräver en advokat med PNG:n är tabellernas GRÄNSER: feta

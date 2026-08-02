@@ -134,6 +134,60 @@ class TestGeometrirapport(unittest.TestCase):
         self.assertNotIn("Sidor utan användbar geometri", rapport)
 
 
+class TestAvgjordFlaggaIRapporten(unittest.TestCase):
+    """En avgjord flagga håller inte elementet öppet, men den räknas.
+
+    Del II bar 29 flaggor som var protokoll över UTFÖRDA kontroller ("671
+    celler omlästa, inga fynd"). De listades som öppna punkter för alltid, och
+    då drunknar de frågor som verkligen väntar på någon. Att radera
+    beläggstexten vore i stället att kasta bort det som gör kontrollen
+    spårbar — därför flyttas flaggan, den försvinner inte.
+    """
+
+    def setUp(self):
+        self.tmp = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, self.tmp, ignore_errors=True)
+        source = self.tmp / "kalla.pdf"
+        source.write_bytes(b"%PDF-1.4 attrapp")
+        Manifest.create(self.tmp, source, 1)
+        m = Manifest.load(self.tmp)
+        m.page(1)["state"] = "validated"
+        m.save()
+
+    def _skriv(self, el):
+        path = page_file(self.tmp, 1, "final.json")
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps({"page": 1, "elements": [el]}),
+                        encoding="utf-8")
+
+    def test_oppen_flagga_listas(self):
+        self._skriv({"id": "p001_e01", "type": "paragraph", "text": "x",
+                     "review_reasons": ["geometrin ska verifieras"]})
+        rapport = build_report(self.tmp).read_text(encoding="utf-8")
+        self.assertIn("Flagga: geometrin ska verifieras", rapport)
+
+    def test_avgjord_flagga_listas_inte_men_raknas(self):
+        self._skriv({"id": "p001_e01", "type": "paragraph", "text": "x",
+                     "review_reasons": [],
+                     "resolved_reasons": [
+                         {"reason": "geometrin ska verifieras",
+                          "resolution": "omkopplad mot mätningen",
+                          "closed_by": "pipeline.rows"}]})
+        rapport = build_report(self.tmp).read_text(encoding="utf-8")
+        self.assertNotIn("Flagga: geometrin ska verifieras", rapport)
+        self.assertIn("1 avgjorda flaggor", rapport)
+
+    def test_kvarvarande_oppen_flagga_haller_elementet_kvar(self):
+        self._skriv({"id": "p001_e01", "type": "paragraph", "text": "x",
+                     "review_reasons": ["den andra frågan"],
+                     "resolved_reasons": [
+                         {"reason": "den forsta", "resolution": "avgjord",
+                          "closed_by": "skript"}]})
+        rapport = build_report(self.tmp).read_text(encoding="utf-8")
+        self.assertIn("Flagga: den andra frågan", rapport)
+        self.assertIn("1 avgjorda flaggor", rapport)
+
+
 class TestEndToEnd(unittest.TestCase):
     """Skanning -> transkript -> validering -> sammanfogning -> export."""
 

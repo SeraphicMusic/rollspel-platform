@@ -2,7 +2,8 @@
 import unittest
 
 from pipeline.corrections import (KIND_EMENDATION, KIND_OCR,
-                                  apply_corrections_to_text, make_correction,
+                                  apply_corrections_to_text,
+                                  close_review_reason, make_correction,
                                   repair_dice_token, repair_word,
                                   scan_dice_in_text)
 from pipeline.systems import load
@@ -220,3 +221,46 @@ class TestDom(unittest.TestCase):
         with self.assertRaises(ValueError):
             make_correction("a", "b", 0.5, "skäl", "agent:x", applied=False,
                             verdict="kanske")
+
+
+class TestAvgjordFlagga(unittest.TestCase):
+    """En granskningsflagga kan vara avgjord utan att kastas bort."""
+
+    def _element(self, *skal):
+        return {"id": "p001_e01", "text": "x", "needs_review": True,
+                "review_reasons": list(skal)}
+
+    def test_flaggan_flyttas_med_sin_losning(self):
+        el = self._element("bbox ska verifieras")
+        self.assertTrue(close_review_reason(
+            el, "bbox ska verifieras", "omkopplad mot mätningen", "skript"))
+        self.assertEqual(el["review_reasons"], [])
+        self.assertEqual(len(el["resolved_reasons"]), 1)
+        stangd = el["resolved_reasons"][0]
+        self.assertEqual(stangd["reason"], "bbox ska verifieras")
+        self.assertEqual(stangd["resolution"], "omkopplad mot mätningen")
+        self.assertEqual(stangd["closed_by"], "skript")
+
+    def test_texten_bevaras_ordagrant(self):
+        """Beläggstexten är det som gör kontrollen spårbar — den raderas inte."""
+        skal = "GENOMRÄKNING: 671 celler omlästa, inga fynd"
+        el = self._element(skal)
+        close_review_reason(el, skal, "protokoll, ingen fråga", "skript")
+        self.assertEqual(el["resolved_reasons"][0]["reason"], skal)
+
+    def test_sista_flaggan_slacker_needs_review(self):
+        el = self._element("a", "b")
+        close_review_reason(el, "a", "avgjord", "skript")
+        self.assertTrue(el["needs_review"])
+        close_review_reason(el, "b", "avgjord", "skript")
+        self.assertFalse(el["needs_review"])
+
+    def test_okand_flagga_ror_ingenting(self):
+        el = self._element("a")
+        self.assertFalse(close_review_reason(el, "b", "avgjord", "skript"))
+        self.assertEqual(el["review_reasons"], ["a"])
+        self.assertNotIn("resolved_reasons", el)
+
+    def test_element_utan_flaggor_klarar_anropet(self):
+        el = {"id": "p001_e02", "text": "x"}
+        self.assertFalse(close_review_reason(el, "a", "avgjord", "skript"))
