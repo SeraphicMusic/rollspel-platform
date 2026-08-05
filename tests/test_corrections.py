@@ -264,3 +264,36 @@ class TestAvgjordFlagga(unittest.TestCase):
     def test_element_utan_flaggor_klarar_anropet(self):
         el = {"id": "p001_e02", "text": "x"}
         self.assertFalse(close_review_reason(el, "a", "avgjord", "skript"))
+
+
+class TestDiceArithmeticIsNotNotation(unittest.TestCase):
+    """BQ-016: `+` duger inte som ensam tärningsmarkör.
+
+    `dice.json` mappar `+` → `T` i `misread_to_canonical`, så varje `N+M` i en
+    bok kunde bli en tärning. Del III s. 23 skrev om `Dess CL är 6+2 per
+    effektgrad` till `6T2` — en notation boken aldrig använder — och
+    applicerade rättningen rakt på ett spelvärde.
+    """
+
+    def setUp(self):
+        self.dice, self.words = DOD.dice, DOD.words
+
+    def test_rakneillagg_rors_inte(self):
+        text = "Dess CL är 6+2 per effektgrad utöver den första."
+        corr, flags = scan_dice_in_text(text, self.dice, self.words)
+        self.assertEqual(corr, [])
+        self.assertEqual(flags, [])
+
+    def test_akta_notation_med_tillagg_passerar_fortfarande(self):
+        """`3T6+3` bär ett `T` och ska fortsätta prövas som notation."""
+        corr, flags = scan_dice_in_text("Skadan är 3T6+3 mot rustning.",
+                                        self.dice, self.words)
+        self.assertEqual(corr, [])
+        self.assertEqual(flags, [])
+
+    def test_felavlast_notation_lagas_fortfarande(self):
+        """Motprovet: en garblad token med `T`-markör repareras som förut."""
+        corr, _ = scan_dice_in_text("Vakten gör ITG i skada.",
+                                    self.dice, self.words)
+        self.assertEqual([c["corrected"] for c in corr], ["1T6"])
+        self.assertTrue(corr[0]["applied"])

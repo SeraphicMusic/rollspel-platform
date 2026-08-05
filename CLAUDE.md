@@ -8,19 +8,19 @@ Deterministisk Python-pipeline i `pipeline/` — kör `python3 -m pipeline --hel
 Allt state per bok ligger i `arbete/<slug>/` (manifest + per-sida-filer + export).
 Kommandon: `analysera`, `rendera`, `extrahera-text`, `radboxar`,
 `identifiera-system`, `jobb`, `bokfor`, `validera`, `forbesikta`, `sammanfoga`,
-`frys`, `diffa`, `rapport`, `exportera`, `status`, `system`.
+`frys`, `diffa`, `rapport`, `exportera`, `arkivera`, `status`, `system`.
 
 Principer (bindande):
 
 - Alla steg är idempotenta — färdiga sidor körs aldrig om; avbrott återupptas med samma kommando.
 - Inga tysta korrigeringar — varje rättning är en korrektionspost (original, förslag, confidence, orsak, källa, kind, applied).
 - Valideringens **härledda** lexikonmatchningar är förslag (`applied: false`) — bara handkurerade alias appliceras direkt. En böjningsform som står korrekt i trycket får aldrig "rättas" tyst; advokaten dömer mot PNG:n.
-- `forbesikta` hittar de mekaniska felmönstren deterministiskt (linjeregel-prefix/-suffix, raka citattecken, `±0`-garbel, kolumnsammanslagning, vertikal radsammanslagning, läsordning, tabellkandidat) och skriver kandidater till `page_NNN.review/heuristik.json`. Kör det FÖRE korrekturen — agenterna ska verifiera listan, inte leta upp mönstren igen. Läsordningsreglerna körs bara på sidor som klassificerats som tvåspaltig löptext; sidans typ står i `heuristik.json` under `sidtyp`.
+- `forbesikta` hittar de mekaniska felmönstren deterministiskt (linjeregel-prefix/-suffix, raka citattecken, `±0`-garbel, `±N`-värde, punktledare, kolumnkollaps, kolumnsammanslagning, vertikal radsammanslagning, läsordning, tabellkandidat, bbox-felkoppling) och skriver kandidater till `page_NNN.review/heuristik.json`. Kör det FÖRE korrekturen — agenterna ska verifiera listan, inte leta upp mönstren igen. Läsordningsreglerna körs bara på sidor som klassificerats som tvåspaltig löptext; sidans typ står i `heuristik.json` under `sidtyp`.
 - En tryckt tabell MÅSTE typas `table` (eller reservformen `table_header`/`table_cell`) — aldrig som en följd av `paragraph`. Kontraktet står i [.claude/skills/extrahera/SKILL.md](.claude/skills/extrahera/SKILL.md) §Tabeller och är bindande: typas en tabell som löptext är rad- och kolumnstrukturen förlorad för gott, och ingenting nedströms kan återskapa den. `forbesikta`-regeln `tabellkandidat` flaggar misstänkta fall som `needs_review` — fel elementtyp är ett typningsfel, aldrig en korrektionspost.
 - Boknivåbeslut samlas i `arbete/<slug>/beslut.md` och delas ut av `jobb`. Bara advokaten skriver dit; alla läser den. Samma fråga ska inte utredas om på varje sida.
 - Uppenbara sättningsfel emenderas automatiskt (`kind: "emendering"`); trycket bevaras i postens `original` och rättningen listas i granskningsrapporten. Gränsen är bindande och står i [AGENTER.md](AGENTER.md) Regel 8a — siffror, spelvärden, dialekt och arkaismer rättas aldrig.
 - Osäkert innehåll flaggas (`needs_review`) och hamnar i granskningsrapporten i stället för att gissas.
-- `source.bbox` mäts fram deterministiskt av `radboxar` (`pipeline/rows.py`) ur sidbilden — de inskannade PDF:erna har inget textlager utöver vattenstämpeln. Kör det för varje skannad bok: utan bbox är fyra av `forbesikta`s åtta regler verkningslösa. Transkriptionen hämtar bbox ur mätningen och **gissar aldrig koordinater**; saknas en rad utelämnas bbox.
+- `source.bbox` mäts fram deterministiskt av `radboxar` (`pipeline/rows.py`) ur sidbilden — de inskannade PDF:erna har inget textlager utöver vattenstämpeln. Kör det för varje skannad bok: utan bbox är fyra av `forbesikta`s elva regler verkningslösa. Transkriptionen hämtar bbox ur mätningen och **gissar aldrig koordinater**; saknas en rad utelämnas bbox.
 - Radera aldrig `arbete/`-kataloger — de är pipelinens state.
 - `forbesikta` hoppar över färdiga sidor; screena en avslutad bok med
   `--sidor 1-N --force`. Reglerna kommer till efter hand, så en bok som
@@ -42,10 +42,76 @@ Principer (bindande):
 - **En uppskjuten boknivåfråga måste i kön.** `beslut.md` under `## Öppen kö`,
   som `- [ ] BQ-NNN <frågan>`. `rapport` och `status` redovisar inte boken som
   avslutad medan kön har poster.
+- **Kön är för frågor som BARA en människa kan svara på — mät först, fråga
+  sedan.** Går frågan att avgöra med en beskärning ur skanningen är den inget
+  köärende: den är ett mätjobb, och det ska göras innan posten skrivs. I del II
+  hamnade tre "misstänkta OCR-fel" (`tämt tillstånd`, `kalla klima`, `Mycket
+  sällsynta`) i kön, användaren läste av dem i boken och beslutade — varefter
+  forensiken visade att alla tre var print-trogna och två av besluten stred mot
+  Regel 8a. Frågorna kostade en avläsning som ingen behövde göra, och svaren
+  gick inte att följa. Rätt sorts köärende är det motsatta: ett värde som bara
+  står i den tryckta boken och som ingen bild eller intern evidens kan avgöra.
+- **Gissa aldrig i frågans formulering.** Samma post löd "sannolikt tryckt
+  `tamt`" — gissningen var fel och styrde svaret. En köpost ska säga vad som
+  är oläst, inte vad man tror att det står.
 - Saknar de flesta av en sidas element bbox är det ett MÄTFEL, inte ett
   transkriptionsfel: läsexporten fogar då inte ihop några stycken och sidan
   faller ut som en rad per tryckt rad. `rapport` listar sådana sidor under
   *Sidor utan användbar geometri*. Se AGENTER.md Regel 9.
+- **Reglerna måste titta IN i tabellcellerna.** De äldre `forbesikta`-reglerna
+  läste bara `el["text"]`, och därför överlevde `Dvärg PSY ±2` i del I:s
+  rastabell tre agentvarv med confidence 1,0 — felet satt i `data.rows` och
+  ingen regel såg dit. Det hittades först när boken diffades mot en oberoende
+  rippning. `plusminus-varde`, `punktledare` och `kolumnkollaps` läser både
+  texten och cellerna. (Cellen visade sig vid forensik vara print-trogen: `±2`
+  står så i trycket. Regeln har ändå rätt att larma — `±N` finns inte i bokens
+  notation, och domen hör hemma i `beslut.md`, inte i elementet.)
+- **En gles tabell monteras ur geometrin, inte ur läsordningen.**
+  `tables.assemble` fyllde tidigare celler sekventiellt, vilket bara fungerar
+  på ett fullt rektangulärt rutnät. Del I:s tabell över grundegenskapskrav har
+  7 attributkolumner där varje yrke fyller två–tre; 33 celler gick aldrig jämnt
+  upp på 9 rubriker, tabellen skippades och bok.md skrev en rad per cell med
+  kolumntillhörigheten borta. Assemblern läser nu kolumnen ur cellens uppmätta
+  x-läge mot kolumnrubrikerna och raden ur y-läget, och faller tillbaka på
+  läsordningen bara när bbox saknas. Varje tvetydighet (två celler i samma
+  ruta, en cell utanför axeln) ger fallback och en anteckning — aldrig en
+  gissning. En tom ruta flaggas alltid: geometrin kan inte skilja "tom i
+  trycket" från "cell som transkriptionen tappade".
+- **En export bär stämpeln av den kod som byggde den.** `bok.json` har
+  `byggd_med` (git-revision + `SCHEMA_VERSION` + om arbetsträdet var smutsigt),
+  och `bok.md`/`tabeller/` har sin i `export/proveniens.json` — inte i bok.md
+  själv, som är ordkonserveringens facit och skulle få ett nytt "nytt ord" vid
+  varje commit. `status` och `rapport` VARNAR (aldrig spärr) när stämpeln inte
+  är HEAD. Utan den var felklassen tyst: `bibliotek/…del2` bar `ENER- GISTRÅLE`
+  och `SMIslaget.` — brytfel som redan var lagade i `pipeline/export.py`, i en
+  export som ingen kört om.
+- **Ett verktyg verifieras mot den ARKIVERADE PDF:en, aldrig mot `arbete/`.**
+  Bygg en kastbar arbetskatalog (`analysera` + `radboxar --workdir <scratch>`)
+  och mät där: samma skanning, samma sidor, inga domar att förstöra. Det var
+  den insikten som löste upp BQ-002/013/021, som stått öppna på antagandet att
+  ett facit krävde en omkörning av `radboxar` över hela boken — och därmed
+  riskerade 103 handmätta boxar.
+- **Mätmotorn har ett ANDRA SVEP.** En kort, gles slutrad (`de ting.`, `sen:`,
+  `sm.`) toppar på ungefär halva grannradernas svärta och faller på den lokala
+  tröskeln; dalen mellan två normala rader ligger på samma nivå, så tröskeln
+  kan inte sänkas. Svepet tittar bara i luckor som RYMMER en rad och mäter dem
+  mot luckans egen profil. Banden märks `svep: 2`. Ramens lodräta linjer
+  sållas bort ur bandets x-mätning (`_rule_mask`) — annars mäts varje band från
+  ramen och styckeindragen försvinner.
+- **Käll-PDF:en är den sista sanningskällan — arkivera den, radera den aldrig.**
+  Sidbilderna i `arbete/` är omrenderade och lägre upplösta än PDF:ens
+  inbäddade skanning (del I: 1339×1941 mot 1928×2795, 44 % mer). Går PDF:en
+  förlorad kan ingen dom omprövas. Städningen import/ → `arkiv/` var länge bara
+  en punkt i en README, alltså en instruktion till en agent: ingenting körde
+  den och ingenting märkte att den uteblev. Numera är den `python3 -m pipeline
+  arkivera`, som vägrar så länge boken har en sida under `validated`, ett
+  sidfel, en saknad export eller en öppen BQ-post — och `status` säger
+  **EJ ARKIVERAD** så länge PDF:en står kvar i `import/`.
+- **En oberoende rippning av samma bok är ett boknivåinstrument.** Diffa mot
+  den när det finns en. Den hittar det som per-sida-korrekturen strukturellt
+  inte kan se. Men dess avvikelser är INDICIER på var man ska titta, aldrig
+  facit — jämförelsebokens egna fel är minst lika många, och varje påstående
+  avgörs mot PNG:n.
 
 Efterarbete på en färdig bok (kör skriptet FÖRE agenten, AGENTER.md Regel 5):
 
@@ -74,6 +140,30 @@ Efterarbete på en färdig bok (kör skriptet FÖRE agenten, AGENTER.md Regel 5)
   som börjar med punkttecken från `paragraph` till `list_item`. Låg de som
   löptext fogade omflödningen in dem i föregående stycke och listan försvann
   som struktur.
+- `python3 scripts/binda_rader.py <arbete/slug> [--sidor N,M] [--verkstall]` —
+  binder element till uppmätta rader på sidor som mätts om. Kör det efter
+  varje `radboxar --force`: mätningen ger rätt band, men elementen pekar inte
+  på dem, och utan `source.rader` räknar pipelinen aldrig fram någon bbox.
+  Bindningen är ingen gissning utan en mätning — elementets teckenlängd mot
+  radens uppmätta bredd (±12,5 % för 90 % av bokens facitrader), illustrations-
+  band utpekade på svärtan (text 0,26–0,43, bildpanel 0,53–0,95), och ett
+  avstavat ord som tvingar nästa element till raden omedelbart efter. Varje
+  körning måste bli mätbart dyrare av att skjutas ett steg, annars lämnas den
+  obunden: 62 % av alla avvikelser mot facit var hela block ett steg ur led.
+  **Kör `--utvardera` först** — den prövar verktyget mot bokens redan bundna
+  sidor. Ett verktyg som inte kan återskapa en känd bindning får inte skriva en
+  okänd. Utvärderingen räknar inte bara avvikelser utan **dömer** dem mot
+  trycket, för facit är en tidigare transkription med egna fel; se AGENTER.md
+  Regel 9a.
+- `python3 scripts/laga_radbas.py <arbete/slug> [--verkstall]` — lagar
+  transkript vars `source.rader` skrevs 1-baserat. `pipeline/jobs.py` slår upp
+  radindexen 0-baserat och räknar själv fram `bbox`, så en 1-baserad sida
+  bokförs som GODKÄND med varje box förskjuten en rad — inget varnar, och felet
+  syns först som obegriplig geometri nedströms. Offsetten mäts, den gissas
+  inte: transkriptet bär `region` per element och mätningen `region` per rad,
+  och den offset som får dem att gå ihop är den rätta. Skriptet rör bara sidor
+  där 1-baserat går ihop utan fel och 0-baserat ger minst ett. Kör det efter
+  varje transkriptionsvåg, före `bokfor`.
 
 Alla är idempotenta — en andra körning rör noll poster.
 

@@ -9,7 +9,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from pipeline.export import export_markdown
+from pipeline.export import export_csv, export_markdown
 
 
 def book(elements):
@@ -209,6 +209,137 @@ class TestReflow(unittest.TestCase):
         self.assertIn("från djur- växt- och mineralriket.", md)
         self.assertNotIn("djurväxt", md)
 
+    def test_compound_hyphen_after_a_capital_abbreviation_is_kept(self):
+        """`PSY-` + `poäng` är ett sammansättningsstreck, inte en avstavning.
+
+        BQ-024: felet stod LIVE i `bok.md` som `PSYpoäng` och `STYkrav` medan
+        sidfilerna hela tiden återgav trycket rätt.
+        """
+        md = self.render([line("e01", "Hur man återvinner PSY-"),
+                          line("e02", "poäng efter en besvärjelse.")])
+        self.assertIn("återvinner PSY-poäng efter", md)
+        self.assertNotIn("PSYpoäng", md)
+
+    def test_hyphenation_of_a_capitalised_word_is_healed(self):
+        """Ett VERSALSATT ord som bryts över radslutet ska också läkas.
+
+        Läkningen krävde tidigare att nästa rad börjar gement, så tolv
+        besvärjelsenamn stod med ett påhittat streck i sig i `bok.md`
+        (`ANTI- MAGI`, `MÖRK- RET`, `TELEPORTE- RING` …). Fortsättningens
+        versalform skiljer arten från sammansättningsstrecket: `ANTI-` + `MAGI`
+        är ett avstavat `ANTIMAGI` (beslut s. 14), medan `PSY-` + `poäng` är
+        två ord i en sammansättning.
+        """
+        md = self.render([line("e01", "besvärjelsen ANTI-"),
+                          line("e02", "MAGI har effektgrad 3.")])
+        self.assertIn("besvärjelsen ANTIMAGI har effektgrad 3.", md)
+        self.assertNotIn("ANTI- MAGI", md)
+
+    def test_avstavning_haller_ihop_stycket_aven_utan_geometri(self):
+        """En rad som slutar på bindestreck kan inte avsluta ett stycke.
+
+        Femton stycken i del III föll isär därför att FORTSÄTTNINGEN saknade
+        uppmätt rad: `…kommunicera med levan-` blev ett stycke och `de ting.`
+        nästa. Utan geometri fogade exporten ingenting ihop — men strecket är
+        i sig ett bevis på att ordet fortsätter.
+        """
+        md = self.render([line("e01", "kommunicera med levan-"),
+                          {"id": "e02", "type": "paragraph",
+                           "text": "de ting."}])
+        self.assertIn("kommunicera med levande ting.", md)
+        self.assertNotIn("levan-", md)
+
+    def test_radbrytningar_inuti_ett_element_fogas_ocksa_ihop(self):
+        """Exempelrutan på s. 8 är ETT element med fem tryckta rader i `text`.
+
+        `_reflow` hade då ingenting att foga ihop, och rutan föll ut rad för
+        rad med ett påhittat streck i `PARA-` / `LYSERING`.
+        """
+        md = self.render([{
+            "id": "e01", "type": "boxed_text",
+            "text": "Exempel: En magiker som lär sig PARA-\n"
+                    "LYSERING ur kodexen Liber Necro-\nsophicus.",
+            "source": {"bbox": [0.53, 0.12, 0.38, 0.05]}}])
+        self.assertIn("lär sig PARALYSERING ur kodexen Liber Necrosophicus.",
+                      md)
+        self.assertNotIn("PARA-", md)
+
+    def test_tom_rad_inuti_rutan_ar_en_styckegrans(self):
+        """Blankraden skiljer rutans stycken och får inte fogas bort."""
+        md = self.render([{
+            "id": "e01", "type": "boxed_text",
+            "text": "Första stycket i rutan.\n\nAndra stycket i rutan.",
+            "source": {"bbox": [0.53, 0.12, 0.38, 0.05]}}])
+        self.assertIn("> Första stycket i rutan.\n> \n> Andra stycket i "
+                      "rutan.", md)
+
+    def test_avstavning_slar_utslutningsregeln(self):
+        """En avstavad rad är aldrig styckets sista, hur kort den än är.
+
+        Exempelrutan på s. 10 bröts vid `…och mina kamra-` därför att raden
+        mättes till 0,3805 mot spaltens 0,4222 — under regel 1b:s gräns. Rutan
+        gick synligt itu och `ter skriker förtvivlat` blev ett eget citatblock.
+        """
+        md = self.render([line("e01", "Det är varmt och mina kamra-", w=0.38),
+                          line("e02", "ter skriker förtvivlat.", w=0.42)])
+        self.assertIn("Det är varmt och mina kamrater skriker förtvivlat.", md)
+
+    def test_utan_geometri_och_utan_streck_fogas_inget_ihop(self):
+        """Motprovet: saknad geometri utan avstavning bryter som förut."""
+        md = self.render([line("e01", "Ett helt stycke som slutar här."),
+                          {"id": "e02", "type": "paragraph",
+                           "text": "Ett nytt stycke."}])
+        self.assertIn("Ett helt stycke som slutar här.\n\nEtt nytt stycke.",
+                      md)
+
+    def test_versalt_ord_med_gemen_andelse_lakas_ocksa(self):
+        """`LJU-` + `Sets` är ett brutet `LJUSets` — inte två ord.
+
+        Läkningen krävde TVÅ versaler i fortsättningen, och missade därmed
+        precis de bryt där versalordet bär en gement satt böjningsändelse.
+        Två fall stod live i `bok.md` (del III): `LJU- Sets` (s. 19, formeln
+        LJUS i `MÖRKRETs grad mot LJUSets grad`) och `MOTSTÅNDSKRAF- Ten`
+        (s. 39). Båda med ett påhittat streck och ett mellanrum mitt i ordet.
+        """
+        md = self.render([line("e01", "måste MÖRKRETs grad övervinna LJU-"),
+                          line("e02", "Sets grad på motståndstabellen.")])
+        self.assertIn("övervinna LJUSets grad", md)
+        self.assertNotIn("LJU- Sets", md)
+
+    def test_hangande_streck_slar_den_vidgade_versalregeln(self):
+        """`ÄVENTYRS-` + `OCH` får inte skrivas ihop.
+
+        Motprovet mot att versalregeln blev för vid när den slutade kräva två
+        versaler i fortsättningen: ett hängande streck framför ett samordnande
+        `OCH` prövas FÖRE den, och strecket behåller sitt mellanrum.
+        """
+        md = self.render([line("e01", "i kapitlet ÄVENTYRS-"),
+                          line("e02", "OCH REGELTABELLER finns listan.")])
+        self.assertIn("ÄVENTYRS- OCH REGELTABELLER", md)
+        self.assertNotIn("ÄVENTYRSOCH", md)
+
+    def test_hanging_hyphen_wins_over_the_abbreviation_rule(self):
+        """`SMI-` + `och` är hängande, inte en sammansättning.
+
+        Prövas förkortningsregeln först skrivs de ihop till `SMI-och`.
+        """
+        md = self.render([line("e01", "slag mot SMI-"),
+                          line("e02", "och STY-baserade färdigheter.")])
+        self.assertIn("mot SMI- och STY-baserade", md)
+        self.assertNotIn("SMI-och", md)
+
+    def test_hanging_hyphen_before_a_coordinating_word_is_kept(self):
+        """`mynt-` + `och penningsystemet` — strecket är hängande.
+
+        Den gamla `_HANGING_HYPHEN` såg bara varianten där NÄSTA rad själv
+        börjar med ett streckförsett ord (`djur-` + `växt- och …`); den sade
+        ingenting om ett naket `och`, och därför skrevs `myntoch`.
+        """
+        md = self.render([line("e01", "en värld där mynt-"),
+                          line("e02", "och penningsystemet är outvecklat.")])
+        self.assertIn("där mynt- och penningsystemet", md)
+        self.assertNotIn("myntoch", md)
+
     def test_field_lines_are_not_glued_together(self):
         """Örtposterna (s. 53–61) sätts `Etikett: värde`, en per tryckt rad.
 
@@ -283,6 +414,144 @@ class TestReflow(unittest.TestCase):
         md = self.render([{"id": "e01", "type": "paragraph", "text": "Ett."},
                           {"id": "e02", "type": "paragraph", "text": "Två."}])
         self.assertIn("Ett.\n\nTvå.", md)
+
+
+class TestArvdaKolumnrubriker(unittest.TestCase):
+    """En deltabell under en spännrubrik ärver tabellens egna rubriker.
+
+    Rustningstabellen (del III s. 38) har EN tryckt rubrikrad och därunder nio
+    delposter under var sin spännrubrik. Bara den första bär rubrikerna, så
+    exporten skrev en TOM rubrikrad (`| | | | |`) över de åtta andra — och en
+    läsare som landar på `BRYNJEHOSOR (BEN)` såg `5 | 15 | 2.500` utan att veta
+    att kolumnerna är absorbering, vikt och pris.
+    """
+
+    def render(self, pages):
+        with tempfile.TemporaryDirectory() as tmp:
+            workdir = Path(tmp)
+            (workdir / "export").mkdir()
+            data = book([])
+            data["pages"] = pages
+            (workdir / "export" / "bok.json").write_text(
+                json.dumps(data, ensure_ascii=False), encoding="utf-8")
+            return export_markdown(workdir).read_text(encoding="utf-8")
+
+    RUBRIKER = ["Namn (kroppsdel)", "Absorbering", "Vikt i kg", "Pris i sm"]
+
+    @staticmethod
+    def tom_rubrikrad(kolumner):
+        """Så ser en tom rubrikrad ut i markdown — `|  |  |  |  |`."""
+        return "| " + " | ".join([""] * kolumner) + " |"
+
+    def sida(self, mellanled, andra_rubriker=None):
+        return [{"page": 1, "elements": [
+            {"id": "e01", "type": "table", "text": "",
+             "data": {"headers": self.RUBRIKER,
+                      "rows": [["Tyghjälm", "1", "1", "30"]]}},
+            mellanled,
+            {"id": "e03", "type": "table", "text": "",
+             "data": {"headers": andra_rubriker
+                      if andra_rubriker is not None else ["", "", "", ""],
+                      "rows": [["Ringbrynja", "5", "15", "2.500"]]}},
+        ]}]
+
+    def test_spannrubrik_bryter_inte_tabellen(self):
+        md = self.render(self.sida(
+            {"id": "e02", "type": "table_caption",
+             "text": "BRYNJEHOSOR (BEN)"}))
+        self.assertEqual(md.count("| Namn (kroppsdel) | Absorbering "
+                                  "| Vikt i kg | Pris i sm |"), 2)
+        self.assertNotIn(self.tom_rubrikrad(4), md)
+
+    def test_loptext_emellan_bryter_arvet(self):
+        """Löptext mellan tabellerna betyder att en NY tabell börjar."""
+        md = self.render(self.sida(
+            {"id": "e02", "type": "paragraph",
+             "text": "Sköldar behandlas i nästa avsnitt."}))
+        self.assertEqual(md.count("| Namn (kroppsdel) | Absorbering "
+                                  "| Vikt i kg | Pris i sm |"), 1)
+        self.assertIn(self.tom_rubrikrad(4), md)
+
+    def test_egna_rubriker_skrivs_aldrig_over(self):
+        md = self.render(self.sida(
+            {"id": "e02", "type": "table_caption", "text": "SKÖLDAR"},
+            andra_rubriker=["Sköld", "BV", "Vikt", "Pris"]))
+        self.assertIn("| Sköld | BV | Vikt | Pris |", md)
+
+    def test_annan_kolumnform_arver_inte(self):
+        """s. 25: `Rasmodifikationer` under förflyttningstabellen.
+
+        Lika många kolumner, egen spännrubrik — och ändå en annan tabell.
+        Skillnaden står i cellerna: modern har TAL i första kolumnen
+        (`0–11`), dottern TEXT (`Anka`).
+        """
+        md = self.render([{"page": 1, "elements": [
+            {"id": "e01", "type": "table_caption",
+             "text": "TABELL FÖR FÖRFLYTTNINGSFÖRMÅGA"},
+            {"id": "e02", "type": "table", "text": "",
+             "data": {"headers": ["STO+FYS+SMI", "Förflyttning"],
+                      "rows": [["0–11", "7"], ["12–13", "8"]]}},
+            {"id": "e03", "type": "table_caption", "text": "Rasmodifikationer"},
+            {"id": "e04", "type": "table", "text": "",
+             "data": {"headers": ["", ""],
+                      "rows": [["Anka", "–2"], ["Dvärg", "–1"]]}},
+        ]}])
+        self.assertEqual(md.count("| STO+FYS+SMI | Förflyttning |"), 1)
+        self.assertIn(self.tom_rubrikrad(2), md)
+
+    def test_olika_antal_kolumner_arver_inte(self):
+        """Stämmer inte kolumnantalet är det inte samma tryckta tabell."""
+        md = self.render(self.sida(
+            {"id": "e02", "type": "table_caption", "text": "HJÄLMAR"},
+            andra_rubriker=["", "", ""]))
+        self.assertIn(self.tom_rubrikrad(3), md)
+        self.assertEqual(md.count("| Namn (kroppsdel) | Absorbering "
+                                  "| Vikt i kg | Pris i sm |"), 1)
+
+    def test_sidbrytning_bryter_arvet(self):
+        md = self.render([
+            {"page": 1, "elements": [
+                {"id": "e01", "type": "table", "text": "",
+                 "data": {"headers": self.RUBRIKER,
+                          "rows": [["Tyghjälm", "1", "1", "30"]]}}]},
+            {"page": 2, "elements": [
+                {"id": "e02", "type": "table_caption", "text": "BRYNJA"},
+                {"id": "e03", "type": "table", "text": "",
+                 "data": {"headers": ["", "", "", ""],
+                          "rows": [["Ringbrynja", "5", "15", "2.500"]]}}]},
+        ])
+        self.assertIn(self.tom_rubrikrad(4), md)
+
+    def test_csv_arver_samma_rubriker_som_markdown(self):
+        """Läsformatet och CSV:n får inte säga olika saker om samma tabell."""
+        with tempfile.TemporaryDirectory() as tmp:
+            workdir = Path(tmp)
+            (workdir / "export").mkdir()
+            data = book([])
+            data["pages"] = self.sida(
+                {"id": "e02", "type": "table_caption", "text": "BRYNJA"})
+            (workdir / "export" / "bok.json").write_text(
+                json.dumps(data, ensure_ascii=False), encoding="utf-8")
+            outdir, _ = export_csv(workdir)
+            csvar = sorted(p.read_text(encoding="utf-8")
+                           for p in outdir.glob("*.csv"))
+        self.assertEqual(len(csvar), 2)
+        for text in csvar:
+            self.assertEqual(text.splitlines()[0],
+                             "Namn (kroppsdel),Absorbering,Vikt i kg,Pris i sm")
+
+    def test_tabell_helt_utan_rubriker_ror_vi_inte(self):
+        """Skräcktabellen s. 10 har ingen rubrikrad i trycket och ingen förlaga.
+
+        Den ska falla ut som förut — en tom rubrikrad är fulare än en ärvd,
+        men den är sann.
+        """
+        md = self.render([{"page": 1, "elements": [
+            {"id": "e01", "type": "table", "text": "",
+             "data": {"headers": ["", ""],
+                      "rows": [["1–5", "Effektgraden halveras."]]}}]}])
+        self.assertIn(self.tom_rubrikrad(2), md)
+        self.assertIn("| 1–5 | Effektgraden halveras. |", md)
 
 
 class TestCrossPageTables(unittest.TestCase):
@@ -447,3 +716,99 @@ class TestPunktlistor(unittest.TestCase):
         self.assertIn("- Höja CL", md)
         self.assertIn("\nNytt stycke som inte hör till listan.", md)
         self.assertNotIn("- Nytt stycke", md)
+
+
+class TestSpanningHeaders(unittest.TestCase):
+    """En rubrik över flera kolumner får inte tyst falla ur läsexporten.
+
+    `Grundegenskapskrav` (s. 12) står över hela attributblocket. Markdown kan
+    inte uttrycka det, och `diffa` visade att ordet försvann helt ur bok.md
+    när tabellen väl monterades. Det renderas därför som en bildtext.
+    """
+
+    def render(self, elements):
+        with tempfile.TemporaryDirectory() as tmp:
+            workdir = Path(tmp)
+            (workdir / "export").mkdir()
+            (workdir / "export" / "bok.json").write_text(
+                json.dumps(book(elements), ensure_ascii=False),
+                encoding="utf-8")
+            return export_markdown(workdir).read_text(encoding="utf-8")
+
+    def _tabell(self, spans):
+        data = {"headers": ["Yrke", "STY", "FYS"],
+                "rows": [["Krigare", "14", "12"], ["Tjuv", "", "16"]]}
+        if spans is not None:
+            data["spans"] = spans
+        return [{"id": "e01", "type": "table", "text": "", "data": data}]
+
+    def test_spannrubriken_renderas_som_bildtext(self):
+        md = self.render(self._tabell(
+            [{"label": "Grundegenskapskrav", "columns": ["STY", "FYS"]}]))
+        self.assertIn("*Grundegenskapskrav — gemensam rubrik över STY, FYS*",
+                      md)
+        self.assertIn("| Yrke | STY | FYS |", md)
+
+    def test_tabell_utan_spann_ar_oforandrad(self):
+        md = self.render(self._tabell(None))
+        self.assertNotIn("gemensam rubrik", md)
+        self.assertIn("| Yrke | STY | FYS |", md)
+
+    def test_ofullstandigt_spann_hoppas_over(self):
+        md = self.render(self._tabell([{"label": "", "columns": ["STY"]},
+                                       {"label": "Utan kolumner",
+                                        "columns": []}]))
+        self.assertNotIn("gemensam rubrik", md)
+
+
+class TestAnmarkning(unittest.TestCase):
+    """Redaktionell notis i läsexporten utan att trycket rörs.
+
+    Boken säger på s. 65 "de färdigheter som är baserade på färdigheten" där
+    sammanhanget kräver "grundegenskapen". Regel 8a förbjuder att ordet byts —
+    men lämnas meningen helt okommenterad är den obegriplig för en läsare.
+    """
+
+    def render(self, elements):
+        with tempfile.TemporaryDirectory() as tmp:
+            workdir = Path(tmp)
+            (workdir / "export").mkdir()
+            (workdir / "export" / "bok.json").write_text(
+                json.dumps(book(elements), ensure_ascii=False),
+                encoding="utf-8")
+            return export_markdown(workdir).read_text(encoding="utf-8")
+
+    def test_anmarkning_renderas_efter_stycket(self):
+        md = self.render([
+            {"id": "e01", "type": "paragraph", "text": "Höjningen är permanent.",
+             "anmarkning": "trycket har ”färdigheten”, ska vara ”grundegenskapen”"},
+        ])
+        self.assertIn("Höjningen är permanent.", md)
+        self.assertIn("*[Anmärkning: trycket har ”färdigheten”, ska vara "
+                      "”grundegenskapen”]*", md)
+        self.assertLess(md.index("Höjningen"), md.index("Anmärkning"))
+
+    def test_trycket_ror_inte(self):
+        md = self.render([
+            {"id": "e01", "type": "paragraph", "text": "baserade på färdigheten.",
+             "anmarkning": "ska vara grundegenskapen"},
+        ])
+        self.assertIn("baserade på färdigheten.", md)
+        self.assertNotIn("baserade på grundegenskapen.", md)
+
+    def test_anmarkning_pa_rad_mitt_i_stycket_overlever_omflodningen(self):
+        """Tryckfelet sitter sällan på styckets FÖRSTA rad."""
+        md = self.render([
+            {"id": "e01", "type": "paragraph",
+             "text": "För 5 HP får man höja en grundegenskap en poäng och",
+             "source": {"bbox": [0.5, 0.30, 0.44, 0.016]}},
+            {"id": "e02", "type": "paragraph",
+             "text": "detta påverkar de färdigheter som baseras på färdigheten.",
+             "source": {"bbox": [0.5, 0.284, 0.44, 0.016]},
+             "anmarkning": "ska vara grundegenskapen"},
+        ])
+        self.assertIn("Anmärkning: ska vara grundegenskapen", md)
+
+    def test_element_utan_anmarkning_far_ingen_rad(self):
+        md = self.render([{"id": "e01", "type": "paragraph", "text": "Vanlig text."}])
+        self.assertNotIn("Anmärkning", md)

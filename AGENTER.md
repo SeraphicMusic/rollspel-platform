@@ -235,3 +235,68 @@ s. 3, 33, 41, 64 är sådana sidor. `rapport` listar dem numera under
 Att låta boxen fattas är alltid tillåtet och aldrig fel; att mäta om den för
 hand kräver att `bbox_source` säger det rent ut, annars ljuger
 provenienssträngen.
+
+**Efter en ommätning: kör `scripts/binda_rader.py`, inte en agent.** Mätningen
+ger rätt band, men elementen pekar inte på dem — och ett element utan
+`source.rader` får aldrig någon bbox. Det jobbet såg länge ut att kräva en
+vision-agent, och den bedömningen byggde på ett räknefel: elementen antogs vara
+stycken när de i själva verket är **en per tryckt rad**, och illustrationens
+band räknades som textrader. Med det rättat är bindningen två listor i
+läsordning som ska paras ihop, och det är en mätning — teckenlängd mot uppmätt
+radbredd, svärta för att skilja bild från sats, avstavning som binder ihop
+grannrader. Skriptet band 131 element på del II:s tio sidor och lämnade resten
+med skäl utskrivet per region.
+
+Kör alltid `--utvardera` innan du litar på det. Den prövar verktyget mot bokens
+redan bundna sidor: **ett verktyg som inte kan återskapa en känd bindning får
+inte skriva en okänd.** Det var så tre riktiga fel hittades — kravet att varje
+element måste få en rad (en missad mätrad sköt då hela regionen ur led), ett
+breddfel som var billigare att överskatta än att underskatta, och en tolerans
+så lös att en förskjutning inte kostade något.
+
+**Ett verktygsfacit prövas i en KASTBAR arbetskatalog, inte i bokens.** Bygg
+den ur den arkiverade PDF:en — `analysera` + `radboxar --workdir <scratch>` på
+de sidor facit gäller — och mät där. Samma skanning, samma sidor, inga domar
+att förstöra. Del III:s tre mätmotorfrågor stod öppna i två dygn på antagandet
+att en verifiering krävde en omkörning av `radboxar` över hela boken och därmed
+riskerade 103 handmätta boxar. Den låsningen fanns aldrig. Regel 9c i ren form:
+posten beskrev sitt eget hinder, och hindret var ett påstående.
+
+### Regel 9a: Facit är inte sanning — döm avvikelsen, räkna den inte
+
+En utvärdering mot befintlig data mäter ÖVERENSSTÄMMELSE, inte riktighet. Den
+befintliga datan är en tidigare transkription med sina egna fel: i del II
+binder facit sidhuvudet `SPELLEDARENS UPPGIFT` till rad 60 mitt på s. 6, och
+element 52 till rad 1 på s. 17. En ren avvikelsesiffra räknar sådant som det
+nya verktygets fel — och då förkastar man ett verktyg som är bättre än det man
+jämför med, eller godtar ett som bara härmar.
+
+Varje avvikelse ska därför **dömas mot trycket**, inte summeras: vilken av de
+två bindningarna passar sidan bäst? `binda_rader.py --utvardera` gör det i kod
+och redovisar `verktyget bättre / FACIT bättre / går inte att skilja åt`.
+Utfallet mot del II blev 18 mot 16 och mot del III 7 mot 4 — alltså jämnbördigt
+med transkriptionen, vilket är det verkliga betyget. Exitkoden underkänner
+verktyget när facit vinner oftare, inte när det avviker.
+
+### Regel 9b: Ett bevis är en skillnad, inte en brist på alternativ
+
+En bindning som inte går att flytta ser bevisad ut. Den är det bara om
+alternativen finns och är sämre. Del II:s indexsida s. 63 fyllde sin region
+från kant till kant, kunde därför inte skjutas åt något håll — och låg två steg
+fel, eftersom två poster saknade band och kunde ha stått var som helst i
+körningen. Samma felform som `±0`-garblet som överlevde tre agentvarv: en regel
+som inte kunde se in i tabellcellerna hittade ingenting, och tomheten lästes
+som renhet.
+
+Kräv alltid att alternativet räknas fram och visar sig dyrare. Går det inte att
+räkna fram är svaret obundet, inte bekräftat.
+
+### Regel 9c: Ett uppskjutet ärendes MOTIVERING är inte bevis
+
+En köpost bär ofta en tidigare agents slutsats om varför något inte gick. Den
+slutsatsen är ett påstående, inte ett resultat, och den ska prövas om innan
+arbetet börjar. Del II:s BQ-001 slog fast att bindningen "INTE kan härledas
+deterministiskt" därför att elementen var stycken. De var rader — det står i
+transkriptionskontraktet — och hela slutsatsen vilade på att illustrationens
+band räknats som textrader. Den prövningen tog en minut; att lita på posten
+hade kostat en vision-agent per sida på tio sidor.

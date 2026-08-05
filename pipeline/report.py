@@ -103,18 +103,108 @@ def _queue_section(workdir):
     trettiotal sådana i ett halvår. Kön står först i rapporten, före allt
     annat, och boken redovisas inte som avslutad medan den har poster.
     """
-    from .decisions import open_questions
-    oppna = open_questions(workdir)
-    if not oppna:
+    from .decisions import blocking_questions, tool_questions
+    oppna = blocking_questions(workdir)
+    verktyg = tool_questions(workdir)
+    if not oppna and not verktyg:
         return []
-    lines = ["## Öppna boknivåfrågor — boken är INTE avslutad", ""]
-    lines.append("%d fråga%s har skjutits upp till boknivå och väntar på svar. "
-                 "De avgörs i ett svep, inte sida för sida — men de måste "
-                 "avgöras."
-                 % (len(oppna), "" if len(oppna) == 1 else "or"))
+    lines = []
+    if oppna:
+        lines += ["## Öppna boknivåfrågor — boken är INTE avslutad", ""]
+        lines.append("%s kräver den tryckta boken eller ett redaktionellt val "
+                     "och väntar på svar. De avgörs i ett svep, inte sida för "
+                     "sida — men de måste avgöras. Frågorna i sin helhet står "
+                     "i `beslut.md` under `## Öppen kö`."
+                     % ("1 fråga" if len(oppna) == 1
+                        else "%d frågor" % len(oppna)))
+        lines.append("")
+        for qid, text in oppna:
+            lines.append("- **%s** %s" % (qid, text))
+        lines.append("")
+    # Verktygsposterna redovisas separat och sägs uttryckligen INTE blockera.
+    # Annars läser en människa dem som något de ska ta ställning till, och det
+    # är precis det som hände i del III.
+    if verktyg:
+        lines += ["## Verktygsfrågor — blockerar INTE boken", ""]
+        lines.append("%s är buggar eller saknade kontroller i pipelinen, var "
+                     "och en med ett facit att bygga mot. De ska lagas, inte "
+                     "besvaras, och de säger ingenting om huruvida boken är "
+                     "klar."
+                     % ("1 post" if len(verktyg) == 1
+                        else "%d poster" % len(verktyg)))
+        lines.append("")
+        for qid, text in verktyg:
+            lines.append("- **%s** %s" % (qid, text))
+        lines.append("")
+    return lines
+
+
+def _provenance_section(workdir):
+    """Exporter som är byggda med äldre kod än HEAD.
+
+    Varning, aldrig spärr: en gammal export är läsbar och riktig så långt den
+    går. Det som saknades var beskedet om att den kan sakna en lagning —
+    `bibliotek/…del2` bar brytfel (`ENER- GISTRÅLE`, `SMIslaget.`) som redan
+    var rättade i `pipeline/export.py`, i en `bok.md` som ingen kört om.
+    """
+    from .provenance import check_exports
+    try:
+        varningar = check_exports(workdir)
+    except Exception:
+        return []
+    if not varningar:
+        return []
+    lines = ["## Exportens proveniens", ""]
+    lines.append("Stämpeln i exporten säger inte att den är byggd med den kod "
+                 "som står i HEAD. Innehållet kan sakna lagningar som redan "
+                 "finns i pipelinen — kör `sammanfoga` och `exportera` om "
+                 "innan filerna används.")
     lines.append("")
-    for qid, text in oppna:
-        lines.append("- **%s** %s" % (qid, text))
+    for v in varningar:
+        lines.append("- %s" % v)
+    lines.append("")
+    return lines
+
+
+def _inherited_headers_section(workdir):
+    """Deltabeller som fått tryckets kolumnrubriker från tabellen ovanför.
+
+    Arvet är den enda plats där exporten skriver ut ord som inte står över
+    just den deltabellen i trycket (`_inherit_headers` i `pipeline/export.py`),
+    och det stod bara i en loggrad. Det var den raden som avslöjade att s. 25:s
+    `Rasmodifikationer` ärvde fel rubriker. En loggrad läses av den som råkar
+    ha terminalen framme; rapporten läses av den som granskar boken.
+    """
+    from . import tables
+    from .export import _inherit_headers, _load_book
+    try:
+        book = _load_book(workdir)
+    except SystemExit:
+        return []
+    rader = []
+    for page in book.get("pages", []):
+        elements, _ = tables.assemble(page["elements"], page["page"])
+        items = _inherit_headers([(page["page"], el) for el in elements
+                                  if not el.get("removed")])
+        for no, el in items:
+            if el.get("headers_inherited"):
+                rader.append((no, el.get("id", "?"),
+                              (el.get("data") or {}).get("headers") or []))
+    if not rader:
+        return []
+    lines = ["## Ärvda kolumnrubriker", ""]
+    lines.append("Rubrikraden står inte i trycket över de här deltabellerna — "
+                 "den är hämtad från tabellens egen rubrik längre upp på samma "
+                 "sida, sedan kolumnernas form visat sig vara densamma. "
+                 "Kontrollera mot PNG:n att det är samma tryckta tabell som "
+                 "fortsätter.")
+    lines.append("")
+    lines.append("| Sida | Element | Ärvda rubriker |")
+    lines.append("| --- | --- | --- |")
+    for no, eid, headers in rader:
+        lines.append("| %d | `%s` | %s |"
+                     % (no, eid,
+                        " / ".join(str(h).replace("|", "/") for h in headers)))
     lines.append("")
     return lines
 
@@ -211,8 +301,10 @@ def build_report(workdir):
         lines.append("")
 
     lines.extend(_queue_section(workdir))
+    lines.extend(_provenance_section(workdir))
     lines.extend(_drift_section(workdir))
     lines.extend(_geometry_section(workdir, m))
+    lines.extend(_inherited_headers_section(workdir))
 
     n_items = n_superseded = n_judged = n_resolved = 0
     lines.append("## Element som behöver granskning")

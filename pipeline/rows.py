@@ -28,7 +28,12 @@ språkmodell gissa dem. Metoden är ren bläckprojektion — ingen OCR, ingen mo
      avsnitt: en sida kan vara tvåspaltig upptill och ha en fullbredds tabell
      nedtill (del I, s. 61).
   6. Inom varje spalt ger profilen ett band per tryckt rad, och bandet mäts i
-     x-led inom sin egen spalt.
+     x-led inom sin egen spalt — utan ramens lodräta linjer, som annars sätter
+     varje bands x och suddar styckeindragen (`_rule_mask`).
+  7. Ett ANDRA SVEP går igenom de luckor som rymmer en rad och mäter dem mot
+     luckans egen profil. Den korta, glesa slutraden (`de ting.`, `sen:`,
+     `sm.`) toppar på ungefär halva grannradernas svärta och faller därför på
+     den lokala tröskeln i steg 3 — se `_sparse_bands`. Banden märks `svep: 2`.
 
 Utfallet skrivs som `page_NNN.radboxar.json` och matas till transkriberaren,
 som fyller i `source.bbox` ur mätningen i stället för att uppskatta
@@ -43,6 +48,13 @@ ligger på exakt 100 %, 62 sidor på minst 95 %, tre under: blanketterna s. 67
 62 missarna ligger 25 på de två blanketterna och 6 på sidor som mätningen
 själv flaggar som grafikdominerade — där ska PNG:n läsas oavsett. Resten är
 ~0,5 element per sida.
+
+Ommätt 2026-08-05 ur den arkiverade PDF:en i en KASTBAR arbetskatalog (del I:s
+egen `arbete/` rörs inte): 3953 kända bbox, **93,50 % före andra svepet och
+ramsållningen, 95,09 % efter**. Siffran 98,5 ovan gäller den mätning som
+faktiskt skrev del I:s boxar och går inte att återskapa med dagens motor — den
+står kvar som historik, inte som dagens facit. Verifieringen mot del III:s
+tjugotre handmätta glesa slutrader (BQ-002 a) gick samtidigt 1 → 19.
 
 Blanketter är den kända svagheten och kräver ingen fix här: fältens etiketter
 sitter i streckade rutor, linjalerna blir sidans vanligaste "band" (7 px) och
@@ -104,6 +116,16 @@ ZONE_WINDOW = 0.05
 # Minsta rännbredd respektive spaltbredd, som andel av sidbredden.
 MIN_GUTTER_WIDTH = 0.015
 MIN_COLUMN_WIDTH = 0.12
+# Var i sidbredden en ränna får ligga för att räknas som SPALTränna. Marginaler
+# och indrag ger också tomma stråk, men inte mitt på satsytan.
+GUTTER_CENTRE_LO = 0.30
+GUTTER_CENTRE_HI = 0.70
+# Hur stor andel av avsnittets radband som måste ha en egen ränna på samma
+# ställe för att spalterna ska räknas som verkliga. En illustration korsar
+# rännan och röstar nej; brödtexten röstar ja. Uppmätt på del II: friska
+# tvåspaltssidor 89–94 %, sidor med helsidesbred illustration 61–74 %, och
+# titelsidan (verkligt enspaltig) 0 %. Hälften skiljer arterna med marginal.
+GUTTER_VOTE_SHARE = 0.5
 # Lucka (i radhöjder) som bryter kroppen i ett nytt lodrätt avsnitt med egen
 # spaltindelning. Uppmätt på s. 61: luckan mellan den tvåspaltiga löptexten
 # och fullbreddstabellen är ~8 radhöjder, luckan mellan två stycken ~1.
@@ -150,6 +172,67 @@ GRAPHIC_HEIGHT_FACTOR = 16.0
 # verkliga raden på en sida. Vid 0,008 (16 px) kastades folion `1`, vilket
 # tog tillbaka en del av det defekt 3 just hade vunnit.
 MIN_ROW_WIDTH = 0.004
+# --- Andra svepet: den korta, glesa slutraden -------------------------------
+#
+# Den lokala tröskeln i `_profile_bands` sätts mitt emellan lokalt golv och
+# lokal topp, och fönstret (3 % av sidhöjden ≈ två radavstånd) domineras av
+# grannradernas fulla sats. En slutrad på två–tre glyfer når inte dit: uppmätt
+# på del III s. 39 toppar `den.` på 40,0 mot tröskeln 41,6 — den föll på 1,6
+# enheter. Samma art är belagd tjugosex gånger i den bokens BQ-002, med
+# handmätta referenser, och kostnaden står i läsexporten: utan bbox bryter
+# `_starts_paragraph` stycket mitt i det avstavade ordet (`levan-` / `de ting.`).
+#
+# Tröskeln kan inte bara sänkas. Dalen mellan två normala rader når aldrig
+# papper (staplar och diakriter hakar i varandra, uppmätt ~44 % av toppen), och
+# en glesrad toppar på ungefär samma nivå — en enda global tröskel kan alltså
+# inte både skilja två rader åt och fånga den glesa. Därför ett ANDRA svep, som
+# bara tittar i luckor där en rad OVER HUVUD TAGET får plats, och där mäter mot
+# luckans egen profil i stället för mot grannradernas.
+#
+# Luckan måste rymma en rad: minst spaltens egen medianbandhöjd.
+SPARSE_GAP_FACTOR = 1.0
+# En osynlig rad skapar den lucka som `_segments` sedan delar avsnittet vid, så
+# raden hamnar ofta PÅ avsnittsgränsen. Svepet får därför sträcka sig en radhöjd
+# förbi gränsen; dubbletter mot nästa avsnitts band rensas efteråt.
+SPARSE_TAIL_FACTOR = 1.0
+# Bläckspärren, och den enda signal som mätningen visade skiljer arterna:
+# kandidatens mörkaste pixel mot spaltens egna bands mörkaste. En gles rad är
+# GLES, inte BLEK — glyferna är svarta, det är antalet som är litet. Uppmätt
+# över 191 kandidater på del III:s femton facitsidor: äkta rader 0,6–1,0 (p05
+# 0,9), och de två kandidater som saknade bläck helt låg på 0,48 och 0,49 (det
+# grå zebrarastret på s. 26). Profilens egen topp skiljer INTE — där överlappar
+# arterna fullständigt (äkta 0,23–1,28, falska 0,39–0,50).
+SPARSE_INK_SHARE = 0.55
+# En bildkolumn räknas som bläck i ramsållningen vid den här andelen av
+# satssvärtan, och som LODRÄT LINJE när den är bläck i minst den här andelen av
+# luckans höjd. En textrad fyller aldrig en hel lucka i y-led; en ramlinje gör
+# ingenting annat.
+RULE_INK_SHARE = 0.3
+RULE_RUN_SHARE = 0.8
+# Bredaste lodräta klunga som får räknas som LINJE, som andel av sidbredden.
+# En ramlinje mäter 1–3 px (0,0005–0,0015); en mörk illustrationskant är
+# tiotals gånger bredare. Utan taket äter masken bilden inifrån, och det var
+# just det som fällde det förra försöket att sålla bort ramar (BQ-013).
+MAX_RULE_WIDTH = 0.006
+# Hur högt fönstret kring ett band mäts för ramlinjer, i radhöjder åt vardera
+# hållet. Se `_rule_mask`: skevningen sätter taket, glyfhöjden golvet.
+RULE_CONTEXT_FACTOR = 1.5
+# Största andel av ett fönster som ramsållningen får maska bort. En ram är en
+# eller två linjer (0,5 % av fönstret); en skrafferad illustration är dussintals
+# och skulle annars ätas inifrån.
+MAX_RULE_SHARE = 0.05
+# En kandidat måste vara en RAD, inte en flisa. Första svepet sållar flisor mot
+# `MIN_BAND_FACTOR` (0,25), men i en lucka räcker inte det: understyckena under
+# en normal rad ligger 7–9 px och slapp igenom (63 falska band på s. 13).
+# Uppmätt mot facit: de tjugosex handmätta glesa raderna mäter 14–26 px mot
+# sidans radhöjd 24–26, alltså 0,54–1,0 — flisorna 0,27–0,35. Gränsen läggs
+# däremellan.
+SPARSE_HEIGHT_FACTOR = 0.45
+# Hur många gånger ett fönster får skalas av och mätas om. Tre räcker för
+# bokens mätta fall (rubrik + ramlinje + rad i samma lucka); djupare svep
+# hittade inget nytt på facitsidorna.
+SPARSE_DEPTH = 3
+
 # Bandets bakgrundsnivå i `_extent` tas som den här percentilen av svärtan
 # längs bandet — låg nog att träffa pappret på en vanlig rad, hög nog att inte
 # fastna i en enstaka ljus pixel mitt i en tonplatta.
@@ -291,7 +374,54 @@ def _merge_and_classify(bands, page_median=None, noise_from_page=True):
     return out
 
 
-def _extent(dark, top, bottom, lo, hi):
+def _rule_mask(block):
+    """Bildkolumner som är en LODRÄT LINJE genom hela fönstret.
+
+    En inramad sida (del III s. 13) har ramens lodräta linje inne i
+    spaltfönstret, och `_extent` mäter då varje band från ramen i stället för
+    från satsen: alla 47 vänsterband fick x 0,0735, och styckeindragen —
+    0,018–0,019, som är hela BQ-013:s facit för indragen — försvann.
+
+    Två krav, båda nödvändiga och båda mätta: kolumnen ska vara bläck i minst
+    `RULE_RUN_SHARE` av fönstrets höjd (ingen textkolumn är det över tre
+    radhöjder), och den sammanhängande klungan sådana kolumner ska vara smalare
+    än `MAX_RULE_WIDTH` av sidbredden. Utan breddkravet äter masken en mörk
+    illustration inifrån — det var därför det förra försöket revs upp
+    (BQ-013, anteckningen om `grafik`-klassningen).
+
+    Fönstret måste vara KORT. Mätt över ett helt avsnitt hittas ingen linje
+    alls: s. 13 är skevad 0,27°, och över 2000 px vandrar ramen nio pixlar i
+    sidled, så ingen enskild bildkolumn är bläck hela vägen. Över tre radhöjder
+    är vandringen under en halv pixel, och en bokstav är fortfarande bara en
+    tredjedel så hög som fönstret.
+    """
+    if block.shape[0] < 3 or not block.size:
+        return None
+    level = RULE_INK_SHARE * float(np.percentile(block, 99.9))
+    if level <= 0:
+        return None
+    rule = (block >= level).mean(axis=0) >= RULE_RUN_SHARE
+    if not rule.any():
+        return None
+    limit = max(2, int(MAX_RULE_WIDTH * block.shape[1]))
+    mask = np.zeros(block.shape[1], dtype=bool)
+    for a, b in _runs(rule):
+        if b - a <= limit:
+            mask[max(0, a - 1):b + 1] = True   # linjens halo hör till linjen
+    if not mask.any():
+        return None
+    # En SKRAFFERAD illustration är också smala lodräta streck genom hela
+    # fönstret — dussintals av dem. Masken skulle äta bildpartiet inifrån, och
+    # det var precis så det förra ramförsöket föll (BQ-013): en texturerad yta
+    # slutade klassas som `grafik`. En ram är en eller två linjer; går masken
+    # över några få procent av fönstret är det inte en ram, och då maskas
+    # ingenting.
+    if mask.mean() > MAX_RULE_SHARE:
+        return None
+    return mask
+
+
+def _extent(dark, top, bottom, lo, hi, ignore=None):
     """Bandets faktiska x-utsträckning inom sin spalt.
 
     Tröskeln måste läggas mot bandets EGEN bakgrund, inte mot noll. En
@@ -308,9 +438,23 @@ def _extent(dark, top, bottom, lo, hi):
     plattans egen nivå och regeln behåller sin fulla bredd.
     """
     block = dark[top:bottom, lo:hi]
+    if (ignore is not None and len(ignore) == block.shape[1]
+            and not ignore.all() and block[:, ~ignore].max()):
+        # Ramens lodräta linje är inte radens bläck. Utan den här maskningen
+        # mäts varje band från ramen och styckeindragen försvinner (s. 13).
+        block = block[:, ~ignore]
+        keep = np.flatnonzero(~ignore)
+    else:
+        keep = None
     prof = block.max(axis=0)
     if not len(prof) or not prof.max():
         return None
+    if keep is not None:
+        def _out(i0, i1):
+            return lo + int(keep[i0]), lo + int(keep[i1]) + 1
+    else:
+        def _out(i0, i1):
+            return lo + int(i0), lo + int(i1) + 1
     if np.percentile(prof, SHADE_PERCENTILE) >= SHADE_SHARE * prof.max():
         # Bandet är satt på en tonplatta. Svärtan kan inte skilja plattan från
         # satsen — rastret når lika höga toppvärden — men KONTRASTEN kan, av
@@ -326,13 +470,173 @@ def _extent(dark, top, bottom, lo, hi):
                      + LOCAL_FRACTION * (contrast.max() - contrast.min()))
             hits = np.flatnonzero(contrast >= level)
             if len(hits):
-                return lo + int(hits[0]), lo + int(hits[-1]) + 1
+                return _out(hits[0], hits[-1])
         # Ingen kontrast alls: ett massivt ornament, t.ex. linjeregeln. Det
         # mäts på svärtan nedan och behåller sin fulla bredd.
     hits = np.flatnonzero(prof >= MIN_DARKNESS_SHARE * prof.max())
     if not len(hits):
         return None
-    return lo + int(hits[0]), lo + int(hits[-1]) + 1
+    return _out(hits[0], hits[-1])
+
+
+def _without_rules(block, ink_ref):
+    """Fönstret utan sina LODRÄTA linjer, eller None om inget blir kvar.
+
+    En inramad sida (del III s. 13) har ramens lodräta linje inne i varje
+    spaltfönster. I första svepet spelar den ingen roll — där sätter satsen
+    tröskeln — men i en tom lucka är den det enda bläcket, och då lyfter den
+    profilens golv så jämnt att varje krusning blir ett band: 58 falska
+    "rader" på s. 13, alla med x på ramens 0,073 och 7–9 px höga.
+    Linjen känns igen på att den är bläck HELA vägen genom luckan, vilket
+    ingen textrad är.
+    """
+    if not block.size:
+        return None
+    ink = block >= RULE_INK_SHARE * ink_ref
+    rule = ink.mean(axis=0) >= RULE_RUN_SHARE
+    # Linjens HALO hör till linjen. En 2 px bred ramlinje lämnar en gråzon på
+    # var sida som inte når svärtningskravet men bär hela dess kontrast — utan
+    # den här utvidgningen överlevde s. 13:s 58 falska band ramsållningen med
+    # oförändrat antal.
+    rule = rule | np.roll(rule, 1) | np.roll(rule, -1)
+    if rule.all():
+        return None
+    return block[:, ~rule]
+
+
+def _scan_window(dark, a, b, lo, hi, median, page_median, ink_ref, depth=0):
+    """Sök rader i ETT fönster, och skala av dess starkaste struktur.
+
+    En enda tröskel per lucka räcker inte. Ligger det en tabellramslinje eller
+    en fet rubrik i luckan sätter DEN nivån, och av den glesa raden sticker
+    bara topparna upp — 1–2 px höga flisor som höjdkravet med rätta sållar
+    bort. Uppmätt på del III s. 40 (`den.`, nivå 35,3 mot radens 41,3 men
+    dominerad av en struktur på 70,7), s. 44 (`sm.`, 34,6/35,9/69,3) och s. 45
+    (`FYS.`, nivå 37,2 mot radens 32,5).
+
+    Därför mäts fönstret om: den starkaste sammanhängande strukturen skalas
+    bort och de två resterna mäts mot SIN egen profil. Det är samma princip
+    som gör hela andra svepet meningsfullt — mät mot det som finns i fönstret,
+    inte mot grannens sats — bara tillämpad ett steg till.
+    """
+    if b - a < median * SPARSE_GAP_FACTOR or depth > SPARSE_DEPTH:
+        return []
+    block = _without_rules(dark[a:b, lo:hi], ink_ref)
+    if block is None:
+        return []
+    prof = row_profile(block)
+    if not len(prof) or not prof.max():
+        return []
+    level = prof.min() + LOCAL_FRACTION * (prof.max() - prof.min())
+    runs = _runs(prof >= level)
+    out = []
+    for r0, r1 in runs:
+        top, bottom = a + int(r0), a + int(r1)
+        if bottom - top < median * SPARSE_HEIGHT_FACTOR:
+            continue  # flisa, inte rad
+        if min(top - a, b - bottom) < median * MERGE_GAP_FACTOR:
+            continue  # sitter ihop med grannraden: dess understycken
+        if block[r0:r1].max() < SPARSE_INK_SHARE * ink_ref:
+            continue  # papper eller raster, inte sats
+        out.append((top, bottom, KIND_ROW))
+    if runs:
+        peak = int(np.argmax(prof))
+        dom = next(r for r in runs if r[0] <= peak < r[1])
+        for sub_a, sub_b in ((a, a + int(dom[0])), (a + int(dom[1]), b)):
+            out += _scan_window(dark, sub_a, sub_b, lo, hi, median,
+                                page_median, ink_ref, depth + 1)
+    return out
+
+
+def _sparse_bands(dark, bands, seg_top, seg_bottom, lo, hi, page_median):
+    """Andra svepet: rader som den lokala tröskeln inte kunde se.
+
+    Bara luckor som RYMMER en rad prövas, och i varje sådan lucka mäts
+    profilen mot luckans egen botten och topp. Det är hela skillnaden: i
+    första svepet sätts tröskeln av grannradernas fulla sats, i det andra av
+    det som faktiskt finns i luckan.
+
+    Bläckspärren gör att papper inte blir rader. En kandidat måste nå
+    `SPARSE_INK_SHARE` av spaltens egen satssvärta — en gles rad är gles, inte
+    blek. Den spärren är riktningen på felet värd: en box som fattas är alltid
+    tillåten, en påhittad box är ett fel som ser ut som data (AGENTER.md
+    Regel 9).
+    """
+    if not bands:
+        return []
+    # Radmåttet är bandhöjden ELLER luckan mellan banden, det största av dem —
+    # samma degenerationstest som `_merge_and_classify` gör med MERGE_GAP_SHARE.
+    # På en sida med liten grad (del I s. 34, registerlika tabeller) delas varje
+    # tryckt rad i fragment, medianhöjden blir 2–4 px, och då rymmer VARJE
+    # mellanrum "en rad": svepet gav 193 fragmentband på den enda sidan. Luckan
+    # är i det läget det enda måttet som fortfarande mäter en rad.
+    median = max(_median_height(bands), _median_gap(
+        [(a, b) for a, b, *_ in bands])) or 1
+    ink_ref = _median_of([float(dark[a:b, lo:hi].max()) for a, b, *_ in bands])
+    if not ink_ref:
+        return []
+    windows = [(bands[i][1], bands[i + 1][0]) for i in range(len(bands) - 1)]
+    windows.append((seg_top, bands[0][0]))
+    windows.append((bands[-1][1],
+                    min(seg_bottom + int(SPARSE_TAIL_FACTOR * median),
+                        dark.shape[0])))
+    out = []
+    for a, b in windows:
+        out += _scan_window(dark, a, b, lo, hi, median, page_median, ink_ref)
+    # Samma rad kan hittas både före och efter avskalningen. Den högsta
+    # kandidaten vinner — den är hela raden, de andra är dess delar.
+    kept = []
+    for top, bottom, kind in sorted(out, key=lambda r: r[0] - r[1]):
+        if any(min(bottom, b) - max(top, a) > 0 for a, b, _ in kept):
+            continue
+        kept.append((top, bottom, kind))
+    return sorted(kept)
+
+
+def _covered_elsewhere(cand, rows):
+    """Täcks andrasvepsbandet av ett band från FÖRSTA svepet någon annanstans?
+
+    Bara första svepets band räknas som ägare. Två andrasvepsband som råkar
+    överlappa varandra får leva: de kommer från olika spalter och kan vara två
+    rader på samma höjd.
+    """
+    top, bottom = cand["_span"]
+    höjd = (bottom - top) or 1
+    x0, bredd = cand["bbox"][0], cand["bbox"][2]
+    for r in rows:
+        if r is cand or r.get("svep") == 2 or "_span" not in r:
+            continue
+        a, b = r["_span"]
+        if min(bottom, b) - max(top, a) <= 0.5 * höjd:
+            continue
+        rx0, rbredd = r["bbox"][0], r["bbox"][2]
+        if min(x0 + bredd, rx0 + rbredd) - max(x0, rx0) > 0:
+            return True
+    return False
+
+
+def _drop_overlaps(rows, extra):
+    """Rensa andrasvepsband som redan täcks av ett band från första svepet.
+
+    Svansfönstret sträcker sig förbi avsnittsgränsen och kan därför nå in i
+    nästa avsnitts första rad. Överlappar kandidaten ett befintligt band med
+    mer än halva sin höjd är den samma rad en gång till.
+    """
+    kept = []
+    for cand in extra:
+        top, bottom = cand["_span"]
+        höjd = bottom - top
+        dubblett = False
+        for r in rows:
+            a, b = r["_span"]
+            över = min(bottom, b) - max(top, a)
+            if över > 0.5 * höjd or (b - a and över > 0.5 * (b - a)):
+                dubblett = True
+                break
+        if not dubblett:
+            kept.append(cand)
+            rows = rows + [cand]
+    return kept
 
 
 def _edge_block(bands, height):
@@ -413,8 +717,93 @@ def _segments(body):
     return segments
 
 
-def _columns(dark, top, bottom, width):
-    """Spaltgränser som (lo, hi) — rännorna är breda tomma lodräta stråk."""
+def _median_of(values):
+    vals = sorted(values)
+    mid = len(vals) // 2
+    if len(vals) % 2:
+        return vals[mid]
+    return (vals[mid - 1] + vals[mid]) / 2
+
+
+def _band_gutter(dark, a, b, width):
+    """Avsnittets ränna sedd från ETT radband, eller None.
+
+    Bandet mäts mot sin egen profil. En brödtextrad i två spalter har en tom
+    lucka mitt på satsytan; en illustrationsrad, en rubrik över båda spalterna
+    eller en fullbredds tabellrad har det inte.
+    """
+    prof = dark[a:b, :].mean(axis=0)
+    if not prof.max():
+        return None
+    empty = prof < GUTTER_DARKNESS_SHARE * prof.max()
+    for x0, x1 in _runs(empty):
+        if x1 - x0 < MIN_GUTTER_WIDTH * width:
+            continue
+        centre = (x0 + x1) / 2 / width
+        if GUTTER_CENTRE_LO < centre < GUTTER_CENTRE_HI:
+            return (x0, x1)
+    return None
+
+
+def _columns(dark, top, bottom, width, bands=None):
+    """Spaltgränser som (lo, hi) — rännorna är breda tomma lodräta stråk.
+
+    Rännan mäts genom OMRÖSTNING bland avsnittets radband, inte på avsnittets
+    medelprofil. Skälet är mätt: en helsidesbred illustration lägger bläck rakt
+    över rännan, och i medelvärdet räcker det för att fylla den — spalterna
+    hittas då inte, och vänster- och högerspaltens rader slås ihop till
+    gemensamma fullbreddsband. Del II hade tio sådana sidor (s. 8, 20, 32–36,
+    42, 64), och där föll HELA sidan ut utan geometri: läsexporten fick en rad
+    per tryckt rad, avstavningarna blev kvar och styckena fogades aldrig ihop.
+
+    Två arter av illustration måste båda fångas, och bara omröstningen klarar
+    det: s. 8 är en nattscen med SVART bottenplatta (hög bläckandel) och s. 20
+    en STRECKTECKNING (bläckandel som brödtext). Det de har gemensamt är att de
+    korsar rännan — alltså röstar de nej, oavsett svärta.
+
+    Rännans LÄGE mäts som den KORRIDOR som är tom i alla röstande band, inte
+    som medianen av deras enskilda rännor. Skillnaden är mätt: på en sida med
+    korta rader — del III s. 13, listan över magiskolor — börjar varje bands
+    egen tomma yta direkt efter radens sista ord, och medianen av de starterna
+    lade rännan vid x 0,332 i stället för vid satsytans verkliga 0,49. Följden
+    var att vänsterspaltens fönster klippte av sin egen text, och antalet band
+    blev fel i båda spalterna.
+
+    Korridoren är robust just för att en KORT rad är tom över HELA ytan till
+    höger om sig: den innehåller den riktiga rännan, och snittet med en full
+    rads ränna blir därför den riktiga rännan. Beslut s. 13 formulerar samma
+    sak — »en obruten vertikal korridor utan bläck över hela satsytans höjd«.
+    Ett band som saknar ränna röstar redan nej och ingår inte i snittet, så en
+    illustrationsrad kan inte radera korridoren.
+    """
+    if bands:
+        röster = [(a, b, _band_gutter(dark, a, b, width)) for a, b in bands]
+        träffar = [(a, b) for a, b, g in röster if g]
+        if len(träffar) >= GUTTER_VOTE_SHARE * len(bands):
+            korridor = None
+            for a, b in träffar:
+                prof = dark[a:b, :].mean(axis=0)
+                tom = prof < GUTTER_DARKNESS_SHARE * (prof.max() or 1)
+                korridor = tom if korridor is None else (korridor & tom)
+            kandidater = [(x0, x1) for x0, x1 in _runs(korridor)
+                          if x1 - x0 >= MIN_GUTTER_WIDTH * width
+                          and GUTTER_CENTRE_LO < (x0 + x1) / 2 / width
+                          < GUTTER_CENTRE_HI]
+            if kandidater:
+                lo, hi = max(kandidater, key=lambda r: r[1] - r[0])
+            else:
+                # Ingen genomgående korridor — fall tillbaka på medianen, som
+                # är bättre än ingen spaltindelning alls.
+                lo = int(_median_of([_band_gutter(dark, a, b, width)[0]
+                                     for a, b in träffar]))
+                hi = int(_median_of([_band_gutter(dark, a, b, width)[1]
+                                     for a, b in träffar]))
+            blocks = [(0, lo), (hi, width)]
+            blocks = [(a, b) for a, b in blocks
+                      if b - a >= MIN_COLUMN_WIDTH * width]
+            if len(blocks) >= 2:
+                return blocks
+
     prof = dark[top:bottom, :].mean(axis=0)
     if not prof.max():
         return [(0, width)]
@@ -514,7 +903,9 @@ def measure_dark(dark):
         # löptext och nedre halvan en fullbredds tabell som fyller rännan — en
         # enda mätning för hela sidan ger då noll spalter och slår ihop
         # vänster- och högerspaltens rader till gemensamma band.
-        for lo, hi in _columns(dark, ink_top, ink_bottom, width):
+        seg_bands = [(a, b) for a, b, _ in body
+                     if a >= ink_top and b <= ink_bottom]
+        for lo, hi in _columns(dark, ink_top, ink_bottom, width, seg_bands):
             region = _region_name(lo, hi, width)
             columns.append({"region": region,
                             "x": round(lo / width, 6),
@@ -526,12 +917,46 @@ def measure_dark(dark):
             prof = row_profile(dark[seg_top:seg_bottom, lo:hi])
             bands = [(a + seg_top, b + seg_top)
                      for a, b in _profile_bands(prof, height)]
-            for top, bottom, kind in _merge_and_classify(bands, page_median):
-                extent = _extent(dark, top, bottom, lo, hi)
+            first = _merge_and_classify(bands, page_median)
+            # Andra svepet läggs in i SAMMA lista och sorteras på y innan
+            # raderna skrivs ut: läsordningen är kontraktet nedströms, och en
+            # gles slutrad hör till sitt eget stycke, inte sist i spalten.
+            def rules_at(top, bottom):
+                """Ramlinjer i ett kort fönster kring bandet (se _rule_mask)."""
+                pad = max(4, int(RULE_CONTEXT_FACTOR * (page_median or 1)))
+                a = max(seg_top, top - pad)
+                b = min(seg_bottom, bottom + pad)
+                return _rule_mask(dark[a:b, lo:hi])
+
+            found = []
+            for top, bottom, kind in first:
+                extent = _extent(dark, top, bottom, lo, hi, rules_at(top, bottom))
                 if extent:
-                    rows.append({"region": region, "kind": kind,
-                                 "bbox": _box(extent[0], extent[1], top,
-                                              bottom, width, height)})
+                    found.append({"region": region, "kind": kind,
+                                  "_span": (top, bottom),
+                                  "bbox": _box(extent[0], extent[1], top,
+                                               bottom, width, height)})
+            extra = []
+            for top, bottom, kind in _sparse_bands(
+                    dark, first, seg_top, seg_bottom, lo, hi, page_median):
+                extent = _extent(dark, top, bottom, lo, hi,
+                                 rules_at(top, bottom))
+                if extent and extent[1] - extent[0] >= MIN_ROW_WIDTH * width:
+                    extra.append({"region": region, "kind": kind, "svep": 2,
+                                  "_span": (top, bottom),
+                                  "bbox": _box(extent[0], extent[1], top,
+                                               bottom, width, height)})
+            found += _drop_overlaps(found, extra)
+            found.sort(key=lambda r: r["_span"])
+            rows.extend(found)
+
+    # Svansfönstret sträcker sig en radhöjd förbi avsnittsgränsen, så en
+    # kandidat kan vara nästa avsnitts FÖRSTA rad en gång till. Den prövningen
+    # går inte att göra inne i spaltloopen — nästa avsnitt är inte mätt ännu.
+    rows = [r for r in rows
+            if r.get("svep") != 2 or not _covered_elsewhere(r, rows)]
+    for r in rows:
+        r.pop("_span", None)
 
     zon(body_bottom, height, "sidfot")
 

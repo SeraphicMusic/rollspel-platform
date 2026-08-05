@@ -106,6 +106,13 @@ def main(argv=None):
     p.add_argument("--format", default="alla",
                    help="kommaseparerat: md,csv,alla (docx är avvecklad)")
 
+    p = add("arkivera",
+            help="flytta käll-PDF till arkiv/ och bok.md till bibliotek/")
+    p.add_argument("--namn", help="standardnamn enligt NAMNSTANDARD.md "
+                                  "(SYSTEM-TYP-titel); default arbetskatalogens namn")
+    p.add_argument("--verkstall", action="store_true",
+                   help="utför flytten (utan flaggan bara torrkörning)")
+
     p = sub.add_parser(
         "konvertera",
         help="konvertera exakt ett färdigrippat äventyr till en målprofil")
@@ -286,6 +293,14 @@ def main(argv=None):
         # 2026-07-29). DOCX-generatorn saknar rendering för statblockens
         # vapentabeller och skulle annars tysta producera ofullständiga filer.
         formats = set(args.format.replace("alla", "md,csv").split(","))
+        # Ett okänt format skrev tidigare ingenting och avslutade med 0:
+        # `--format markdown` (i stället för `md`) såg ut som en lyckad export
+        # men lämnade bok.md orörd. En tyst nolloperation på en stavfelad flagga
+        # är värre än ett fel — man tror att exporten är gjord.
+        okända = formats - {"md", "csv", "docx"}
+        if okända:
+            ap.error("okänt format: %s (giltiga: md, csv, alla; docx är "
+                     "avvecklad)" % ", ".join(sorted(okända)))
         if "md" in formats:
             export_markdown(workdir)
         if "csv" in formats:
@@ -293,6 +308,25 @@ def main(argv=None):
         if "docx" in formats:
             export_docx(workdir)
         return
+
+    if args.cmd == "arkivera":
+        from .archive import archive
+        r = archive(workdir, args.namn, verkstall=args.verkstall)
+        if r["hinder"]:
+            print("ARKIVERAS INTE — %d hinder:" % len(r["hinder"]))
+            for h in r["hinder"]:
+                print("  -", h)
+            return 1
+        if r["klart"]:
+            print("redan arkiverad: %s" % r["namn"])
+            return 0
+        for slag, src, dst in r["atgarder"]:
+            print("%-8s %s -> %s"
+                  % (slag.upper() if args.verkstall else slag, src, dst))
+        print("%s: %d åtgärder"
+              % ("ARKIVERAT" if args.verkstall else "TORRKÖRNING",
+                 len(r["atgarder"])))
+        return 0
 
     if args.cmd == "status":
         from .manifest import Manifest
@@ -304,12 +338,45 @@ def main(argv=None):
         print("dokumenttyp:", m.data.get("doc_type", {}).get("class_counts"))
         print("states:", s["states"])
         print("needs_review:", s["needs_review"])
-        from .decisions import open_questions
-        oppna = open_questions(workdir)
+        from .decisions import blocking_questions, tool_questions
+        oppna = blocking_questions(workdir)
         if oppna:
             print("ÖPPNA BOKNIVÅFRÅGOR: %d — boken är inte avslutad" % len(oppna))
             for qid, text in oppna:
                 print("   %s %s" % (qid, text))
+        verktyg = tool_questions(workdir)
+        if verktyg:
+            print("VERKTYGSFRÅGOR: %d — blockerar INTE boken, ska lagas"
+                  % len(verktyg))
+            for qid, text in verktyg:
+                print("   %s %s" % (qid, text[:100]))
+        # Återkopplingen som saknades: en färdig bok vars käll-PDF står kvar i
+        # inkorgen såg ut precis som en avslutad. Grundreglernas tre delar låg
+        # kvar tills de raderades för hand, och då var den inbäddade
+        # skanningen borta för all forensik.
+        from .archive import unarchived_source, uncorrected_pages
+        # `states: {'validated': 50}` betyder INTE att korrekturet är gjort —
+        # pipelinen lyfter aldrig en sida över `validated`. Del III såg därför
+        # ut precis som den färdiga del I trots att 26 av 50 sidor aldrig varit
+        # hos advokaten.
+        okorr = uncorrected_pages(workdir)
+        if okorr:
+            print("EJ KORREKTURLÄST: %d sidor saknar final.json (%s)"
+                  % (len(okorr), ", ".join(str(n) for n in okorr[:12])
+                     + (" …" if len(okorr) > 12 else "")))
+        # En export som byggts med äldre kod ser ut precis som en färsk. Det
+        # var så `bibliotek/…del2` bar brytfel som redan var lagade i koden.
+        from .provenance import check_exports
+        for varning in check_exports(workdir):
+            print("EXPORTENS PROVENIENS: %s" % varning)
+        from .archive import unarchived_source
+        kvar = unarchived_source(workdir)
+        if kvar:
+            print("EJ ARKIVERAD: käll-PDF:en ligger kvar i import/ (%s)"
+                  % kvar.name)
+            print("   arkivera med: python3 -m pipeline arkivera "
+                  "--workdir %s --namn <SYSTEM-TYP-titel> --verkstall"
+                  % workdir)
         if s["errors"]:
             print("fel:")
             for no, err in s["errors"]:

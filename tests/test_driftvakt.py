@@ -10,7 +10,7 @@ from pathlib import Path
 
 from pipeline.decisions import enqueue, next_id, open_questions, queue_items
 from pipeline.freeze import diff, freeze, words
-from pipeline.preflight import drift_ceased_types, drift_furniture_retyped
+from pipeline.preflight import drift_split_tables, drift_ceased_types, drift_furniture_retyped
 
 
 LOPTEXT = "en tillräckligt lång rad brödtext för att inte räknas som cell"
@@ -170,7 +170,7 @@ class TestBoknivako(unittest.TestCase):
         self._skriv("## Öppen kö\n\n- [ ] BQ-001 ett\n\n## Avgjort\n\n- text\n")
         enqueue(self.wd, "två")
         innehall = (self.wd / "beslut.md").read_text(encoding="utf-8")
-        self.assertIn("- [ ] BQ-002 två", innehall)
+        self.assertIn("- [ ] BQ-002 [beslut] två", innehall)
         self.assertIn("## Avgjort", innehall)
         self.assertLess(innehall.index("BQ-002"), innehall.index("## Avgjort"))
 
@@ -262,3 +262,114 @@ class TestKapitelavdelare(unittest.TestCase):
             pages.append((no, [rad("page_artifact", "MAGI", y=0.95, h=0.010,
                                    w=0.29)] + prosasida()))
         self.assertEqual(drift_furniture_retyped(pages), [])
+
+
+def _tab(eid, rows, headers=None, fortsattning=None):
+    data = {"rows": rows, "headers": headers if headers is not None else []}
+    if fortsattning:
+        data["fortsattning_av"] = fortsattning
+    return {"id": eid, "type": "table", "data": data}
+
+
+def _par(eid, text="Ett stycke löptext som fortsätter."):
+    return {"id": eid, "type": "paragraph", "text": text}
+
+
+class TestSidbrutnaTabeller(unittest.TestCase):
+    """BQ-011 (b): en tabell som bryts över en sidbrytning ska vara märkt."""
+
+    def test_strukturell_signal(self):
+        pages = [(41, [_tab("a", [["11", "x"]], ["1T20", "Effekt"])]),
+                 (42, [_tab("b", [["12", "y"]])])]
+        self.assertEqual(len(drift_split_tables(pages)), 1)
+
+    def test_markt_fortsattning_larmar_inte(self):
+        pages = [(41, [_tab("a", [["11", "x"]], ["1T20", "Effekt"])]),
+                 (42, [_tab("b", [["12", "y"]], fortsattning="a")])]
+        self.assertEqual(drift_split_tables(pages), [])
+
+    def test_egen_rubrikrad_ar_en_ny_tabell(self):
+        pages = [(46, [_tab("a", [["Öl", "4"]], ["Namn", "Pris"])]),
+                 (47, [_tab("b", [["Sovsal", "10"]], ["Namn", "Pris per dygn"])])]
+        self.assertEqual(drift_split_tables(pages), [])
+
+    def test_nyckelfoljden_fangar_fortsattning_som_inte_star_forst(self):
+        """s. 11 inleds med löptexten från s. 10 — tabellen kommer först sedan."""
+        pages = [(10, [_tab("a", [["18", "x"], ["19", "y"]], ["Resultat", "Effekt"])]),
+                 (11, [_par("p1"), _par("p2"), _tab("b", [["20", "z"]])])]
+        träffar = drift_split_tables(pages)
+        self.assertEqual(len(träffar), 1)
+        self.assertIn("nyckelkolumnen fortsätter", träffar[0])
+
+    def test_rubrikslos_etikettabell_med_namn_larmar_inte(self):
+        """Bokens rubrikslösa etikett/värde-tabeller har namn, inte tal i följd."""
+        pages = [(9, [_tab("a", [["1–5", "x"]], ["Slag", "Effekt"])]),
+                 (10, [_par("p1"), _tab("b", [["Död kropp", "1"]])])]
+        self.assertEqual(drift_split_tables(pages), [])
+
+
+class TestKoklass(unittest.TestCase):
+    """Kön skiljer `[beslut]` från `[verktyg]` — bara det förra blockerar.
+
+    Regeln fanns i CLAUDE.md men var oframtvingad, och kön drev till en
+    att-göra-lista: i del III var 24 av 27 poster verktygsarbete, och de
+    blockerade boken lika hårt som de tre verkliga frågorna. Följden blev att
+    användaren fick ta ställning till buggar i `pipeline/`.
+    """
+
+    def setUp(self):
+        self.dir = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, self.dir)
+
+    def _skriv(self, *rader):
+        (self.dir / "beslut.md").write_text(
+            "## Öppen kö\n\n" + "\n".join(rader) + "\n", encoding="utf-8")
+
+    def test_verktygspost_blockerar_inte(self):
+        from pipeline.decisions import blocking_questions, tool_questions
+        self._skriv("- [ ] BQ-001 [verktyg] Regeln mäter fel storhet.")
+        self.assertEqual(blocking_questions(self.dir), [])
+        self.assertEqual([q for q, _ in tool_questions(self.dir)], ["BQ-001"])
+
+    def test_beslutspost_blockerar(self):
+        from pipeline.decisions import blocking_questions
+        self._skriv("- [ ] BQ-001 [beslut] Bevara tryckfelet eller emendera?")
+        self.assertEqual([q for q, _ in blocking_questions(self.dir)], ["BQ-001"])
+
+    def test_oklassad_post_blockerar(self):
+        """Defaulten gör kön för sträng och aldrig för slapp."""
+        from pipeline.decisions import blocking_questions
+        self._skriv("- [ ] BQ-001 En gammal post utan klassmarkör.")
+        self.assertEqual([q for q, _ in blocking_questions(self.dir)], ["BQ-001"])
+
+    def test_klassmarkoren_visas_inte_i_lydelsen(self):
+        from pipeline.decisions import tool_questions
+        self._skriv("- [ ] BQ-001 [verktyg] Regeln mäter fel storhet.")
+        self.assertEqual(tool_questions(self.dir)[0][1],
+                         "Regeln mäter fel storhet.")
+
+    def test_besvarad_post_raknas_inte(self):
+        from pipeline.decisions import blocking_questions, tool_questions
+        self._skriv("- [x] BQ-001 [beslut] Avgjord.",
+                    "- [x] BQ-002 [verktyg] Lagad.")
+        self.assertEqual(blocking_questions(self.dir), [])
+        self.assertEqual(tool_questions(self.dir), [])
+
+    def test_enqueue_skriver_klassen(self):
+        from pipeline.decisions import CLASS_TOOL, enqueue, tool_questions
+        enqueue(self.dir, "Regeln mäter fel storhet.", CLASS_TOOL)
+        self.assertIn("[verktyg]",
+                      (self.dir / "beslut.md").read_text(encoding="utf-8"))
+        self.assertEqual(len(tool_questions(self.dir)), 1)
+
+    def test_enqueue_vagrar_okand_klass(self):
+        from pipeline.decisions import enqueue
+        with self.assertRaises(ValueError):
+            enqueue(self.dir, "En fråga.", "kanske")
+
+    def test_arkivering_hindras_inte_av_verktygspost(self):
+        """Kärnan: en bugg i pipelinen får aldrig hålla en färdig bok gisslan."""
+        from pipeline.decisions import blocking_questions
+        self._skriv("- [ ] BQ-001 [verktyg] Mätmotorn delar inte spalter.",
+                    "- [ ] BQ-002 [verktyg] Regeln läser inte i celler.")
+        self.assertEqual(blocking_questions(self.dir), [])

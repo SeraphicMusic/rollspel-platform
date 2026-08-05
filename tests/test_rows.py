@@ -9,10 +9,9 @@ import unittest
 
 import numpy as np
 
-from pipeline.rows import (EDGE_BAND, KIND_GRAPHIC, KIND_ROW, _extent,
-                           ink_share,
-                           _merge_and_classify, _segments, darkness,
-                           measure_dark, summarise)
+from pipeline.rows import (EDGE_BAND, KIND_GRAPHIC, KIND_ROW, _columns,
+                           _extent, _merge_and_classify, _segments, darkness,
+                           ink_share, measure_dark, summarise)
 
 HEIGHT, WIDTH = 800, 600
 LINE_H, PITCH = 10, 24
@@ -439,3 +438,230 @@ class TestMatdefekterBok2(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestGutterVote(unittest.TestCase):
+    """En helsidesbred illustration får inte dölja spaltrännan.
+
+    Uppmätt på del II: tio sidor (8, 20, 32–36, 42, 64) hade en illustration
+    tvärs över rännan. Avsnittets MEDELPROFIL fylldes då av bildens bläck,
+    spalterna hittades inte, och vänster- och högerspaltens rader slogs ihop
+    till fullbreddsband — hela sidan föll ut utan geometri, och läsexporten
+    gav en rad per tryckt rad med avstavningarna kvar.
+
+    Omröstningen bland radbanden löser det: brödtextrader har en lucka mitt på
+    satsytan, bilden har det inte, och en majoritet räcker.
+    """
+
+    def _tvaspaltig(self, rader=12):
+        """Två spalter med ränna mellan x=290 och x=310."""
+        page = blank()
+        for i in range(rader):
+            top = 100 + i * PITCH
+            write_line(page, top, 60, 285)
+            write_line(page, top, 315, 540)
+        return page
+
+    def _regioner(self, page):
+        rows, _ = measure_dark(darkness(page))
+        reg = {}
+        for r in rows:
+            if r["region"] in ("sidhuvud", "sidfot"):
+                continue
+            reg[r["region"]] = reg.get(r["region"], 0) + 1
+        return reg
+
+    def test_ren_tvaspaltssida_delas_i_spalter(self):
+        reg = self._regioner(self._tvaspaltig())
+        self.assertEqual(reg.get("vänsterkolumn"), 12)
+        self.assertEqual(reg.get("högerkolumn"), 12)
+
+    def test_svart_illustration_over_rannan_doljer_inte_spalterna(self):
+        """Del II s. 8: nattscen med svart bottenplatta, hög bläckandel."""
+        page = self._tvaspaltig()
+        page[430:700, 60:540] = 20          # solid svart block tvärs rännan
+        reg = self._regioner(page)
+        self.assertEqual(reg.get("vänsterkolumn"), 12)
+        self.assertEqual(reg.get("högerkolumn"), 12)
+
+    def test_streckteckning_over_rannan_doljer_inte_heller(self):
+        """Del II s. 20: linjekonst med bläckandel som brödtext."""
+        page = self._tvaspaltig()
+        for y in range(430, 700, 6):
+            write_line(page, y, 60, 540, ink=60)   # bläck rakt över rännan
+        reg = self._regioner(page)
+        self.assertEqual(reg.get("vänsterkolumn"), 12)
+        self.assertEqual(reg.get("högerkolumn"), 12)
+
+    def test_verkligt_enspaltig_sida_delas_inte(self):
+        """Rösten får inte hitta på en ränna där ingen finns."""
+        page = blank()
+        for i in range(12):
+            write_line(page, 100 + i * PITCH, 60, 540)
+        reg = self._regioner(page)
+        self.assertNotIn("vänsterkolumn", reg)
+        self.assertNotIn("högerkolumn", reg)
+
+    def test_marginalens_tomrum_rostar_inte_fram_en_ranna(self):
+        """Bara stråk mitt på satsytan räknas — inte vänster/höger marginal."""
+        page = blank()
+        for i in range(12):
+            write_line(page, 100 + i * PITCH, 20, 200)   # smal spalt till vänster
+        reg = self._regioner(page)
+        self.assertNotIn("högerkolumn", reg)
+
+
+class TestRannanSomKorridor(unittest.TestCase):
+    """BQ-013: rännans läge är den korridor som är tom i ALLA band.
+
+    Medianen av bandens egna rännor lägger rännan fel så snart raderna är
+    korta: varje bands tomma yta börjar direkt efter dess sista ord. På del III
+    s. 13 (listan över magiskolor) hamnade rännan på x 0,332 i stället för
+    0,49, och vänsterspaltens fönster klippte av sin egen text.
+    """
+
+    def _sida(self, hoger_marginal):
+        """Två spalter; vänsterspaltens rader slutar där anropet säger."""
+        dark = np.zeros((400, 1000), dtype=np.uint8)
+        for i, slut in enumerate(hoger_marginal):
+            top = 20 + i * 30
+            dark[top:top + 14, 80:slut] = 255      # vänsterspalt
+            dark[top:top + 14, 560:900] = 255      # högerspalt
+        return dark
+
+    def test_korta_rader_flyttar_inte_rannan(self):
+        # Fyra rader vars vänsterspalt slutar på vitt skilda ställen. Bara den
+        # längsta når fram till den riktiga rännan vid x 480.
+        dark = self._sida([300, 480, 350, 470])
+        bands = [(20 + i * 30, 34 + i * 30) for i in range(4)]
+        blocks = _columns(dark, 0, 400, 1000, bands)
+        self.assertEqual(len(blocks), 2)
+        gutter_lo, gutter_hi = blocks[0][1], blocks[1][0]
+        self.assertGreaterEqual(gutter_lo, 470,
+                                "rännan lades vid en KORT rads slut")
+        self.assertLessEqual(gutter_hi, 570)
+
+    def test_fullbreda_rader_ger_samma_ranna(self):
+        """Motprovet: med fyllda rader ska svaret vara oförändrat."""
+        dark = self._sida([480, 480, 480, 480])
+        bands = [(20 + i * 30, 34 + i * 30) for i in range(4)]
+        blocks = _columns(dark, 0, 400, 1000, bands)
+        self.assertEqual(len(blocks), 2)
+        self.assertGreaterEqual(blocks[0][1], 470)
+
+
+class TestSparseTrailingRow(unittest.TestCase):
+    """Andra svepet: den korta, glesa slutraden (BQ-002 a).
+
+    Uppmätt i del III: en slutrad på två–tre glyfer toppar på ungefär halva
+    grannradernas profil, och den lokala tröskeln i `_profile_bands` ligger
+    just där — `den.` på s. 39 mätte 40,0 mot tröskeln 41,6. Mönstret är
+    belagt tjugosex gånger i den bokens beslutslista, och kostnaden syns i
+    `bok.md`: utan bbox bryts stycket mitt i det avstavade ordet.
+    """
+
+    # Tät sättning och RASTRERAT papper — båda krävs för att återge felet.
+    # Med pitch 24 och kritvitt papper ligger den lokala tröskeln nära noll och
+    # första svepet hittar raden ändå; i en verklig skanning sätter
+    # grannradernas sats den lokala toppen och rastret golvet.
+    TIGHT_PITCH = 16
+
+    def _sida(self, kort_bredd=20, tom=False):
+        """Sex fulla rader, en KORT gles rad, och sedan tre fulla."""
+        rng = np.random.default_rng(20260805)
+        page = blank()
+        tops = [100 + i * self.TIGHT_PITCH for i in range(10)]
+        yta = (slice(90, tops[-1] + 3 * LINE_H), slice(50, 290))
+        page[yta] = rng.integers(190, 256, size=page[yta].shape,
+                                 dtype=np.uint16).astype(np.uint8)
+        for i, top in enumerate(tops):
+            if i == 6:
+                if not tom:
+                    write_line(page, top, 60, 60 + kort_bredd)
+                continue
+            write_line(page, top, 60, 280)
+        return page, tops
+
+    def test_kort_slutrad_far_ett_band(self):
+        page, tops = self._sida()
+        rows, _ = measure_dark(darkness(page))
+        mitt = (HEIGHT - (tops[6] + LINE_H / 2)) / HEIGHT
+        träff = [r for r in rows
+                 if r["bbox"][1] <= mitt <= r["bbox"][1] + r["bbox"][3]]
+        self.assertTrue(träff, "den glesa raden saknar band: %s" % rows)
+        self.assertEqual(träff[0].get("svep"), 2,
+                         "raden hittades av första svepet — testet mäter inte "
+                         "det den påstår")
+
+    def test_banden_ligger_kvar_i_lasordning(self):
+        """Läsordningen är kontraktet nedströms — den glesa raden ska in på
+        sin plats i spalten, inte sist."""
+        page, tops = self._sida()
+        rows, _ = measure_dark(darkness(page))
+        body = [r for r in rows if r["region"] not in ("sidhuvud", "sidfot")]
+        ys = [r["bbox"][1] for r in body]
+        self.assertEqual(ys, sorted(ys, reverse=True))
+
+    def test_tom_lucka_ger_inget_band(self):
+        """Motprovet, och det som gör svepet användbart: utan tryckt rad i
+        luckan får ingen box hittas på. En box som fattas är alltid tillåten;
+        en påhittad är ett fel som ser ut som data (AGENTER.md Regel 9)."""
+        page, tops = self._sida(tom=True)
+        rows, _ = measure_dark(darkness(page))
+        mitt = (HEIGHT - (tops[6] + LINE_H / 2)) / HEIGHT
+        träff = [r for r in rows
+                 if r["bbox"][1] <= mitt <= r["bbox"][1] + r["bbox"][3]]
+        self.assertFalse(träff, "band hittades på i en TOM lucka: %s" % träff)
+
+    def test_understycken_blir_inte_egna_rader(self):
+        """En flisa under en normal rad är inte en rad. Utan höjdkravet gav
+        svepet 63 sådana band på en enda sida (del III s. 13)."""
+        page, tops = self._sida(tom=True)
+        # Ett par pixelrader strax under rad 5 — understycken, inte sats.
+        page[tops[5] + LINE_H + 1:tops[5] + LINE_H + 4, 60:120] = 40
+        rows, _ = measure_dark(darkness(page))
+        låga = [r for r in rows if r.get("svep") == 2
+                and r["bbox"][3] < 0.6 * LINE_H / HEIGHT]
+        self.assertFalse(låga, "svepet gjorde flisor till rader: %s" % låga)
+
+
+class TestFrameRuleExtent(unittest.TestCase):
+    """Ramlinjen är inte radens bläck (BQ-013).
+
+    Del III s. 13 är inramad, och `_extent` mätte varje band från ramen: alla
+    47 vänsterband fick x 0,0735 och styckeindragen — som är hela postens
+    facit — försvann.
+    """
+
+    def _inramad(self, indrag=0):
+        page = blank()
+        page[80:700, 40:42] = 30                     # ramens vänstra linje
+        tops = [100 + i * PITCH for i in range(8)]
+        for i, top in enumerate(tops):
+            lo = 90 + (indrag if i == 3 else 0)
+            write_line(page, top, lo, 280)
+        return page, tops
+
+    def test_ramen_satter_inte_radens_x(self):
+        page, _ = self._inramad()
+        rows, _ = measure_dark(darkness(page))
+        body = [r for r in rows if r["region"] not in ("sidhuvud", "sidfot")]
+        self.assertTrue(body)
+        for r in body:
+            self.assertGreater(r["bbox"][0], 60 / WIDTH,
+                               "bandet mättes från ramlinjen: %s" % r["bbox"])
+
+    def test_styckeindraget_syns(self):
+        page, _ = self._inramad(indrag=12)
+        rows, _ = measure_dark(darkness(page))
+        body = [r for r in rows if r["region"] not in ("sidhuvud", "sidfot")]
+        xs = [r["bbox"][0] for r in body]
+        self.assertAlmostEqual(max(xs) - min(xs), 12 / WIDTH, places=2)
+
+    def test_skrafferad_illustration_ates_inte_av_masken(self):
+        """Motprovet som fällde det förra ramförsöket: en skraffering är också
+        smala lodräta streck, men dussintals — då maskas ingenting."""
+        page, _ = page_with_lines(6)
+        page[380:700, 60:280:4] = 30
+        rows, _ = measure_dark(darkness(page))
+        self.assertIn(KIND_GRAPHIC, [r["kind"] for r in rows])

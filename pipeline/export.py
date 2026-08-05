@@ -10,7 +10,7 @@ import subprocess
 from collections import Counter
 from pathlib import Path
 
-from . import tables
+from . import provenance, tables
 from .log import setup_logging
 from .manifest import export_dir, read_json
 
@@ -180,6 +180,15 @@ def _table_md(el):
     caption = (el.get("text") or "").strip()
     if caption:
         lines += ["**%s**" % esc(caption), ""]
+    # En spännrubrik står över flera kolumner i trycket och kan inte uttryckas
+    # i en markdown-tabell. Utan raden nedan faller den tryckta texten helt ur
+    # läsexporten — `diffa` fångade `Grundegenskapskrav` (s. 12) på just det.
+    for span in data.get("spans") or []:
+        etikett = str(span.get("label") or "").strip()
+        kolumner = [str(c) for c in (span.get("columns") or []) if str(c)]
+        if etikett and kolumner:
+            lines += ["*%s — gemensam rubrik över %s*"
+                      % (esc(etikett), esc(", ".join(kolumner))), ""]
     if headers:
         lines += ["| " + " | ".join(esc(h) for h in headers) + " |",
                  "|" + " --- |" * len(headers)]
@@ -225,6 +234,45 @@ _X_BUCKET = 0.005
 # ser ut som en avstavning men får inte fogas ihop.
 _HANGING_HYPHEN = re.compile(r"^\S*-(?:\s|$)")
 
+# Ett bindestreck vid radslut är inte alltid en avstavning. Två fall till, båda
+# mätta i DoD-grundreglernas del III (BQ-024), och båda kändes igen först när
+# felet stod LIVE i `bok.md`:
+#
+#   `PSY-` + `poäng`  ⇒ `PSY-poäng`      (sammansättningsstreck, inget mellanrum)
+#   `mynt-` + `och penningsystemet` ⇒ `mynt- och penningsystemet` (hängande)
+#
+# Utan dem skrevs `PSYpoäng`, `STYkrav` och `myntoch` — ord som inte finns i
+# boken — medan sidfilerna hela tiden återgav trycket rätt.
+#
+# (a) Ett VERSALT förled är en förkortning eller ett spelvärde (`PSY`, `STY`,
+#     `BV`, `FV`), aldrig ett avstavat ordfragment. Motprovet som gör regeln
+#     säker: en äkta avstavning av ett versalsatt ord fortsätter också i
+#     versaler (`MOTSTÅNDSKRAF-` / `TEN`), och den fångas redan av kravet att
+#     nästa rad ska börja gement.
+_COMPOUND_ABBR = re.compile(r"(?:^|[\s(\[»„\"'])([A-ZÅÄÖ]{2,4})-$")
+# (b) Ett fristående samordnande småord kan aldrig vara fortsättningen på ett
+#     avstavat ord — då är strecket hängande och behåller sitt mellanrum.
+_HANGING_NEXT = re.compile(r"^(?:och|eller|samt)\b", re.IGNORECASE)
+
+# Ett VERSALSATT ord som bryts över radslutet läks också — men det gjorde det
+# inte, eftersom läkningen krävde att nästa rad börjar GEMENT. Följden stod
+# live i `bok.md`: `ANTI- MAGI`, `MÖRK- RET`, `TELEPORTE- RING`,
+# `VARSE- BLIVNING` … tolv besvärjelsenamn med ett påhittat streck mitt i sig.
+# Fortsättningens versalform är just det som skiljer arten från
+# sammansättningsstrecket ovan: `ANTI-` + `MAGI` är ett avstavat `ANTIMAGI`
+# (beslut s. 14), medan `PSY-` + `poäng` är två ord i en sammansättning.
+_ALLCAPS_TAIL = re.compile(r"(?:^|[\s(\[»„\"'])[A-ZÅÄÖ]{2,}-$")
+# Fortsättningen behöver bara EN versal. Kravet på två släppte igenom just de
+# bryt där versalordet får en gement satt böjningsändelse — `LJU-` + `Sets`
+# (del III s. 19, besvärjelsen LJUS i genitivliknande form `LJUSets`) och
+# `MOTSTÅNDSKRAF-` + `Ten` (del III s. 39). Båda stod LIVE i `bok.md` med ett
+# påhittat streck och ett mellanrum mitt i ordet, och båda är samma art som
+# `ANTI-`/`MAGI`: versalt ord brutet över radslutet. Motprovet mot att regeln
+# blir för vid är mätt över hela `bibliotek/` — mönstret VERSALER + bindestreck
+# + versal förekommer i fyra fall totalt, och det fjärde (`ÄVENTYRS- OCH`) är
+# ett hängande streck som fångas av `_HANGING_NEXT` FÖRE den här regeln.
+_ALLCAPS_HEAD = re.compile(r"^[A-ZÅÄÖ]")
+
 # `Tillredning:`, `Växtplats:`, `Effekt:` — en kort inledande etikett med
 # kolon. Ett eller två ord räcker (`Naturligt skydd:`); längre än så är det
 # löptext med ett kolon i sig, inte en fältrad.
@@ -244,16 +292,58 @@ def _join_text(prev, nxt):
     läkningen faller den ut som `(liten/medelstor/ stor)`. Ett snedstreck som
     är satt MED mellanslag omkring sig (`Teknik / Grundkostnad`) är en
     avskiljare, inte en bindning, och läks därför inte.
+
+    Bindestrecket faller bara bort när det verkligen är en avstavning. Ett
+    sammansättningsstreck efter ett versalt förled (`PSY-` / `poäng`) och ett
+    hängande streck framför ett samordnande småord (`mynt-` / `och`) står kvar
+    i trycket och ska stå kvar här — se `_COMPOUND_ABBR` och `_HANGING_NEXT`.
     """
     prev, nxt = (prev or "").rstrip(), (nxt or "").lstrip()
     if not prev or not nxt:
         return prev or nxt
-    if (prev.endswith("-") and not prev.endswith((" -", "--"))
-            and nxt[:1].islower() and not _HANGING_HYPHEN.match(nxt)):
-        return prev[:-1] + nxt
+    if prev.endswith("-") and not prev.endswith((" -", "--")):
+        # Hängande streck FÖRST — annars fångar förkortningsregeln `SMI-` + `och`
+        # och skriver ihop dem till `SMI-och`.
+        if _HANGING_HYPHEN.match(nxt) or _HANGING_NEXT.match(nxt):
+            return prev + " " + nxt
+        if nxt[:1].islower():
+            if _COMPOUND_ABBR.search(prev):
+                # Sammansättningsstreck: strecket står kvar, utan mellanrum.
+                return prev + nxt
+            return prev[:-1] + nxt
+        if _ALLCAPS_TAIL.search(prev) and _ALLCAPS_HEAD.match(nxt):
+            # Avstavat versalsatt ord: strecket faller bort som i löptext.
+            return prev[:-1] + nxt
     if prev.endswith("/") and not prev.endswith((" /", "//")):
         return prev + nxt
     return prev + " " + nxt
+
+
+def _unwrap(text):
+    """Foga ihop de tryckta radbrytningarna INUTI ett elements egen text.
+
+    Transkriptionskontraktet ger ett element per tryckt rad — men inte
+    överallt. Exempelrutorna står ibland som ETT element med radbrytningarna
+    kvar i `text` (s. 8:s `p008_e41` bär fem tryckta rader). `_reflow` ser då
+    bara ett element och har ingenting att foga ihop, så rutan föll ut rad för
+    rad i `bok.md` och ett avstavat ord vid radslutet behöll sitt streck:
+    `lära sig PARA-` / `LYSERING ur den magiska kodexen Liber Necro-` /
+    `sophicus …`.
+
+    En TOM rad är däremot en styckegräns inne i rutan och bevaras — det är den
+    som håller ihop en flerstyckesruta till ETT citatblock i markdown.
+    """
+    if "\n" not in (text or ""):
+        return text
+    stycken = []
+    for stycke in re.split(r"\n[ \t]*\n", text):
+        hopfogad = ""
+        for rad in stycke.split("\n"):
+            if rad.strip():
+                hopfogad = _join_text(hopfogad, rad.strip())
+        if hopfogad:
+            stycken.append(hopfogad)
+    return "\n\n".join(stycken)
 
 
 def _median(values):
@@ -316,6 +406,32 @@ def _starts_paragraph(el, prev, nxt, boxes, prev_boxes):
     #    `Tillredning: Brygges Intagning: Appliceras Växtplats: Ljus lövskog`.
     if _FIELD_LINE.match((el.get("text") or "").lstrip()):
         return True
+    # 0b. En tryckt rad som slutar på ett bindestreck kan INTE avsluta ett
+    #     stycke — ordet fortsätter på nästa rad. Det är ett typografiskt
+    #     faktum och väger tyngre än varje geometrisk signal nedan, så det
+    #     prövas först.
+    #
+    #     Två fall i del III visar varför båda vägarna behövs:
+    #     * UTAN geometri. Femton stycken föll isär med samma form:
+    #       `…kommunicera med levan-` som eget stycke och `de ting.` som ett
+    #       nästa (s. 4), `…’magiker och utbygdsjäga-` + `re’.` (s. 4),
+    #       `…VARSEBLIV-` + `NING.` (s. 49). Fortsättningen är kort, och
+    #       `pipeline/rows.py` mätte inget eget band för den — 64 av bokens
+    #       2 474 element saknar bbox. `scripts/binda_rader.py` band 3 av dem;
+    #       för de övriga SAKNAS bandet i mätningen (BQ-002/013/021).
+    #     * MED geometri, mot utslutningsregeln. Exempelrutan på s. 10 bryts
+    #       vid `…och mina kamra-` (bredd 0,3805 mot spaltens 0,4222 — under
+    #       regel 1b:s gräns 0,92) och `ter skriker förtvivlat…` blev ett eget
+    #       citatblock. Men en rad som slutar på avstavning är per definition
+    #       inte styckets sista, hur kort den än råkar vara uppmätt.
+    #
+    #     Läkningen av strecket självt sköter `_join_text`, som skiljer
+    #     avstavning från sammansättnings- och hängande streck. Här avgörs
+    #     bara att raderna hör till SAMMA stycke — vilket gäller för alla tre
+    #     arterna.
+    prev_text = (prev.get("text") or "").rstrip()
+    if prev_text.endswith("-") and not prev_text.endswith((" -", "--")):
+        return False
     bb, pbb = _bbox(el), _bbox(prev)
     if bb is None or pbb is None:
         # Utan geometri finns inget facit — då fogas ingenting ihop.
@@ -391,9 +507,33 @@ def _reflow(run):
     for block in blocks:
         text = ""
         for _, el in block:
-            text = _join_text(text, (el.get("text") or "").strip())
-        out.append((block[0][0], text, block[0][1]))
+            text = _join_text(text, _unwrap((el.get("text") or "").strip()))
+        # Anmärkningarna samlas från HELA blocket, inte bara ledarelementet.
+        # Ett tryckfel sitter sällan på styckets första rad — s. 65:s
+        # "baserade på färdigheten" står på dess sista — och hade noten
+        # hämtats ur `block[0]` skulle den tystna just där den behövs.
+        out.append((block[0][0], text, block[0][1], _notes(block)))
     return out
+
+
+def _notes(block):
+    """Redaktionella anmärkningar på blockets element, i ordning."""
+    ut = []
+    for _, el in block:
+        note = (el.get("anmarkning") or "").strip()
+        if note and note not in ut:
+            ut.append(note)
+    return ut
+
+
+def _note_md(notes):
+    """Anmärkningen som en rad som INTE går att förväxla med boktext.
+
+    Klamrar och kursiv är den gängse redaktionella konventionen. Kursiv ensam
+    duger inte — bildtexter och tabellnoter är redan kursiva — och citatblock
+    är upptaget av tryckets egna exempelrutor.
+    """
+    return ["*[Anmärkning: %s]*" % n for n in notes] + ([""] if notes else [])
 
 
 # ---------------------------------------------------------------------------
@@ -459,6 +599,96 @@ def _stitch(items):
     return out
 
 
+# En cell som är ett TAL eller ett talintervall: `5`, `2.500`, `22,5`, `0–11`,
+# `–2`, `1T6+2`, med eventuell fotnotssiffra efter (`5¹⁾`).
+_NUMERIC_CELL = re.compile(r"^[+\-–±]?\d[\d\s.,:/T×x+\-–]*[⁰-⁹⁽⁾]*$")
+# Ett rent streck är ingen uppgift alls — det betyder "gäller ej" i tabellerna
+# och får inte rösta om kolumnens art.
+_EMPTY_CELL = re.compile(r"^[—–\-]?$")
+
+
+def _column_shapes(rows):
+    """Kolumnernas art: `tal` eller `text`, mätt ur cellerna själva.
+
+    Två tabeller med lika många kolumner är inte nödvändigtvis samma tabell.
+    Formen är det som skiljer dem åt, och den går att mäta i stället för att
+    antas.
+    """
+    if not rows:
+        return None
+    bredd = max(len(r) for r in rows)
+    shapes = []
+    for col in range(bredd):
+        tal = text = 0
+        for row in rows:
+            cell = str(row[col]).strip() if col < len(row) else ""
+            if _EMPTY_CELL.match(cell):
+                continue
+            if _NUMERIC_CELL.match(cell):
+                tal += 1
+            else:
+                text += 1
+        shapes.append("tal" if tal > text else "text" if text else None)
+    return shapes
+
+
+def _inherit_headers(items):
+    """Ge en rubriklös deltabell tryckets egna kolumnrubriker.
+
+    Rustningstabellen (del III s. 38) är EN tryckt tabell med EN rubrikrad —
+    `Namn (kroppsdel) | Absorbering | Vikt i kg | Pris i sm` — och därunder nio
+    delposter under var sin spännrubrik (`HJÄLM (HUVUD)`, `ARMSKYDD (ARM)³⁾`,
+    `HARNESK (BRÖSTKORG OCH MAGE)` …). Bara den första deltabellen bär
+    rubrikraden i trycket; de övriga står under samma kolumner. Transkriptionen
+    återger det troget med tomma rubriker, och exporten skrev då ut en TOM
+    rubrikrad (`| | | | |`) över var och en. Tabellen såg ut att sakna data,
+    och en läsare som landar på `BRYNJEHOSOR (BEN)` har ingen aning om att
+    `5 | 15 | 2.500` betyder absorbering, vikt och pris.
+
+    Rubrikerna ärvs bara när det bevisligen är samma tryckta tabell som
+    fortsätter: SAMMA sida, SAMMA antal kolumner, SAMMA kolumnform, och
+    ingenting mellan tabellerna utom tabellrubriker och tabellnoter. Bryts
+    kedjan av löptext, en överskrift eller en sidbrytning är det en ny tabell,
+    och då ärvs ingenting — en påhittad kolumnrubrik är värre än en tom.
+
+    Kolumnformen är den spärr som kostade mest att upptäcka. Antalet kolumner
+    räcker inte: s. 25 sätter `Rasmodifikationer` (`Anka | –2`) direkt under
+    förflyttningstabellen (`0–11 | 7`) under en egen spännrubrik, och med bara
+    kolumnräkningen som villkor ärvde den rubrikerna `STO+FYS+SMI` och
+    `Förflyttning` — som är fel, för dess kolumner är ras och modifikation.
+    Skillnaden syns i cellerna: moderns första kolumn är TAL, dotterns är
+    TEXT. Rustningstabellens delposter har samma form som modern hela vägen
+    (text, tal, tal, tal) och ärver därför.
+
+    En tabell som saknar rubriker i trycket OCH inte har någon sådan förlaga
+    (skräcktabellen s. 10, fummeltabellerna) lämnas orörd med tom rubrikrad.
+    Det är inte snyggt, men det är sant.
+    """
+    forlaga = None          # (sida, rubriker, kolumnform) att ärva från
+    for page, el in items:
+        etype = el.get("type")
+        if etype in _CAPTION_TYPES:
+            continue        # spännrubriken bryter inte tabellen
+        if etype != "table":
+            forlaga = None
+            continue
+        data = el.get("data") or {}
+        headers = data.get("headers") or []
+        rows = data.get("rows") or []
+        if any(str(h).strip() for h in headers):
+            forlaga = (page, list(headers), _column_shapes(rows))
+            continue
+        if not (headers and rows and forlaga and forlaga[0] == page
+                and len(forlaga[1]) == len(headers)):
+            continue
+        if _column_shapes(rows) != forlaga[2]:
+            continue
+        data["headers"] = list(forlaga[1])
+        el["data"] = data
+        el["headers_inherited"] = True
+    return items
+
+
 def _stream(book, include_artifacts):
     """(sida, element) för hela boken, med cellblock monterade."""
     for page in book["pages"]:
@@ -478,7 +708,13 @@ def export_markdown(workdir, include_artifacts=False):
     title = (book["source"].get("metadata") or {}).get("title") \
         or Path(book["source"]["path"]).stem
     lines += ["# %s" % title, ""]
-    items = _stitch(list(_stream(book, include_artifacts)))
+    items = _inherit_headers(_stitch(list(_stream(book, include_artifacts))))
+    arvda = [el.get("id") for _, el in items if el.get("headers_inherited")]
+    if arvda:
+        # Ingen tyst ändring: rubrikraden står inte i trycket över just den
+        # deltabellen, den är hämtad från tabellens egen rubrik ovanför.
+        log.info("ärvda kolumnrubriker i %d deltabeller: %s",
+                 len(arvda), ", ".join(str(i) for i in arvda))
     last_page = None
     index = 0
     while index < len(items):
@@ -504,7 +740,7 @@ def export_markdown(workdir, include_artifacts=False):
                 run.append((nxt_page, nxt))
                 index += 1
             blocks = _reflow(run)
-            for blk_page, text, lead in blocks:
+            for blk_page, text, lead, notes in blocks:
                 if blk_page != last_page:
                     lines += ["<!-- sida %d -->" % blk_page, ""]
                     last_page = blk_page
@@ -527,6 +763,7 @@ def export_markdown(workdir, include_artifacts=False):
                     lines += ["*%s*" % text, ""]
                 else:
                     lines += [text, ""]
+                lines += _note_md(notes)
             if blocks and (etype in _BULLET_TYPES or etype == "boxed_text"):
                 lines += [""]
             continue
@@ -561,10 +798,15 @@ def export_markdown(workdir, include_artifacts=False):
             lines += ["| %s |" % text] if text else []
         elif text:
             lines += [text, ""]
+        lines += _note_md(_notes([(page, el)]))
     _warn_unknown_types(book, log)
     warn_empty_payloads(book, log)
     out = export_dir(workdir) / "bok.md"
     out.write_text("\n".join(lines), encoding="utf-8")
+    # Stämpeln ligger i `export/proveniens.json`, inte i bok.md: filen är
+    # ordkonserveringens facit och en revisionssträng i den skulle ge en ny
+    # "nytt ord"-rad vid varje commit (se pipeline/provenance.py).
+    provenance.record(workdir, "bok.md")
     log.info("export markdown -> %s", out)
     return out
 
@@ -578,18 +820,44 @@ def export_csv(workdir):
     book = _load_book(workdir)
     outdir = export_dir(workdir) / "tabeller"
     outdir.mkdir(exist_ok=True)
+    # En tabell som bryts över en SIDBRYTNING är EN tabell. Fragmenten pekar på
+    # huvudelementet med `data.fortsattning_av` (BQ-010), men fältet var inert:
+    # varje fragment blev en egen csv, och Skräcktabellen föll ut som två filer
+    # som såg ut att vara skilda tabeller. Här fogas de ihop i SIDORDNING under
+    # huvudelementets namn, med huvudets `headers` skrivna en gång. Se BQ-011.
+    fragment = {}
+    for page in book["pages"]:
+        elements, _ = tables.assemble(page["elements"], page["page"])
+        for el in elements:
+            if el.get("removed") or el.get("type") != "table":
+                continue
+            huvud = (el.get("data") or {}).get("fortsattning_av")
+            if huvud:
+                fragment.setdefault(huvud, []).append((page["page"], el))
+
     n = 0
     for page in book["pages"]:
         # Samma montering som md/docx, annars saknas de tabeller som ligger
         # som lösa celler i CSV-exporten.
         elements, _ = tables.assemble(page["elements"], page["page"])
+        # ...och samma rubrikarv: rustningstabellens delposter (s. 38) skulle
+        # annars falla ut som åtta csv-filer med en tom rubrikrad var, medan
+        # markdownen har tryckets kolumnnamn. Arvet är sidlokalt, så det
+        # räcker att köra det per sida här.
+        _inherit_headers([(page["page"], el) for el in elements
+                          if not el.get("removed")])
         for el in elements:
             if el.get("removed"):
                 continue
             if el.get("type") != "table":
                 continue
             data = el.get("data") or {}
-            headers, rows = data.get("headers"), data.get("rows")
+            if data.get("fortsattning_av"):
+                continue  # skrivs med sitt huvudelement
+            headers, rows = data.get("headers"), list(data.get("rows") or [])
+            for _, bit in sorted(fragment.get(el.get("id"), []),
+                                 key=lambda t: t[0]):
+                rows.extend((bit.get("data") or {}).get("rows") or [])
             if not rows:
                 continue
             n += 1
@@ -600,6 +868,7 @@ def export_csv(workdir):
                 if headers:
                     w.writerow(headers)
                 w.writerows(rows)
+    provenance.record(workdir, "tabeller/")
     log.info("export csv: %d tabeller -> %s", n, outdir)
     return outdir, n
 

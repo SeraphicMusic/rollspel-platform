@@ -12,6 +12,26 @@ def header(eid, text):
     return cell(eid, text, "table_header")
 
 
+def _mät(eid, text, x, y, kind="table_cell", bredd=0.06):
+    """Cell med uppmätt bbox. y räknas från sidans nederkant."""
+    e = cell(eid, text, kind)
+    e["source"] = {"bbox": [x, y, bredd, 0.014]}
+    return e
+
+
+def _krav_block():
+    """Två rader ur tabellen över grundegenskapskrav (s. 12), med `Lärd man`
+    gles: yrket har krav på STY men inte på FYS. Lägena är de uppmätta."""
+    return [_mät("h1", "Yrke", 0.195, 0.308, "table_header"),
+            _mät("h2", "STY", 0.320, 0.308, "table_header"),
+            _mät("h3", "FYS", 0.396, 0.308, "table_header"),
+            _mät("r1a", "Krigare", 0.195, 0.260),
+            _mät("r1b", "14", 0.326, 0.262),
+            _mät("r1c", "12", 0.400, 0.263),
+            _mät("r2a", "Lärd man", 0.195, 0.245),
+            _mät("r2b", "16", 0.326, 0.246)]
+
+
 class TestAssemble(unittest.TestCase):
     def test_even_block_becomes_table(self):
         elements = [
@@ -93,35 +113,94 @@ class TestAssemble(unittest.TestCase):
         self.assertTrue(table["needs_review"])
         self.assertTrue(table["review_reasons"])
 
-    def test_short_row_is_named_in_the_report(self):
-        """"33 celler går inte upp på 9 kolumner" går inte att åtgärda.
+    def test_short_row_is_assembled_from_geometry(self):
+        """Sida 12: en GLES rad monteras med tom ruta i stället för att skippas.
 
-        Sida 12: rapporten sa hur många celler som fattades men inte VAR, så
-        felet fick räknas fram cell för cell. Med bbox läses raderna direkt ur
-        geometrin och varje avvikande rad pekas ut med sin egen etikett.
+        Tabellen över grundegenskapskrav har 33 celler på 9 rubriker och gick
+        aldrig jämnt upp — en sekventiell påfyllning kan inte veta vilka rutor
+        som är tomma. Bboxen vet: kolumnen läses ur cellens x-läge.
         """
-        def c(eid, text, x, y, kind="table_cell"):
-            e = cell(eid, text, kind)
-            e["source"] = {"bbox": [x, y, 0.06, 0.014]}
-            return e
+        out, report = tables.assemble(_krav_block(), page=12)
+        table = next(e for e in out if e["type"] == "table")
+        self.assertEqual(report[0]["status"], "assembled")
+        self.assertEqual(table["source"]["assembly_method"], "geometri")
+        self.assertEqual(table["data"]["headers"], ["Yrke", "STY", "FYS"])
+        self.assertEqual(table["data"]["rows"],
+                         [["Krigare", "14", "12"], ["Lärd man", "16", ""]])
 
-        elements = [c("h1", "Yrke", 0.195, 0.308, "table_header"),
-                    c("h2", "STY", 0.320, 0.308, "table_header"),
-                    c("h3", "FYS", 0.396, 0.308, "table_header"),
-                    c("r1a", "Krigare", 0.195, 0.260),
-                    c("r1b", "14", 0.326, 0.262),
-                    c("r1c", "12", 0.400, 0.263),
-                    c("r2a", "Lärd man", 0.195, 0.245),
-                    c("r2b", "16", 0.326, 0.246)]
-        out, report = tables.assemble(elements, page=12)
-        self.assertEqual([e["type"] for e in out if e["type"] == "table"], [])
+    def test_empty_cells_are_flagged_not_glossed_over(self):
+        """Tom i trycket eller tappad av transkriptionen syns inte i geometrin."""
+        out, _ = tables.assemble(_krav_block(), page=12)
+        table = next(e for e in out if e["type"] == "table")
+        skäl = " ".join(table["review_reasons"])
+        self.assertIn("1 av 6 rutor är tomma", skäl)
+        self.assertIn("rad 2 ’Lärd man’ saknar FYS", skäl)
+        self.assertIn("TAPPAT", skäl)
+
+    def test_spanning_header_is_not_a_column(self):
+        """`Grundegenskapskrav` står över STY…FYS och blir ingen egen kolumn."""
+        block = _krav_block()
+        block.insert(3, _mät("h4", "Grundegenskapskrav", 0.307, 0.321,
+                             "table_header", bredd=0.174))
+        out, _ = tables.assemble(block, page=12)
+        table = next(e for e in out if e["type"] == "table")
+        self.assertEqual(table["data"]["headers"], ["Yrke", "STY", "FYS"])
+        self.assertEqual(table["data"]["spans"],
+                         [{"label": "Grundegenskapskrav",
+                           "columns": ["STY", "FYS"]}])
+        self.assertTrue(any("Spännrubriken" in r
+                            for r in table["review_reasons"]))
+
+    def test_two_cells_in_one_slot_falls_back_instead_of_guessing(self):
+        """Tvetydig geometri gissas aldrig ihop — då gäller läsordningen."""
+        block = _krav_block()
+        block.append(_mät("r2c", "99", 0.326, 0.246))  # andra cellen i STY
+        out, report = tables.assemble(block, page=12)
+        table = next(e for e in out if e["type"] == "table")
+        self.assertEqual(report[0]["status"], "assembled")
+        self.assertEqual(table["source"]["assembly_method"], "läsordning")
+
+    def test_contradictory_geometry_is_reported_not_swallowed(self):
+        """Bbox som motsäger sig själv är ett eget fynd, inte en tyst fallback.
+
+        Går läsordningen jämnt ut monteras tabellen ändå — men att MÄTNINGEN
+        inte gick ihop får inte försvinna, för det är signaturen för
+        `bbox-felkoppling`.
+        """
+        block = _krav_block()
+        block.append(_mät("r2c", "99", 0.326, 0.246))
+        out, _ = tables.assemble(block, page=12)
+        table = next(e for e in out if e["type"] == "table")
+        skäl = " ".join(table["review_reasons"])
+        self.assertIn("hamnar i samma ruta", skäl)
+        self.assertIn("bbox-felkoppling", skäl)
+
+    def test_cell_outside_every_column_falls_back(self):
+        """En cell långt utanför axeln betyder att mätningen inte går ihop."""
+        block = _krav_block()
+        block.append(_mät("strö", "7", 0.90, 0.245))
+        out, _ = tables.assemble(block, page=12)
+        table = next(e for e in out if e["type"] == "table")
+        self.assertEqual(table["source"]["assembly_method"], "läsordning")
+        self.assertIn("ligger inte under någon kolumn",
+                      " ".join(table["review_reasons"]))
+
+    def test_short_row_is_named_when_geometry_cannot_be_used(self):
+        """Utan användbar geometri pekas den avvikande raden fortfarande ut."""
+        block = [_mät("h1", "Yrke", 0.195, 0.308, "table_header"),
+                 _mät("h2", "STY", 0.320, 0.308, "table_header"),
+                 _mät("h3", "FYS", 0.396, 0.308, "table_header"),
+                 _mät("r1a", "Krigare", 0.195, 0.260),
+                 _mät("r1b", "14", 0.326, 0.262),
+                 _mät("r1c", "12", 0.400, 0.263),
+                 _mät("r1d", "99", 0.326, 0.261),   # krockar med r1b
+                 _mät("r2a", "Lärd man", 0.195, 0.245),
+                 _mät("r2b", "16", 0.326, 0.246),
+                 _mät("r2c", "11", 0.400, 0.246)]
+        _, report = tables.assemble(block, page=12)
         self.assertEqual(report[0]["status"], "skipped")
-        self.assertIn("rad 2 ’Lärd man’ har 2 av 3 celler", report[0]["reason"])
-        self.assertNotIn("rad 1", report[0]["reason"])
-        self.assertEqual(report[0]["rows"],
-                         [{"row": 2, "cells": 2, "label": "Lärd man",
-                           "ids": ["r2a", "r2b"]}])
-        self.assertFalse(any(e.get("removed") for e in out))
+        self.assertIn("rad 1 ’Krigare’ har 4 av 3 celler", report[0]["reason"])
+        self.assertIn("hamnar i samma ruta", report[0]["reason"])
 
     def test_short_row_without_bbox_falls_back_to_sequence(self):
         """Utan bbox går bara den sista, ofullständiga gruppen att namnge."""
@@ -140,3 +219,50 @@ class TestAssemble(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestSpannrubrikensKolumner(unittest.TestCase):
+    """BQ-017: en centrerad grupprubrik täcker inte sitt blocks ändkolumner.
+
+    Mätt på del III s. 25: `Grundegenskapskrav` har bläck x 498–786 medan
+    kolumnblocket STY–STO spänner 324–846, så bläckets överlappning ensam
+    namnger fem av sju kolumner. Påståendet hamnar i `bok.json` och i
+    granskningsrapportens kontrollfråga, och är då osant om trycket.
+    """
+
+    def _yrkestabell(self):
+        # Radetikettkolumn + sju grundegenskapskolumner, mätta som på s. 25.
+        kolumner = ["STY", "FYS", "SMI", "INT", "PSY", "KAR", "STO"]
+        bredd = (0.846 - 0.324) / len(kolumner)
+        headers = [_mät("h0", "Yrke", 0.10, 0.90, "table_header", 0.20)]
+        for i, namn in enumerate(kolumner):
+            headers.append(_mät("h%d" % (i + 1), namn, 0.324 + i * bredd,
+                                0.90, "table_header", bredd * 0.8))
+        # Spännrubriken står ett band ovanför och är centrerad över blocket.
+        headers.append(_mät("hs", "Grundegenskapskrav", 0.498, 0.92,
+                            "table_header", 0.786 - 0.498))
+        return headers
+
+    def test_centrerad_spannrubrik_far_hela_blocket(self):
+        columns, spans = tables._column_axis(self._yrkestabell())
+        self.assertEqual(len(spans), 1)
+        self.assertEqual(spans[0]["label"], "Grundegenskapskrav")
+        self.assertEqual(spans[0]["columns"],
+                         ["STY", "FYS", "SMI", "INT", "PSY", "KAR", "STO"])
+
+    def test_radetikettkolumnen_ingar_aldrig(self):
+        _, spans = tables._column_axis(self._yrkestabell())
+        self.assertNotIn("Yrke", spans[0]["columns"])
+
+    def test_tva_spannrubriker_delar_blocket_och_fyller_bara_sitt_intervall(self):
+        """Delar två rubriker på bandet är intervallfyllnaden allt vi vet."""
+        headers = self._yrkestabell()
+        bredd = (0.846 - 0.324) / 7
+        headers[-1] = _mät("hs1", "Fysiska", 0.330, 0.92,
+                           "table_header", 2.2 * bredd)
+        headers.append(_mät("hs2", "Mentala", 0.324 + 4.1 * bredd, 0.92,
+                            "table_header", 2.2 * bredd))
+        _, spans = tables._column_axis(headers)
+        self.assertEqual([s["label"] for s in spans], ["Fysiska", "Mentala"])
+        self.assertEqual(spans[0]["columns"], ["STY", "FYS", "SMI"])
+        self.assertEqual(spans[1]["columns"], ["PSY", "KAR", "STO"])

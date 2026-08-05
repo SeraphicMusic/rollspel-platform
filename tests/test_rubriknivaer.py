@@ -92,3 +92,37 @@ class TestPlan(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestHomonymerIToc(unittest.TestCase):
+    """BQ-009: vid namnar inuti TOC:t vinner den GRUNDASTE nivån.
+
+    `levels.setdefault(key, level)` behöll den FÖRSTA posten i läsordning, så
+    en underpost som råkade stå före sitt kapitel bestämde kapitlets nivå.
+    Ett kapitel står alltid grundast av sina namnar, så minimum är rätt urval
+    — och det behöver varken folio eller läsordning.
+    """
+
+    def _levels(self, measured):
+        levels = {}
+        for key, level in indent_levels(measured):
+            if key not in levels or level < levels[key]:
+                levels[key] = level
+        return levels
+
+    def test_grundaste_nivan_vinner_oavsett_lasordning(self):
+        # Underposten `Tabeller ... 23-26` står FÖRE kapitlet `TABELLER`.
+        measured = [("KAPITEL", 0, 0.0742),
+                    ("TABELLER", 0, 0.1145),
+                    ("TABELLER", 0, 0.0742)]
+        self.assertEqual(self._levels(measured)["TABELLER"], 1)
+
+    def test_setdefault_hade_gett_underpostens_niva(self):
+        """Motprovet: den gamla regeln ger 3 på exakt samma indata."""
+        measured = [("KAPITEL", 0, 0.0742),
+                    ("TABELLER", 0, 0.1145),
+                    ("TABELLER", 0, 0.0742)]
+        gammal = {}
+        for key, level in indent_levels(measured):
+            gammal.setdefault(key, level)
+        self.assertEqual(gammal["TABELLER"], 3)

@@ -5,6 +5,7 @@ Prioritet per sida: final > validated > transcript > embedded.
 from .log import setup_logging
 from .manifest import (Manifest, atomic_write_json, export_dir, now_iso,
                        page_file, read_json)
+from .provenance import STAMP_KEY, stamp
 
 PRIORITY = ("final.json", "validated.json", "transcript.json", "embedded.json")
 
@@ -48,6 +49,10 @@ def merge(workdir):
 
     book = {
         "generated": now_iso(),
+        # `generated` säger NÄR filen skrevs, inte av VAD. En export som ligger
+        # kvar från före en lagning ser annars ut precis som en färsk — se
+        # `pipeline/provenance.py` för de två mätta fallen.
+        STAMP_KEY: stamp(),
         "source": m.data["source"],
         "system": m.data.get("system"),
         "doc_type": m.data.get("doc_type"),

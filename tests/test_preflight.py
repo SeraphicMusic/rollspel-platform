@@ -620,3 +620,260 @@ class TestKolumnsammanslagningPaBlankett(unittest.TestCase):
         out, counts = scan_page({"page": 1, "elements": elements})
         self.assertEqual(out["sidtyp"], PAGE_PROSE)
         self.assertEqual(counts["kolumnsammanslagning"], 1)
+
+
+def rastabell(psy="±2"):
+    """Rastabellen på s. 11, som `table` med rutnätet i `data`."""
+    return {"id": "p011_e28", "type": "table", "text": "", "confidence": 1.0,
+            "data": {"headers": ["", "STY", "PSY", "KAR"],
+                     "rows": [["Alv", "-1", "±0", "+2"],
+                              ["Dvärg", "+3", psy, "±0"],
+                              ["Människa", "±0", "±0", "±0"]]}}
+
+
+class TestPlusminusSigned(unittest.TestCase):
+    """`±2` finns inte i notationen — men den låg i en CELL, inte i texten."""
+
+    def test_cell_med_nollskild_plusminus_flaggas(self):
+        _, counts = scan_page({"page": 11, "elements": [rastabell()]})
+        self.assertEqual(counts["plusminus-varde"], 1)
+
+    def test_flaggan_pekar_ut_raden_och_kolumnen(self):
+        out, _ = scan_page({"page": 11, "elements": [rastabell()]})
+        skäl = " ".join(out["elements"][0]["review_reasons"])
+        self.assertIn("rad 2 ’Dvärg’, kolumn ’PSY’", skäl)
+
+    def test_bada_lasningarna_namns_och_tecknet_avgors_mot_bilden(self):
+        out, _ = scan_page({"page": 11, "elements": [rastabell()]})
+        skäl = " ".join(out["elements"][0]["review_reasons"])
+        self.assertIn("+2", skäl)
+        self.assertIn("-2", skäl)
+        self.assertIn("LÄS TECKNET I PNG:N", skäl)
+
+    def test_plusminus_noll_ar_korrekt_notation(self):
+        _, counts = scan_page({"page": 11, "elements": [rastabell(psy="±0")]})
+        self.assertEqual(counts["plusminus-varde"], 0)
+
+    def test_vanliga_modifikationer_ror_inte(self):
+        for värde in ("+2", "-2", "±0", "12", "8-14 (11)"):
+            _, counts = scan_page({"page": 11,
+                                   "elements": [rastabell(psy=värde)]})
+            self.assertEqual(counts["plusminus-varde"], 0, värde)
+
+    def test_fristaende_vardeelement_ger_korrektionspost(self):
+        out, counts = scan_page({"page": 11, "elements": [el("e1", "±2")]})
+        self.assertEqual(counts["plusminus-varde"], 1)
+        korr = out["elements"][0]["corrections"][0]
+        self.assertEqual(korr["corrected"], "+2")
+        self.assertFalse(korr["applied"])
+
+    def test_loptext_med_plusminus_ror_inte(self):
+        _, counts = scan_page(
+            {"page": 11,
+             "elements": [el("e1", "Modifikationen är ±2 i vissa fall.")]})
+        self.assertEqual(counts["plusminus-varde"], 0)
+
+
+class TestDotLeaders(unittest.TestCase):
+    """Låsdyrkningens fummeltabell (s. 53) blev löptext med ledarlinjer kvar."""
+
+    def test_punktledare_flaggas(self):
+        out, counts = scan_page({"page": 53, "elements": [
+            el("p053_e62", "1....... DYRKEN GÅR SÖNDER, men fastnar inte.")]})
+        self.assertEqual(counts["punktledare"], 1)
+        self.assertIn("ledarlinje",
+                      " ".join(out["elements"][0]["review_reasons"]))
+
+    def test_uteslutningstecken_ar_inte_ledarlinje(self):
+        _, counts = scan_page({"page": 53, "elements": [
+            el("e1", "Han tvekade... och gick sedan vidare.")]})
+        self.assertEqual(counts["punktledare"], 0)
+
+    def test_flaggan_ar_aldrig_en_korrektionspost(self):
+        out, _ = scan_page({"page": 53, "elements": [el("e1", "2.....")]})
+        self.assertEqual(out["elements"][0].get("corrections", []), [])
+        self.assertTrue(out["elements"][0]["needs_review"])
+
+
+class TestColumnCollapse(unittest.TestCase):
+    """Tabellen över grundegenskapskrav skrevs ut som en rad per cell."""
+
+    def _kollaps(self):
+        return {"id": "e1", "type": "table", "text": "", "confidence": 1,
+                "data": {"headers": ["Yrke"],
+                         "rows": [["STY"], ["FYS"], ["Bard"], ["12"]]}}
+
+    def test_enkolumnigt_rutnat_flaggas(self):
+        out, counts = scan_page({"page": 12, "elements": [self._kollaps()]})
+        self.assertEqual(counts["kolumnkollaps"], 1)
+        self.assertIn("kolumnkollaps",
+                      " ".join(out["elements"][0]["review_reasons"]))
+
+    def test_riktig_tabell_ror_inte(self):
+        _, counts = scan_page({"page": 11, "elements": [rastabell(psy="±0")]})
+        self.assertEqual(counts["kolumnkollaps"], 0)
+
+    def test_for_fa_rader_racker_inte(self):
+        kort = self._kollaps()
+        kort["data"]["rows"] = [["STY"], ["FYS"]]
+        _, counts = scan_page({"page": 12, "elements": [kort]})
+        self.assertEqual(counts["kolumnkollaps"], 0)
+
+    def test_typningsfel_ger_ingen_korrektionspost(self):
+        out, _ = scan_page({"page": 12, "elements": [self._kollaps()]})
+        self.assertEqual(out["elements"][0].get("corrections", []), [])
+
+
+class TestRowMergeBandCount(unittest.TestCase):
+    """BQ-015: höjdfaktorn är en artefakt när elementet BÄR banden.
+
+    Regelns premiss är att MÄTNINGEN slog ihop två tryckta rader och att
+    draften bara återger den ena. Konsumerar elementet lika många uppmätta band
+    som dess höjd rymmer saknas ingen rad — bboxen är unionen av banden. Mätt
+    över DoD del III: 12 av regelns 14 kandidater var falska på exakt den
+    grunden, och fyra advokater avvisade dem var för sig.
+    """
+
+    def _sida(self, n=12):
+        return [el("e%d" % i, LANG_RAD,
+                   bbox=[0.067, 0.90 - i * 0.016, 0.435, 0.016])
+                for i in range(n)]
+
+    def test_element_som_bar_bada_banden_flaggas_inte(self):
+        elements = self._sida()
+        hog = el("e99", "Genma Frigke a Vands for at lara sig slas",
+                 bbox=[0.067, 0.60, 0.325, 0.0336])
+        hog["source"]["rader"] = [40, 41]
+        elements.append(hog)
+        self.assertEqual(rule_row_merge(elements), [])
+
+    def test_element_med_ett_enda_band_flaggas_fortfarande(self):
+        """Motprovet: ETT band under en dubbelhög box är det äkta fallet."""
+        elements = self._sida()
+        hog = el("e99", "Genma Frigke a Vands for at lara sig slas",
+                 bbox=[0.067, 0.60, 0.325, 0.0336])
+        hog["source"]["rader"] = [40]
+        elements.append(hog)
+        self.assertEqual([e["id"] for e, _ in rule_row_merge(elements)], ["e99"])
+
+    def test_tvaradig_rubrik_raknas_med_floor(self):
+        """En rubrik i större grad spänner 2,5 brödtextspitchar — inte 3.
+
+        Med avrundning uppåt larmade s. 7, 34 och 39, alla tvåradiga rubriker
+        med BÅDA banden i `rader`.
+        """
+        elements = self._sida()
+        rubrik = el("e99", LANG_RUBRIK + " OCH NAGOT MER TEXT AN SA HAR",
+                    bbox=[0.067, 0.60, 0.40, 0.0403])
+        rubrik["type"] = "heading"
+        rubrik["source"]["rader"] = [40, 41]
+        elements.append(rubrik)
+        self.assertEqual(rule_row_merge(elements), [])
+
+    def test_agentmatt_box_ar_en_dom_och_flaggas_inte(self):
+        """En box som en agent mätt fram är inte mätningens utfall.
+
+        s. 38 `Hela rustningar` bär halva ett band som advokaten delade vågrätt
+        med y/höjd ÄRVD (beslut s. 6 b) — höjden är ramlinjens, inte en svald
+        rads. En box UTAN `bbox_source` är däremot en äldre mätning och prövas
+        som vanligt.
+        """
+        elements = self._sida()
+        hog = el("e99", "Hela rustningar", bbox=[0.519, 0.60, 0.130, 0.0336])
+        hog["type"] = "heading"
+        hog["source"]["rader"] = [1]
+        hog["source"]["bbox_source"] = "agent:djavulens-advokat"
+        elements.append(hog)
+        self.assertEqual(rule_row_merge(elements), [])
+
+
+class TestTomtRadbandOchBandbredd(unittest.TestCase):
+    """BQ-019 och BQ-020 — de två pixelbaserade signalerna.
+
+    Båda kräver sidbilden. Utan `image`/`bands` ska de tiga, så att `scan_page`
+    går att anropa utan bild i test och i äldre flöden.
+    """
+
+    def _bild(self, rader):
+        """Gråskalebild där `rader` är (topp, botten, vänster, höger)-bläck."""
+        import numpy as np
+        img = np.full((100, 200), 255, dtype="uint8")
+        for top, bot, lo, hi in rader:
+            img[top:bot, lo:hi] = 0
+        return img
+
+    def test_tomt_band_flaggas(self):
+        from pipeline.preflight import rule_empty_band
+        img = self._bild([])                      # helt vit sida
+        bands = [[0.1, 0.5, 0.8, 0.02]]
+        els = [el("e1", "En rad text", bbox=[0.1, 0.5, 0.8, 0.02])]
+        els[0]["source"]["rader"] = [0]
+        hits = rule_empty_band(els, img, bands)
+        self.assertEqual([e["id"] for e, _ in hits], ["e1"])
+
+    def test_band_med_black_flaggas_inte(self):
+        from pipeline.preflight import rule_empty_band
+        img = self._bild([(48, 52, 20, 180)])
+        bands = [[0.1, 0.5, 0.8, 0.02]]
+        els = [el("e1", "En rad text", bbox=[0.1, 0.5, 0.8, 0.02])]
+        els[0]["source"]["rader"] = [0]
+        self.assertEqual(rule_empty_band(els, img, bands), [])
+
+    def test_utan_bild_tiger_reglerna(self):
+        from pipeline.preflight import rule_empty_band, scan_band_widths
+        els = [el("e1", "En rad text", bbox=[0.1, 0.5, 0.8, 0.02])]
+        self.assertEqual(rule_empty_band(els, None, None), [])
+        self.assertEqual(scan_band_widths(els, None, None), ([], []))
+
+    def test_for_brett_band_flaggas_pa_sitt_element(self):
+        from pipeline.preflight import scan_band_widths
+        # Bandet är 0,8 brett men bläcket bara 0,1 — faktor 8.
+        img = self._bild([(48, 52, 20, 40)])
+        bands = [[0.1, 0.5, 0.8, 0.02]]
+        els = [el("e1", "Personlig", bbox=[0.1, 0.5, 0.8, 0.02],
+                  region="vänsterkolumn")]
+        els[0]["source"]["rader"] = [0]
+        hits, obundna = scan_band_widths(els, img, bands, ["vänsterkolumn"])
+        self.assertEqual([e["id"] for e, _ in hits], ["e1"])
+        self.assertEqual(obundna, [])
+
+    def test_obundet_band_tappas_inte(self):
+        """Ett för brett band som inget element bär ska ändå redovisas."""
+        from pipeline.preflight import scan_band_widths
+        img = self._bild([(48, 52, 20, 40)])
+        bands = [[0.1, 0.5, 0.8, 0.02]]
+        hits, obundna = scan_band_widths([], img, bands, ["vänsterkolumn"])
+        self.assertEqual(hits, [])
+        self.assertEqual(len(obundna), 1)
+
+    def test_fullbreddsband_pa_rutnatssida_prövas_inte(self):
+        """`sidbredd` är mätningens avsedda form på en rutnätssida."""
+        from pipeline.preflight import scan_band_widths
+        img = self._bild([(48, 52, 20, 40)])
+        bands = [[0.1, 0.5, 0.8, 0.02]]
+        hits, obundna = scan_band_widths([], img, bands, ["sidbredd"])
+        self.assertEqual((hits, obundna), ([], []))
+
+
+class TestKonsumeradeElement(unittest.TestCase):
+    """BQ-027: ett konsumerat element ska inte besiktas.
+
+    `removed: true` betyder att elementet gått upp i ett annat och inte
+    renderas — men texten står kvar, eftersom ingenting kastas (beslut s. 26).
+    Läser per-elementreglerna om den ger de kandidater som aldrig går att
+    avfärda för gott.
+    """
+
+    def _sida(self, removed):
+        rad = el("e1", "–6 .............RPn möter skräckkällan ofta.")
+        rad["removed"] = removed
+        return {"page": 11, "elements": [rad]}
+
+    def test_konsumerat_element_ger_inga_kandidater(self):
+        _, counts = scan_page(self._sida(True))
+        self.assertEqual(sum(counts.values()), 0)
+
+    def test_samma_element_utan_removed_ger_kandidat(self):
+        """Motprovet: spärren får inte tysta regeln i största allmänhet."""
+        _, counts = scan_page(self._sida(False))
+        self.assertGreater(counts["punktledare"], 0)

@@ -36,6 +36,7 @@ from pipeline.manifest import page_file, pages_dir, read_json  # noqa: E402
 
 INDENT = 0.0195       # indragssteget, uppmätt i båda böckerna
 COLUMN_GAP = 0.15     # minsta sidledsavstånd mellan två TOC-spalter
+COLUMN_PAD = 0.01     # mätfönstrets marginal utanför spaltens vänsterkant
 DARK = 128            # tröskel för "svart pixel" i sidbilden
 MAX_LEVEL = 3         # kontraktets djupaste rubriknivå
 
@@ -66,6 +67,26 @@ def indent_levels(measured):
     bases = {}
     for _key, column, left in measured:
         bases[column] = min(bases.get(column, left), left)
+
+    # Spaltens EGEN minsta vänsterkant duger bara om spalten råkar innehålla en
+    # kapitelpost. Gör den inte det hamnar baslinjen ett indragssteg för långt
+    # in och hela spalten graderas en nivå för högt: i del III saknar
+    # mittspalten kapitelpost, och `Elementarmagi` blev kapitel i stället för
+    # sektion. Spalterna är jämnt fördelade, så rutnätet går att återställa —
+    # anchor är den grundaste baslinjen mätt mot rutnätet, och de spalter som
+    # HAR en kapitelpost sätter den.
+    if len(bases) >= 3:
+        index = sorted(bases)
+        # Pitchen tas som SPANNET delat på antalet intervall, inte som medianen
+        # av stegen: ligger en mellanspalts baslinje ett indrag för djupt blir
+        # steget före den för stort och steget efter lika mycket för litet, och
+        # felet tar ut sig självt i spannet. Medianen gör tvärtom — den plockar
+        # ett av de två felaktiga stegen.
+        pitch = (bases[index[-1]] - bases[index[0]]) / (len(index) - 1)
+        if pitch > 0:
+            anchor = min(bases[c] - i * pitch for i, c in enumerate(index))
+            bases = {c: anchor + i * pitch for i, c in enumerate(index)}
+
     out = []
     for key, column, left in measured:
         step = int(round((left - bases[column]) / INDENT))
@@ -94,8 +115,14 @@ def measure_toc(workdir, toc_page):
     measured = []
     for el, (x0, y, _w, h) in entries:
         index = max(i for i, c in enumerate(columns) if x0 >= c - 0.01)
-        lo = columns[index] - 0.02
-        hi = (columns[index + 1] - 0.02) if index + 1 < len(columns) else 0.99
+        # Marginalen var 0,02 och släppte in bläck från grannspalten: i del III
+        # hamnade spalt 2:s grundaste rad på exakt fönstrets vänsterkant, vilket
+        # sköt hela spaltens baslinje 0,017 för långt ut — mer än ett helt
+        # indragssteg. Uppmätt på s. 2: med 0,01 och 0,005 ligger noll rader på
+        # fönsterkanten och baslinjen sammanfaller med det uppmätta rutnätet.
+        lo = columns[index] - COLUMN_PAD
+        hi = ((columns[index + 1] - COLUMN_PAD)
+              if index + 1 < len(columns) else 0.99)
         # y räknas från sidans nederkant (se AGENTER.md Regel 9).
         top = max(0, int((1 - (y + h)) * height) - 1)
         band = image[top:int((1 - y) * height) + 1,
@@ -103,9 +130,16 @@ def measure_toc(workdir, toc_page):
         hits = np.flatnonzero(band.any(axis=0))
         left = lo + hits[0] / width if len(hits) else x0
         measured.append((normalise(el.get("text")), index, left))
+    # Vid HOMONYMER inuti innehållsförteckningen vinner den GRUNDASTE nivån.
+    # `setdefault` behöll den första posten i läsordning, och normaliseringen
+    # slår ihop kapitlet `TABELLER` med underposten `Tabeller ... 23-26` — så
+    # ett av bokens fyra kapitel graderades 3. Ett kapitel står alltid grundast
+    # av sina namnar, så minimum är rätt urval och det behöver ingen folio.
+    # Se BQ-009.
     levels = {}
     for key, level in indent_levels(measured):
-        levels.setdefault(key, level)
+        if key not in levels or level < levels[key]:
+            levels[key] = level
     return levels
 
 
@@ -122,6 +156,14 @@ def plan_level(page, el, levels, toc_page):
     som pipelinens övriga (CLAUDE.md) och visar samtidigt VARFÖR varje rubrik
     hamnade på sin nivå.
     """
+    # En redan stämplad rubrik räknas ALDRIG om — oavsett varifrån nivån kom.
+    # Spärren låg tidigare efter TOC-uppslaget och gällde bara `utanför TOC`,
+    # så en homonym skrevs över varje körning: `ALLMÄNNA BESVÄRJELSER` står
+    # både som kapitälrubrik på s. 5 (grad 3) och som TOC-postens sektion på
+    # s. 14, och uppslaget på titeltexten ensam drog ner s. 5 till 2 — även
+    # efter att advokaten graderat den mot skanningen.
+    if el.get("level_source"):
+        return el.get("level"), el["level_source"]
     if page < toc_page:
         return el.get("level"), "omslag — orört"
     if page == toc_page:

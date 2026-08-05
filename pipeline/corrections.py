@@ -196,6 +196,15 @@ def repair_dice_token(token, dice_cfg):
     if notation == token:
         return "ok", None
     confidence = max(0.85, 1.0 - 0.03 * subs)
+    # Posten APPLICERAS när den är entydig, och det är rätt: en lagad
+    # tärningstoken ÅTERSTÄLLER vad som står tryckt (`kind: "ocr"`), den
+    # avviker inte från det. AGENTER.md Regel 8a förbjuder EMENDERINGAR av
+    # siffror och spelvärden — alltså medvetna avsteg från trycket — inte
+    # återställning av en felläsning som `ITG` → `1T6`. BQ-016 (b) ställde
+    # frågan och svaret är nej: skulle varje tärningsrättning bli ett förslag
+    # skulle valideraren sluta göra det den finns till för. Felet på del III
+    # s. 23 var av motsatt art — `6+2` är aritmetik som LÄSTES som notation,
+    # och den vägen är stängd i `scan_dice_in_text` i stället.
     corr = make_correction(
         token, notation, confidence,
         "Tärningsnotation: %d teckensubstitution(er) ger giltig notation %s"
@@ -217,7 +226,15 @@ def scan_dice_in_text(text, dice_cfg, lexicon_words):
         token = raw.strip(".")
         if not DICE_TOKEN.match(token):
             continue
-        if not any(ch in "TtDd7Il|+" for ch in token):
+        # `+` duger INTE som ensam tärningsmarkör. `dice.json` mappar `+` → `T`
+        # i `misread_to_canonical`, så varje `N+M` i en bok kunde bli en
+        # tärning: `Dess CL är 6+2 per effektgrad` (del III s. 23) skrevs om
+        # till `6T2`, en notation boken aldrig använder, och rättningen
+        # applicerades rakt på ett spelvärde. Ett rent `N+M` är aritmetik —
+        # bastal plus tillägg — inte notation, och regeln har redan den
+        # symmetriska spärren åt andra hållet (»sifferlös token måste ha en
+        # bokstavlig separator T/D«). Se BQ-016.
+        if not any(ch in "TtDd7Il|" for ch in token):
             continue
         if normalize(token) in lexicon_words:
             continue

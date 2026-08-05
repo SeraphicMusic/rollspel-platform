@@ -18,6 +18,17 @@ språkmodell:
   7. `tabellkandidat` — en tryckt tabell som transkriberats som en följd av
      `paragraph` i stället för ett `table`-element. Strukturen går då förlorad
      för gott: ingenting nedströms kan återskapa rad- och kolumnindelningen.
+  8. `plusminus-varde` — `±` framför en NOLLSKILD siffra. Notationen har `+N`,
+     `-N` och `±0`; `±2` finns inte och är alltid en felläsning.
+  9. `punktledare` — fyra eller fler punkter i följd. En tryckt ledarlinje som
+     transkriberats som tecken, vilket betyder att ett rutnät blivit löptext.
+ 10. `kolumnkollaps` — ett `table` vars rutnät är en kolumn brett.
+
+Reglerna 8–10 läser även TABELLCELLERNA (`data.headers`/`data.rows`), inte bara
+`el["text"]`. Att de äldre reglerna bara såg elementets egen text var skälet
+till att `Dvärg PSY ±2` i rastabellen (s. 11) överlevde tre agentvarv med
+confidence 1,0: felet satt i en cell, och ingen regel tittade dit. Det hittades
+först när boken jämfördes mot en oberoende rippning.
 
 Utfallet är **kandidater, aldrig ändringar**: korrektionsposter med
 `applied: false` och `source: "heuristik:<regel>"`, plus `review_reasons` för
@@ -55,6 +66,20 @@ HEADING_RULE_MARK = re.compile(
 # talet tio, och siffror emenderas aldrig (Regel 8a).
 PLUSMINUS_GARBLE = re.compile(r"^(?:[tTIil*+|]0|±[Oo])$")
 PLUSMINUS_AMBIGUOUS = re.compile(r"^10$")
+# ±0-garblet har en spegelbild som kostade en riktig felläsning: `±` framför en
+# NOLLSKILD siffra. Boken sätter modifikationer som `+2`, `-2` eller `±0` — ett
+# `±2` finns inte i notationen och kan bara vara ett felläst `+2` (eller `-2`).
+# Uppmätt: `Dvärg PSY ±2` i rastabellen s. 11, funnen först när en oberoende
+# rippning jämfördes mot vår. Elementet låg på confidence 1.0 och ingen regel
+# tittade in i tabellcellerna, så ingenting flaggade den.
+PLUSMINUS_SIGNED = re.compile(r"^±([1-9]\d*)$")
+# Punktledare som ätit radstrukturen: `1....... DYRKEN GÅR SÖNDER`. Tre punkter
+# kan vara ett tryckt uteslutningstecken; fyra eller fler är en ledarlinje, och
+# en ledarlinje betyder att ett rutnät har blivit löptext (s. 53).
+DOT_LEADER = re.compile(r"\.{4,}")
+# Kolumnkollaps: ett `table` vars rutnät är EN kolumn brett. Värdena finns kvar
+# men kolumntillhörigheten är borta — läsexporten skriver då en rad per cell.
+COLLAPSE_MIN_ROWS = 3
 
 STRAIGHT_QUOTES = {"'": "’", '"': "”"}
 
@@ -66,6 +91,22 @@ STRAIGHT_QUOTES = {"'": "’", '"': "”"}
 MERGE_FACTOR = 1.4
 MIN_COLUMN_ELEMENTS = 5
 MIN_MERGE_TEXT = 40
+# Textlängden får inte ensam avgöra. Ett KORT element kan också bära en
+# sammanslagen rad: s. 6 hade `page_artifact` `MAGI` (4 tecken) på bredden
+# 0,655 = 1,56× spaltbredden, och längdfiltret dolde det — felet hittades
+# först för hand. Men att bara ta bort filtret ger 30 falska larm i den boken,
+# eftersom sidhuvudselementet normalt bär hela linjebandet. Skillnaden är
+# mätbar utan bild: ett sidhuvud spänner HELA satsytan (~2× spaltbredden plus
+# rännan), medan en sammanslagning av två spaltrader börjar i vänsterspalten
+# och slutar inne i högerspalten — bredare än en spalt, smalare än satsytan.
+MERGE_SHORT_LO = 1.3
+MERGE_SHORT_HI = 1.9
+
+# Bbox-felkoppling: hur stor andel av sidans renderande element som måste ha
+# uppmätt box för att en bbox-lös RUBRIK alls ska betyda felkoppling. Under
+# gränsen har uppmätningen fallit på hela sidan (Regel 9) och rubriken saknar
+# box av samma skäl som allt annat.
+MIN_MEASURED_SHARE = 0.5
 
 # Läsordning: hur långt utanför grannarnas y-intervall ett element måste ligga
 # för att det ska räknas som felplacerat i arrayen och inte som en snedställd
@@ -97,6 +138,15 @@ MIN_HEIGHT_ELEMENTS = 8
 # (s. 31, 37, 39) på 0,06–0,5×. Bandet nedan släpper bara igenom det första.
 ROW_MERGE_GLYPH_MIN = 0.7
 ROW_MERGE_GLYPH_MAX = 1.4
+# Den ANDRA varianten: båda radernas text hamnade i elementet. Då saknas ingen
+# boktext — det är strukturen som gått förlorad — men bredden per tecken
+# halveras och faller under bandet ovan, så regeln var blind för den. S. 5
+# p005_e53 passerade höjdtestet med 2,65× medianradhöjden men gav noll
+# kandidater på glyfkvoten 0,49×. Kvoten ligger då kring 1/n, där n är antalet
+# rader bandet spänner över. n skattas ur radAVSTÅNDET, inte ur ink-höjden:
+# höjdfaktorn 2,65 för ett tvåradsband skulle ge n=3.
+ROW_MERGE_JOINED_LO = 0.8
+ROW_MERGE_JOINED_HI = 1.25
 # Elementtyper som per definition rymmer flera rader och därför aldrig kan
 # vara en "sammanslagen rad".
 MULTIROW_TYPES = ("table", "statblock", "list")
@@ -138,8 +188,10 @@ PAGE_FORM_SHORT_SHARE = 0.60
 PAGE_FORM_MIN_CLUSTERS = 3
 
 RULES = ("linjeregel-prefix", "linjeregel-suffix", "raka-citattecken",
-         "plusminus", "kolumnsammanslagning", "lasordning",
-         "radsammanslagning", "tabellkandidat")
+         "plusminus", "plusminus-varde", "punktledare", "kolumnkollaps",
+         "kolumnsammanslagning", "lasordning", "radsammanslagning",
+         "tabellkandidat", "bbox-felkoppling", "tabell-svalt-titelband",
+         "forskjuten-kedja", "tomt-radband", "bandbredd")
 
 
 def _bbox(el):
@@ -249,6 +301,129 @@ def flag_plusminus_ambiguous(el):
     return None
 
 
+def _cells(el):
+    """Alla celltexter i ett `table`-element som (etikett, text).
+
+    Etiketten pekar ut cellen för en läsare: `rad 3 ’Dvärg’, kolumn ’PSY’`.
+    Utan den blir en flagga på ett tabellelement en jakt genom rutnätet.
+    """
+    data = el.get("data")
+    if not isinstance(data, dict):
+        return []
+    headers = [str(h) for h in (data.get("headers") or [])]
+    ut = []
+    for i, header in enumerate(headers):
+        ut.append(("kolumnrubrik %d" % (i + 1), header))
+    for r, row in enumerate(data.get("rows") or []):
+        if not isinstance(row, (list, tuple)):
+            continue
+        etikett = str(row[0]) if row else ""
+        for c, value in enumerate(row):
+            kolumn = headers[c] if c < len(headers) else "kolumn %d" % (c + 1)
+            ut.append(("rad %d ’%s’, kolumn ’%s’" % (r + 1, etikett, kolumn),
+                       str(value)))
+    return ut
+
+
+def _texts(el):
+    """Elementets egen text plus dess tabellceller, som (etikett, text)."""
+    ut = [("elementets text", (el.get("text") or ""))]
+    ut.extend(_cells(el))
+    return [(etikett, text) for etikett, text in ut if text]
+
+
+def rule_plusminus_signed(el):
+    """`±2` -> `+2`: plusminus framför en nollskild siffra finns inte i satsen.
+
+    Boken sätter modifikationer som `+N`, `-N` eller `±0`. `±N` är därför alltid
+    en felläsning — men VILKEN är inte given: `±` är ett plus med en vågrät
+    linje under, så bortfaller linjen står det `+2`, bortfaller plusets lodräta
+    stapel står det `-2`. Förslaget är `+N` eftersom plustecknet är den
+    gemensamma delen av glyfen, men tecknet MÅSTE läsas i PNG:n innan det
+    appliceras — en teckenvändning i en grundegenskapstabell är ett spelvärde.
+
+    Siffran rörs aldrig, bara tecknet — samma gräns som `±0`-regeln.
+    """
+    hits = []
+    for etikett, text in _texts(el):
+        m = PLUSMINUS_SIGNED.match(text.strip())
+        if not m:
+            continue
+        siffra = m.group(1)
+        skäl = (
+            "Heuristik (plusminus-värde): `±%s` i %s. Trycket sätter "
+            "modifikationer som `+%s`, `-%s` eller `±0` — `±` framför en "
+            "nollskild siffra finns inte i notationen och är alltid en "
+            "felläsning. LÄS TECKNET I PNG:N: `±` är ett plus med vågrät linje "
+            "under, så både `+%s` (linjen är falsk) och `-%s` (plusets lodräta "
+            "stapel är falsk) är möjliga läsningar. Siffran är oomstridd. "
+            "Detta är ett spelvärde i en grundregelbok — teckenvändningen "
+            "avgörs mot bilden, aldrig på sannolikhet."
+            % (siffra, etikett, siffra, siffra, siffra, siffra))
+        if etikett == "elementets text":
+            hits.append(("korrektion", make_correction(
+                el.get("text"), "+" + siffra, 0.5, skäl,
+                "heuristik:plusminus-varde", applied=False, kind=KIND_OCR)))
+        else:
+            # En tabellcell har ingen egen korrektionspost att applicera på —
+            # posten sitter på elementet och `original` skulle bli tvetydig.
+            hits.append(("flagga", skäl))
+    return hits
+
+
+def flag_dot_leaders(el):
+    """Punktledare i texten -> ett rutnät har blivit löptext.
+
+    `1....... DYRKEN GÅR SÖNDER, men fastnar inte i låset. 2.....` (s. 53) är
+    inte en mening: det är en fummeltabell vars ledarlinjer transkriberats som
+    tecken och vars rader därmed flutit ihop. Ledarlinjen är typografi, inte
+    boktext — men VAD den band ihop syns bara i bilden, så detta är en flagga
+    och aldrig en korrektionspost.
+    """
+    for etikett, text in _texts(el):
+        if DOT_LEADER.search(text):
+            return ("Heuristik (punktledare): fyra eller fler punkter i följd i "
+                    "%s. Det är en tryckt ledarlinje, inte ett uteslutnings"
+                    "tecken — och en ledarlinje binder ihop en etikett med sitt "
+                    "värde i ett rutnät. Elementet är alltså sannolikt en "
+                    "tabellrad som transkriberats som löptext, med flera rader "
+                    "hopflutna i samma element. Läs stycket i PNG:n och typa om "
+                    "till `table` (eller `table_header`/`table_cell`) om det är "
+                    "en tabell. Punkterna själva är typografi och ska inte stå "
+                    "kvar i texten." % etikett)
+    return None
+
+
+def flag_column_collapse(el):
+    """Ett `table` vars rutnät är en kolumn brett — kolumntillhörigheten borta.
+
+    Ett `table` med en kolumn är alltid fel: är det verkligen en enda spalt
+    hör innehållet hemma i en `list`, och är det en tabell har kolumnerna
+    kollapsat. Läsexporten skriver då en rad per cell, vilket är exakt hur
+    grundreglernas tabell över grundegenskapskrav såg ut i `bok.md` — värdena
+    kvar, men utan att kolumnen (grundegenskapen) gick att utläsa.
+    """
+    if el.get("type") != "table":
+        return None
+    data = el.get("data")
+    if not isinstance(data, dict):
+        return None
+    rows = [r for r in (data.get("rows") or []) if isinstance(r, (list, tuple))]
+    if len(rows) < COLLAPSE_MIN_ROWS:
+        return None
+    bredd = max([len(data.get("headers") or [])] + [len(r) for r in rows])
+    if bredd > 1:
+        return None
+    return ("Heuristik (kolumnkollaps): `table` med %d rader men bara %d "
+            "kolumn. Ett enkolumnigt rutnät är alltid fel — antingen har "
+            "kolumnerna kollapsat och varje cell blivit sin egen rad (då är "
+            "rad- och kolumntillhörigheten borta och måste läsas tillbaka ur "
+            "PNG:n), eller så är innehållet ingen tabell och ska typas `list`. "
+            "Cellerna själva är oftast rätt lästa; det är strukturen som "
+            "saknas, så detta är ett typningsfel och aldrig en korrektionspost."
+            % (len(rows), bredd))
+
+
 # ---------------------------------------------------------------------------
 # Regler på sidnivå (geometri)
 # ---------------------------------------------------------------------------
@@ -301,7 +476,9 @@ def rule_column_merge(elements):
         box = _bbox(el)
         if not box or box[2] <= colw * MERGE_FACTOR:
             continue
-        if len(el.get("text") or "") < MIN_MERGE_TEXT:
+        if len(el.get("text") or "") < MIN_MERGE_TEXT and not (
+                el.get("type") == "page_artifact"
+                and colw * MERGE_SHORT_LO < box[2] < colw * MERGE_SHORT_HI):
             continue
         hits.append((el,
                      "Heuristik (kolumnsammanslagning): bbox-bredd %.3f mot "
@@ -429,6 +606,29 @@ def rule_reading_order(elements):
     return hits
 
 
+def _row_pitch(boxes, med_h):
+    """Sidans radAVSTÅND — avståndet mellan två rader, inte deras ink-höjd.
+
+    Höjdfaktorn mot medianradhöjden duger för att LARMA men inte för att räkna
+    rader: ett tvåradsband mäter 2,65× medianen, eftersom medianen är bara
+    bläckets höjd medan bandet också rymmer radmellanrummet. Pitchen mäts som
+    medianen av y-avstånden mellan lodrätt intilliggande rader inom samma
+    region.
+    """
+    per_region = {}
+    for el, box in boxes:
+        per_region.setdefault(_region(el), []).append(box[1])
+    deltas = []
+    for ys in per_region.values():
+        ys = sorted(set(ys), reverse=True)
+        for hi, lo in zip(ys, ys[1:]):
+            steg = hi - lo
+            # Uteslut spaltbyten och luckor kring rubriker/bilder.
+            if 0 < steg <= med_h * 4:
+                deltas.append(steg)
+    return _median(deltas) if deltas else None
+
+
 def rule_row_merge(elements):
     """Element vars bbox-HÖJD är ~2× sidans medianradhöjd.
 
@@ -454,6 +654,7 @@ def rule_row_merge(elements):
     colw = column_width(elements)
     if not med_h or not med_glyph:
         return []
+    pitch = _row_pitch(boxes, med_h)
     # Bär två element SAMMA uppmätta box har mätningen slagit ihop två tätt
     # satta rader till ETT band, och transkriptionen har gett båda elementen
     # bandet. Då finns båda de tryckta raderna i draften — regelns antagande
@@ -473,13 +674,65 @@ def rule_row_merge(elements):
             continue
         if tuple(round(v, 6) for v in box) in delad:
             continue
+        # Ett element som KONSUMERAR lika många uppmätta band som dess höjd
+        # rymmer har inte svalt någon rad — bboxen är unionen av banden, och
+        # höjdfaktorn är då en artefakt av unionen och inte ett band som täckt
+        # två tryckta rader. Signalen är gratis, rent index-baserad och skiljer
+        # arterna exakt. Mätt över DoD del III: av regelns 14 kandidater hade 12
+        # två eller flera band i `source.rader` och var falska larm som fyra
+        # advokater avvisade var för sig (s. 7, 8, 22, 23 ×3, 28 ×3, 32, 34, 39)
+        # — bara s. 35 `p035_e32` och s. 44 `p044_e71` bar ETT band och var
+        # äkta. Att i stället undanta `list_item` räcker inte: tre av de tolv är
+        # `heading` och ett är `paragraph`. Se BQ-015.
+        src = el.get("source") or {}
+        rader = src.get("rader") or []
+        # Räkna med FLOOR, inte round: en tvåradig RUBRIK är satt i större grad
+        # än brödtexten, så dess höjd spänner 2,5–2,6 brödtextspitchar utan att
+        # rymma en tredje rad. Med avrundning uppåt larmade s. 7, 34 och 39 —
+        # alla tre tvåradiga rubriker med båda banden i `rader`.
+        if pitch and len(rader) >= max(2, int(box[3] // pitch)):
+            continue
+        # En box som en agent MÄTT FRAM är inte mätningens utfall utan en redan
+        # fälld dom, och regelns premiss ("mätningen slog ihop två rader")
+        # gäller inte för den. s. 38 `Hela rustningar` bär halva ett band som
+        # advokaten delade vågrätt med y/höjd ÄRVD från det odelade bandet
+        # (beslut s. 6 b) — höjden är därför ramlinjens, inte en svald rads.
+        # Villkoret prövar att boxen är AGENTSATT, inte att den är
+        # `pipeline.rows`: en box helt utan `bbox_source` kommer från en äldre
+        # mätning (del I har 3953 sådana) och är alltså mätningens utfall.
+        if str(src.get("bbox_source") or "").startswith("agent:"):
+            continue
         # Ett element som också är för BRETT är en kolumnsammanslagning och
         # ägs av rule_column_merge — flagga inte samma element två gånger.
         if colw and box[2] > colw * MERGE_FACTOR:
             continue
         glyph = box[2] / len((el.get("text") or "").strip())
-        if not (ROW_MERGE_GLYPH_MIN <= glyph / med_glyph
-                <= ROW_MERGE_GLYPH_MAX):
+        kvot = glyph / med_glyph
+        if not (ROW_MERGE_GLYPH_MIN <= kvot <= ROW_MERGE_GLYPH_MAX):
+            # Andra varianten: ingen rad SAKNAS, men båda radernas text ligger
+            # i samma element och radindelningen är därmed borta. Kvoten faller
+            # då mot 1/n. Antalet rader räknas ur pitchen — höjdfaktorn skulle
+            # ge n=3 för ett tvåradsband och därmed leta i fel band.
+            n = round(box[3] / pitch) if pitch else 0
+            # Bara `paragraph`. En rubrik, en punkt eller en rutrad som
+            # radbryts är ETT typografiskt element och SKA bära båda radernas
+            # text — s. 7:s tvåradsrubrik är sidans rätta form, inte ett fel.
+            # Det är löptexten som har en rad per element, och det är där
+            # förlorad radindelning gör skada i läsexporten.
+            if (el.get("type") == "paragraph" and n >= 2
+                    and (ROW_MERGE_JOINED_LO / n <= kvot
+                         <= ROW_MERGE_JOINED_HI / n)):
+                hits.append((el,
+                             "Heuristik (radsammanslagning, hopslagen text): "
+                             "bbox-höjden %.4f rymmer %d tryckta rader "
+                             "(radavstånd %.4f) och glyfbredden är %.2f× "
+                             "sidans median — nära 1/%d. Ingen boktext saknas: "
+                             "BÅDA radernas text ligger i elementet, vilket är "
+                             "varför bredden per tecken halverats. Det som gått "
+                             "förlorat är radindelningen. Dela elementet i %d "
+                             "och ge varje del sin uppmätta bbox — utelämnad "
+                             "box spränger stycket i läsexporten."
+                             % (box[3], n, pitch, kvot, n, n)))
             continue
         hits.append((el,
                      "Heuristik (radsammanslagning): bbox-höjd %.4f mot sidans "
@@ -492,6 +745,197 @@ def rule_row_merge(elements):
                      "diakritband för ä/ö/å) och lägg till den saknade raden "
                      "med uppmätt bbox."
                      % (box[3], med_h, box[3] / med_h, glyph / med_glyph)))
+    return hits
+
+
+def rule_bbox_miscoupling(elements):
+    """En RUBRIK utan uppmätt bbox — mätningens rader har glidit ett steg.
+
+    Mönstret har setts två gånger och båda gångerna hittades det för hand, inte
+    av en regel: s. 6 mätte de två spaltrubrikerna som ETT band som draften gav
+    åt sidhuvudet, så båda rubrikerna blev utan box; s. 9 lät rubriken stå utan
+    box medan de två följande elementen bar rubrikens och varandras rader.
+
+    Signalen är billig och kräver ingen bild: en rubrik är kraftigt svärtad och
+    mäts praktiskt taget alltid. En bbox-lös rubrik är därför nästan aldrig den
+    art av mätlucka som drabbar korta, glesa SLUTRADER (kön: BQ-002 a) — den är
+    en felkoppling, och då bär något annat element rubrikens rad.
+
+    Regeln larmar bara. Vilket element som ska ha vilken box går inte att
+    avgöra ur JSON:en; det kräver att bandet läses i skanningen.
+
+    Den kompletterande signal kön nämner — luckor i radindexföljden — är INTE
+    implementerad: ett element utan `rader` ger konsekutiva grannindex både när
+    kolonnen glidit och när raden aldrig mättes, så den skiljer inte
+    felkoppling från äkta mätlucka och skulle larma på varje kort slutrad.
+    """
+    # På en sida där uppmätningen i praktiken FALLIT saknar nästan allt box, och
+    # då säger en bbox-lös rubrik ingenting om felkoppling. Det är AGENTER.md
+    # Regel 9 — en annan art med en annan orsak, och den ägs inte av den här
+    # regeln. Uppmätt i denna bok: pärmsidan 0 % och s. 13 4 % mätta, mot
+    # 95–99 % på sidorna där en ensam rubrik verkligen tappat sin box.
+    renderade = [el for el in elements
+                 if not el.get("removed")
+                 and ((el.get("text") or "").strip() or el.get("data"))]
+    if not renderade:
+        return []
+    matta = sum(1 for el in renderade if _bbox(el))
+    if matta / len(renderade) < MIN_MEASURED_SHARE:
+        return []
+
+    hits = []
+    for el in elements:
+        # `table_caption` hör hit av samma skäl som `heading`: en tabelltitel är
+        # lika kraftigt svärtad och mäts lika säkert. Utan den saknades
+        # `p040_e25` och `p042_e03`, där tabellen svalt titelbandet och
+        # bildtexten blev utan box — systerregeln `tabell-svalt-titelband` kan
+        # inte se dem, eftersom en bildtext utan band inte gör anspråk på något.
+        if el.get("type") not in ("heading", "table_caption") or el.get("removed"):
+            continue
+        if not (el.get("text") or "").strip():
+            continue
+        if _bbox(el):
+            continue
+        hits.append((el,
+                     "Heuristik (bbox-felkoppling): rubriken/bildtexten saknar "
+                     "source.bbox. Rubriker är kraftigt svärtade och mäts "
+                     "nästan alltid, så detta är sannolikt inte en mätlucka "
+                     "utan en felkoppling — något annat element på sidan bär "
+                     "rubrikens radband. Läs bandet i skanningen och koppla om; "
+                     "gissa inte koordinater."))
+    return hits
+
+
+# En `paragraph` vars bredd-per-tecken avviker mer än så här från sidans median
+# bär antingen fel band eller en felmätt bandbredd. Uppmätt över DoD del III:
+# tröskeln 2,0 ger sju kandidater på 31 sidor — en hanterlig lista där fem var
+# äkta fel.
+CHAR_WIDTH_FACTOR = 2.0
+MIN_CHAR_WIDTH_ELEMENTS = 8
+
+
+def rule_table_ate_caption(elements):
+    """Ett `table` som gör anspråk på ett band en `table_caption` också vill ha.
+
+    En tabells `rader` börjar på dess tryckta RUBRIKRAD och slutar på sista
+    DATARAD; titelbandet hör till bildtexten och ramen är sättningsgrafik
+    (beslut s. 12, 25, 26). Har tabellen svalt titelraden blir bildtexten utan
+    box, eller — värre — pekar båda på samma band och kedjan under dem glider.
+
+    Signalen är gratis och rent index-baserad, och den fyller luckan efter
+    `rule_bbox_miscoupling`: på en RUTNÄTSSIDA har varje element en box, så den
+    regeln tiger. s. 25 gav noll kandidater där fem elements radlistor var fel.
+
+    Regeln larmar bara. Vilket element som ska ha bandet kräver att bandet läses
+    i skanningen — precis som systerregeln. Den fångar INTE följdfelet där ett
+    band glidit mellan två helt skilda element (s. 25 band 46,
+    `SVÄRDSHAND`/`TABELL FÖR SOCIALT STÅND`). Se BQ-018.
+    """
+    # Bildtexten måste vara tabellens EGEN, alltså den närmast föregående i
+    # arrayen. På en RUTNÄTSSIDA mäts ett FULLBRETT band per radhöjd tvärs hela
+    # satsytan, så en tabell delar rutinmässigt band med grannrutans bildtext —
+    # och det bandet ska stanna i BÅDA elementens `rader` (beslut s. 25 b).
+    # Utan det villkoret ger regeln fem kandidater på s. 25 där två är äkta, och
+    # fyra överlever advokatens rättning.
+    egen = {}
+    senaste = None
+    for el in elements:
+        if el.get("removed"):
+            continue
+        if el.get("type") == "table_caption":
+            senaste = el
+        elif el.get("type") == "table":
+            egen[el["id"]] = senaste
+
+    anspråk = {}
+    for el in elements:
+        if el.get("removed"):
+            continue
+        for band in (el.get("source") or {}).get("rader") or []:
+            anspråk.setdefault(band, []).append(el)
+    hits = []
+    for el in elements:
+        if el.get("type") != "table" or el.get("removed"):
+            continue
+        titel = egen.get(el["id"])
+        if titel is None:
+            continue
+        # Har bildtextens box MÄTTS FRAM av en agent är delningen redan dömd:
+        # på s. 24 står bildtexten på SAMMA tryckta rad som tabellens första
+        # kolumnetikett, så bandet omsluter båda, och advokaten smalnade
+        # bildtexten medan tabellens bbox med rätta stod kvar (beslut s. 24).
+        # Att larma om samma band igen är brus.
+        if str((titel.get("source") or {}).get("bbox_source")
+               or "").startswith("agent:"):
+            continue
+        delade = sorted({b for b in (el.get("source") or {}).get("rader") or []
+                         if any(o is titel for o in anspråk.get(b, []))})
+        if not delade:
+            continue
+        titlar = [titel["id"]]
+        hits.append((el,
+                     "Heuristik (tabell-svalt-titelband): tabellens "
+                     "source.rader innehåller band %s som ocksa gors anspråk "
+                     "på av %s. En tabells rader ska börja på den tryckta "
+                     "RUBRIKRADEN och sluta på sista DATARAD — titelbandet hör "
+                     "till bildtexten och ramen är sättningsgrafik (beslut "
+                     "s. 12, 25). Läs bandet i skanningen och koppla om; gissa "
+                     "inte koordinater."
+                     % (", ".join(str(b) for b in delade), ", ".join(titlar))))
+    return hits
+
+
+def rule_shifted_chain(elements):
+    """En `paragraph` vars bredd per tecken avviker grovt från sidans median.
+
+    `rule_bbox_miscoupling` larmar bara på en bbox-LÖS rubrik. På s. 32 hade
+    ALLA element en box fast fyra av dem bar fel band — en falsk mätrad inne i
+    illustrationen hade konsumerats och sköt kedjan ett steg. Det var bokens
+    femte felkoppling och den första som ingen agent larmade på.
+
+    Signalen är gratis och kräver ingen bild: bbox-BREDDEN delat på antalet
+    tecken är nästan konstant inom en typ och en spalt, så ett `paragraph` som
+    avviker mer än CHAR_WIDTH_FACTOR från sidans median bär antingen fel band
+    eller en felmätt bandbredd (BQ-020). Regeln skiljer INTE de två arterna åt
+    men fångar båda.
+
+    Begränsad till `paragraph` med flit: kvoten är meningslös för `heading`
+    (rubrikgrad), `page_artifact` (sidhuvud över hela satsytan), `table_caption`
+    och flerradiga `list_item` (text som fortsätter på nästa rad).
+
+    MOTMETOD att inte förväxla den med: att mäta bläcket INOM elementets lagrade
+    band kan ALDRIG upptäcka en förskjuten kedja — kvoten blir 1,00 ändå
+    (beslut s. 32). Det som gäller är att para spaltens bläckrader i ORDNING mot
+    spaltens element i ordning. Se BQ-022.
+    """
+    kandidater = []
+    for el in elements:
+        if el.get("type") != "paragraph" or el.get("removed"):
+            continue
+        box = _bbox(el)
+        text = (el.get("text") or "").strip()
+        if not box or len(text) < 4:
+            continue
+        kandidater.append((el, box[2] / len(text)))
+    if len(kandidater) < MIN_CHAR_WIDTH_ELEMENTS:
+        return []
+    median = _median([kvot for _, kvot in kandidater])
+    if not median:
+        return []
+    hits = []
+    for el, kvot in kandidater:
+        faktor = max(kvot / median, median / kvot)
+        if faktor < CHAR_WIDTH_FACTOR:
+            continue
+        hits.append((el,
+                     "Heuristik (förskjuten kedja): bredd per tecken %.5f mot "
+                     "sidans median %.5f för paragraph (faktor %.2f). "
+                     "Elementet bär antingen FEL BAND — kedjan har glidit, och "
+                     "då är grannarna också fel — eller ett band vars bredd är "
+                     "felmätt. Para spaltens bläckrader i ORDNING mot spaltens "
+                     "element i ordning; att mäta bläcket INOM elementets eget "
+                     "band ger 1,00 även när kedjan är förskjuten."
+                     % (kvot, median, faktor)))
     return hits
 
 
@@ -684,8 +1128,13 @@ def classify_page(elements):
 # Sida och körning
 # ---------------------------------------------------------------------------
 
-def scan_page(data):
+def scan_page(data, image=None, bands=None, regions=None):
     """Kör alla regler på en validerad sid-JSON.
+
+    `image` (gråskale-array av sidbilden) och `bands` (mätningens bboxar) är
+    valfria. Utan dem hoppas de två PIXELBASERADE reglerna över — `tomt-radband`
+    och `bandbredd` — medan de rent index-baserade körs som förut. Det gör
+    `scan_page` anropbar utan bild i test och i äldre flöden.
 
     Returnerar (ny_data, summering). Indata muteras inte.
     """
@@ -695,6 +1144,15 @@ def scan_page(data):
     counts = {rule: 0 for rule in RULES}
 
     for el in elements:
+        # Ett KONSUMERAT element (`removed: true`) har gått upp i ett annat och
+        # renderas inte — men det behåller sin tryckta text, eftersom ingenting
+        # kastas (beslut s. 26). Utan spärren läser per-elementreglerna om den
+        # texten och ger kandidater som aldrig går att avfärda för gott: på
+        # s. 11 gav `punktledare` sju träffar, varav två satt på de två element
+        # som just hade konsumerats. De fjorton sidnivåreglerna hoppar redan
+        # över dem. Se BQ-027.
+        if el.get("removed"):
+            continue
         # Linjeregelregeln avgör själv om träffen är prefix eller suffix.
         for rule, corr in rule_heading_dash(el):
             _add_candidate(el, corr)
@@ -708,10 +1166,34 @@ def scan_page(data):
         if flag:
             _add_flag(el, flag)
             counts["plusminus"] += 1
+        # Reglerna nedan tittar också IN i tabellcellerna. Att de tidigare bara
+        # läste `el["text"]` var skälet till att `Dvärg PSY ±2` överlevde tre
+        # agentvarv: cellen låg i `data.rows` och ingen regel såg den.
+        for slag, träff in rule_plusminus_signed(el):
+            if slag == "korrektion":
+                _add_candidate(el, träff)
+            else:
+                _add_flag(el, träff)
+            counts["plusminus-varde"] += 1
+        for regel, fn in (("punktledare", flag_dot_leaders),
+                          ("kolumnkollaps", flag_column_collapse)):
+            flag = fn(el)
+            if flag:
+                _add_flag(el, flag)
+                counts[regel] += 1
 
     sidtyp = classify_page(elements)
     sidnivå = [("radsammanslagning", rule_row_merge),
-               ("tabellkandidat", rule_table_candidate)]
+               ("tabellkandidat", rule_table_candidate),
+               ("bbox-felkoppling", rule_bbox_miscoupling),
+               ("tabell-svalt-titelband", rule_table_ate_caption),
+               ("forskjuten-kedja", rule_shifted_chain)]
+    if image is not None and bands:
+        sidnivå += [("tomt-radband",
+                     lambda els: rule_empty_band(els, image, bands)),
+                    ("bandbredd",
+                     lambda els: scan_band_widths(els, image, bands,
+                                                  regions)[0])]
     # Kolumnsammanslagningen mäter mot medianen av sidans elementbredder. På en
     # blankett är medianen de korta fältraderna ("Typ: Buske"), så satsytans
     # normalbreda rader ser ut att spänna över rännan. Uppmätt: del II s. 53,
@@ -729,6 +1211,15 @@ def scan_page(data):
         for el, reason in fn(elements):
             _add_flag(el, reason)
             counts[rule] += 1
+
+    if image is not None and bands:
+        obundna = scan_band_widths(elements, image, bands, regions)[1]
+        if obundna:
+            # Ett för brett band som INGET element bär kan inte flaggas på ett
+            # element — men det får inte tappas heller, för nästa bindning kan
+            # råka fastna i det.
+            out["bandbredd_obundna"] = obundna
+            counts["bandbredd"] += len(obundna)
 
     out["source"] = "heuristik"
     out["sidtyp"] = sidtyp
@@ -772,7 +1263,12 @@ def preflight(workdir, pages=None, force=False):
         if target.is_file() and not force:
             results.append((no, None))
             continue
-        out, counts = scan_page(data)
+        matfil = Path(str(page_file(workdir, no, "radboxar.json")))
+        matning = (read_json(matfil) or {}) if matfil.is_file() else {}
+        bands = [r.get("bbox") for r in (matning.get("rows") or [])]
+        regioner = [r.get("region") for r in (matning.get("rows") or [])]
+        out, counts = scan_page(data, _page_gray(workdir, no),
+                                bands if all(bands) else None, regioner)
         # Provenienssträngen måste följa med: en heuristik.json kan nu vara
         # räknad antingen ur draften eller ur den färdiga sidan, och utan det
         # går de två inte att skilja åt i efterhand.
@@ -969,9 +1465,275 @@ def _sidlista(nos, max_visade=6):
                                 nos[-1], len(nos))
 
 
+def drift_split_tables(pages):
+    """Tabeller som bryts över en SIDBRYTNING utan att vara märkta som det.
+
+    En tryckt tabell som fortsätter på nästa sida är EN tabell, och
+    fortsättningen ska bära `data.fortsattning_av` som pekar på huvudelementet
+    (BQ-010). Är märkningen borta faller tabellen ut som två csv-filer som ser
+    ut att vara skilda tabeller, och läsaren av `export/tabeller/` kan inte veta
+    att de hör ihop.
+
+    Signalen är gratis och rent strukturell: FÖREGÅENDE sidas sista renderande
+    element är ett `table`, och den nya sidans FÖRSTA är ett `table` vars
+    `headers` är tomma eller saknas — en tabell som börjar om trycker sin
+    rubrikrad.
+
+    Den nyckelform posten föreslog (`^\s*[<>]?\d+\+?\s*\.{2,}`) är prövad och
+    förkastad: den kräver en nyckelkolumn med utfyllnadspunkter och ger NOLL på
+    s. 45→46, som är bokens tredje sidbrutna fall och en ren namnlista. Den
+    strukturella signalen fångar alla tre.
+
+    Kan bara ses på boknivå — sidloopen har ingen granne. Se BQ-011.
+    """
+    def renderande(elements):
+        return [el for el in elements if not el.get("removed")
+                and el.get("type") not in ("page_artifact",)
+                and ((el.get("text") or "").strip() or el.get("data"))]
+
+    def rubrikslos(el):
+        if el.get("type") != "table" or el.get("removed"):
+            return False
+        data = el.get("data") or {}
+        if data.get("fortsattning_av") or not data.get("rows"):
+            return False
+        headers = data.get("headers")
+        return not (headers and any(str(h).strip() for h in headers))
+
+    def nyckel(rad):
+        m = re.match(r"^\s*(\d+)\s*$", str(rad[0]) if rad else "")
+        return int(m.group(1)) if m else None
+
+    hits = []
+    for (fno, fel), (nno, nel) in zip(pages, pages[1:]):
+        fore, nasta = renderande(fel), renderande(nel)
+        if not fore or not nasta:
+            continue
+        # (1) STRUKTURELLT: sidan slutar med en tabell och nästa INLEDS med en
+        #     rubrikslös. Ger noll falska larm i hela boken.
+        if fore[-1].get("type") == "table" and rubrikslos(nasta[0]):
+            hits.append(
+                "sidbruten tabell: s. %d slutar med `table` %s och s. %d inleds "
+                "med `table` %s utan egen rubrikrad, men `data.fortsattning_av` "
+                "saknas. Är det samma tryckta tabell ska fortsättningen peka på "
+                "HUVUDELEMENTET (BQ-010); annars ska den ha sin egen rubrikrad."
+                % (fno, fore[-1].get("id"), nno, nasta[0].get("id")))
+            continue
+        # (2) NYCKELFÖLJDEN: den strukturella signalen missar en fortsättning
+        #     som inte står FÖRST på sin sida — s. 11 inleds med löptexten som
+        #     fortsätter från s. 10, och Skräcktabellens fortsättning kommer
+        #     först därefter. Fortsätter nyckelkolumnen på nästa heltal är det
+        #     samma tabell, och det provet är i praktiken utan falska larm: de
+        #     rubrikslösa etikett/värde-tabellerna (s. 9, 10, 25, 38) har namn i
+        #     nyckelkolumnen, inte tal i följd.
+        for tabell in fore:
+            if tabell.get("type") != "table":
+                continue
+            rader = (tabell.get("data") or {}).get("rows") or []
+            sist = nyckel(rader[-1]) if rader else None
+            if sist is None:
+                continue
+            for kandidat in nasta:
+                if not rubrikslos(kandidat):
+                    continue
+                forst = nyckel(((kandidat.get("data") or {})
+                                .get("rows") or [None])[0])
+                if forst == sist + 1:
+                    hits.append(
+                        "sidbruten tabell: s. %d `table` %s slutar på nyckeln "
+                        "%d och s. %d `table` %s börjar på %d utan egen "
+                        "rubrikrad — nyckelkolumnen fortsätter över "
+                        "sidbrytningen, men `data.fortsattning_av` saknas "
+                        "(BQ-010)."
+                        % (fno, tabell.get("id"), sist, nno,
+                           kandidat.get("id"), forst))
+    return hits
+
+
+# Svärtningströskeln är en PARAMETER, inte 150. På rutnätssidorna ligger det
+# grå zebrarastret på ~200 och en profil vid 150 fångar rastrets punkter: en
+# fullbreddsprofil av del III s. 26 gav då SEX band för hela sidan. Tröskel 100
+# skiljer text från raster rent; s. 36 krävde 80, eftersom rastret där är en
+# halvtonspunktskärm och inte en jämn ton.
+BAND_DARK = 100
+# Ett band som ett TEXTbärande element gör anspråk på men som har färre än så
+# här mörka pixlar är en ramlinje eller en rasterkant, inte en textrad.
+EMPTY_BAND_PIXELS = 8
+# Ett band vars bredd är mer än så här gånger bläckets egen utbredning är
+# felmätt i x-led (BQ-020).
+BAND_WIDTH_FACTOR = 2.0
+
+
+def _page_gray(workdir, page_no):
+    """Sidbilden som gråskale-array, eller None om den inte går att läsa."""
+    try:
+        import numpy as np
+        from PIL import Image
+    except ImportError:
+        return None
+    png = Path(str(page_file(workdir, page_no, "png")))
+    if not png.is_file():
+        return None
+    try:
+        return np.asarray(Image.open(png).convert("L"))
+    except Exception:
+        return None
+
+
+def _band_window(image, box):
+    """Bildutsnittet för ett band. y räknas från sidans NEDERKANT."""
+    h, w = image.shape
+    x, y, bredd, hojd = box
+    top = max(0, int(round((1 - (y + hojd)) * h)))
+    bot = min(h, int(round((1 - y) * h)) + 1)
+    lo = max(0, int(round(x * w)))
+    hi = min(w, int(round((x + bredd) * w)) + 1)
+    if bot <= top or hi <= lo:
+        return None
+    return image[top:bot, lo:hi]
+
+
+def rule_empty_band(elements, image, bands):
+    """Ett TEXTbärande element som gör anspråk på ett band UTAN bläck.
+
+    Signalen är gratis, deterministisk och rent pixelbaserad: bär bandet noll
+    text är det en ramlinje eller en rasterkant, och då har kopplingen glidit.
+    På del III s. 26 gällde det fem band (49, 50, 51, 77, 78) som sköt sex
+    element ur läge, medan `bbox-felkoppling` teg (varje element HADE en box)
+    och `tabell-svalt-titelband` teg (ingen bildtext gjorde anspråk på samma
+    band).
+
+    Regeln larmar bara. Vilket element som ska ha bandet kräver att banden mäts
+    om per ruta — det kan ingen indexsignal avgöra. Se BQ-019.
+    """
+    if image is None or not bands:
+        return []
+    hits = []
+    for el in elements:
+        # "TEXTbärande" måste rymma `table` och `list` också: deras innehåll
+        # ligger i `data`, inte i `text`. Utan det missades s. 26 `p026_e10`,
+        # tabellen som svalt de tre ramlinjebanden — alltså precis det fall
+        # regeln skrevs för.
+        if el.get("removed"):
+            continue
+        if not ((el.get("text") or "").strip() or el.get("data")):
+            continue
+        tomma = []
+        for i in (el.get("source") or {}).get("rader") or []:
+            if not (0 <= i < len(bands)):
+                continue
+            ruta = _band_window(image, bands[i])
+            if ruta is None:
+                continue
+            # Tomheten måste hålla vid BÅDA trösklarna. En liten, svagt tryckt
+            # glyf — folion på en avdelarsida — ger bara 5 pixlar under 100 men
+            # 80 under 150, och är alltså text. En ramlinje som ligger mellan
+            # två mätta rader ger noll vid båda (s. 26 banden 49, 50, 51, 77, 78).
+            if (int((ruta < BAND_DARK).sum()) < EMPTY_BAND_PIXELS
+                    and int((ruta < 150).sum()) < EMPTY_BAND_PIXELS):
+                tomma.append(i)
+        if not tomma:
+            continue
+        hits.append((el,
+                     "Heuristik (tomt-radband): elementet gör anspråk på band "
+                     "%s som har färre än %d pixlar under svärtningströskeln "
+                     "%d — det är en RAMLINJE eller en rasterkant, inte en "
+                     "textrad, och ramen ingår aldrig i ett elements rader "
+                     "(beslut s. 12, 26). Kopplingen har alltså glidit. Mät "
+                     "banden om per ruta i eget x-fönster och koppla om; gissa "
+                     "inte koordinater."
+                     % (", ".join(str(i) for i in tomma), EMPTY_BAND_PIXELS,
+                        BAND_DARK)))
+    return hits
+
+
+COLUMN_REGIONS = ("vänsterkolumn", "högerkolumn", "mittkolumn")
+
+
+def scan_band_widths(elements, image, bands, regions=None):
+    """Band vars BREDD är mycket större än bläckets egen utbredning.
+
+    Arten är varken BQ-002:s mätlucka (bandet finns och sitter rätt) eller en
+    felkoppling (elementet har rätt band) — det är en felmätt x-utbredning, och
+    den syns bara om någon läser bläcket. Mätt på del III s. 29: band 5 bär
+    `Sx1 SR` med rätt y men bredden 0,3519, sju gånger radens faktiska bläck.
+
+    Varför den ska larma trots att effekten där blev noll:
+    `pipeline/export.py::_starts_paragraph` jämför bandbredden med spaltbredden
+    för att avgöra om raden FYLLDE spalten, och 0,3519 låg på 89 % av den
+    gränsen — ytterligare någon hundradel och ASTRALVAPEN-stycket hade fogats
+    in i statblockets sista rad i `bok.md`.
+
+    Signalen läser MÄTNINGENS band, inte elementens bbox. Det är nödvändigt:
+    på s. 29 hade elementet ingen box alls i draften, så en elementbaserad
+    regel såg ingenting. Returnerar (element-träffar, obundna band) — ett band
+    som inget element bär kan inte flaggas på ett element, men det får inte
+    tappas heller. Se BQ-020.
+    """
+    if image is None or not bands:
+        return [], []
+    _, w = image.shape
+    # Bara SPALTBAND prövas. På en rutnätssida mäts ett FULLBRETT band per
+    # radhöjd tvärs hela satsytan (beslut s. 25) — där ÄR bandet mycket bredare
+    # än bläcket i den enskilda rutan, och det är mätningens avsedda form, inte
+    # ett fel. Utan den avgränsningen ger regeln 47 träffar över boken, varav
+    # de flesta ligger på s. 24–27 och 45; med den återstår de fall där en
+    # spaltrad fått en bredd som inte är radens.
+    barare = {}
+    for el in elements:
+        if el.get("removed"):
+            continue
+        for i in (el.get("source") or {}).get("rader") or []:
+            barare.setdefault(i, el)
+
+    hits, obundna = [], []
+    for i, box in enumerate(bands):
+        if not box:
+            continue
+        if regions and regions[i] not in COLUMN_REGIONS:
+            continue
+        ruta = _band_window(image, box)
+        if ruta is None or ruta.shape[1] < 4:
+            continue
+        kolumner = (ruta < BAND_DARK).any(axis=0)
+        if not kolumner.any():
+            continue  # tomt band — det ägs av `tomt-radband`
+        forsta = int(kolumner.argmax())
+        sista = len(kolumner) - 1 - int(kolumner[::-1].argmax())
+        black = (sista - forsta + 1) / float(w)
+        if black <= 0 or box[2] / black < BAND_WIDTH_FACTOR:
+            continue
+        text = ("bandets bredd %.4f är %.1f× bläckets egen utbredning %.4f "
+                "inom samma band. Bandet sitter rätt i y — det är "
+                "x-utbredningen som är felmätt. `_starts_paragraph` läser "
+                "bandbredden som »fyllde raden spalten«, så en felmätt bredd "
+                "kan foga ihop två stycken som ska stå isär."
+                % (box[2], box[2] / black, black))
+        el = barare.get(i)
+        # Bara `paragraph`. En TABELL har legitim vitrymd inne i raden — en
+        # nyckelkolumn till vänster och text till höger ger ett bläckspann som
+        # inte fyller bandet — och en `table_caption` är centrerad. Premissen
+        # "bandet ska vara radens egen bredd" håller bara för löptext. Utan den
+        # avgränsningen ger regeln 20 träffar över boken i stället för fyra.
+        if el is not None and el.get("type") != "paragraph":
+            continue
+        # En box som en agent MÄTT FRAM är en redan fälld dom: advokaten har
+        # ersatt det felmätta bandet med bläckets egen utbredning, och att
+        # larma om samma band igen är brus. Samma spärr som i `rule_row_merge`.
+        if el is not None and str((el.get("source") or {}).get("bbox_source")
+                                  or "").startswith("agent:"):
+            continue
+        if el is None:
+            obundna.append("band %d: %s" % (i, text))
+        else:
+            hits.append((el, "Heuristik (bandbredd): band %d — %s" % (i, text)))
+    return hits, obundna
+
+
 def scan_drift(pages):
     """Alla boknivåsignaler om typdrift, i en lista."""
-    return drift_ceased_types(pages) + drift_furniture_retyped(pages)
+    return (drift_ceased_types(pages) + drift_furniture_retyped(pages)
+            + drift_split_tables(pages))
 
 
 def book_pages(workdir):
