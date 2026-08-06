@@ -347,11 +347,64 @@ def repair_word(word, adapter):
         "validator:lexicon", applied=False)
 
 
-def scan_words_in_text(text, adapter):
+def _multiword_aliases(adapter):
+    """Handkurerade alias vars nyckel består av flera ord, längsta först."""
+    poster = [(nyckel.split(), mål) for nyckel, mål in adapter.aliases.items()
+              if " " in nyckel]
+    poster.sort(key=lambda p: -len(p[0]))
+    return poster
+
+
+def scan_phrases_in_text(text, adapter):
+    """Handkurerade FLERORDSALIAS — `obesväpnad strid` -> `Obeväpnad strid`.
+
+    `repair_word` slår upp ett ord i taget, så en aliasnyckel med mellanslag
+    kunde aldrig träffa någonting: den fanns i lexikonet, den slog aldrig an,
+    och ingenting sa ifrån. Tre av `mutant2089`:s sex handkurerade alias var
+    flerords och därmed döda sedan de skrevs — vilket är värre än att sakna
+    dem, eftersom en kurerad post ser ut som en verkställd regel.
+
+    Frasen matchas på samma normalform som enskilda ord (`normalize`), så
+    diakritikskadad OCR träffar; ordgränserna kommer ur tokeniseringen och inte
+    ur en delsträngsjämförelse, så `strid` inuti `närstrid` inte kan råka bilda
+    en fras.
+    """
+    poster = _multiword_aliases(adapter)
+    if not poster:
+        return []
+    tokens = [(m.group(0), m.start(), m.end())
+              for m in WORD_TOKEN.finditer(text)]
     corrections = []
+    upptagen = set()
+    for ord_lista, mål in poster:
+        n = len(ord_lista)
+        for i in range(len(tokens) - n + 1):
+            if any(j in upptagen for j in range(i, i + n)):
+                continue
+            fras = [tokens[j][0] for j in range(i, i + n)]
+            if [normalize(o) for o in fras] != ord_lista:
+                continue
+            original = text[tokens[i][1]:tokens[i + n - 1][2]]
+            if original.lower() == mål.lower():
+                continue  # endast skiftlägesskillnad — rätta inte
+            upptagen.update(range(i, i + n))
+            corrections.append(make_correction(
+                original, mål, 0.95,
+                "Känd variant i systemlexikonet (flerordsalias)",
+                "validator:lexicon"))
+    return corrections
+
+
+def scan_words_in_text(text, adapter):
+    corrections = list(scan_phrases_in_text(text, adapter))
+    # Ord som redan ingår i en frasrättning får inte rättas en gång till —
+    # `apply_corrections_to_text` skulle då skriva över frasens resultat.
+    tagna = set()
+    for corr in corrections:
+        tagna.update(WORD_TOKEN.findall(corr["original"]))
     seen = set()
     for word in WORD_TOKEN.findall(text):
-        if word in seen:
+        if word in seen or word in tagna:
             continue
         seen.add(word)
         status, corr = repair_word(word, adapter)

@@ -10,7 +10,8 @@ from pipeline.corrections import (KIND_EMENDATION, KIND_OCR,
                                   close_review_reason, make_correction,
                                   review_flag_counts,
                                   repair_dice_token, repair_word,
-                                  scan_dice_in_text)
+                                  scan_dice_in_text, scan_phrases_in_text,
+                                  scan_words_in_text)
 from pipeline.systems import load
 
 DOD = load("dod")
@@ -167,6 +168,59 @@ class TestLexiconRepair(unittest.TestCase):
         # (pixelverifierat). Aliaset sypox->Syopox rättade FRÅN den tryckta
         # formen och är borttaget — namnet ska lämnas orört.
         self.assertEqual(repair_word("Sypox", M2089)[0], "skip")
+
+
+class TestFlerordsalias(unittest.TestCase):
+    """En aliasnyckel med mellanslag kunde aldrig träffa någonting.
+
+    `repair_word` slår upp ett ord i taget, så tre av `mutant2089`:s sex
+    handkurerade alias var döda sedan de skrevs. Det är värre än att sakna
+    dem: en kurerad post ser ut som en verkställd regel, och ingenting sa
+    ifrån.
+    """
+
+    def test_flerordsalias_traffar(self):
+        korr = scan_phrases_in_text("Obesväpnad strid 65%", M2089)
+        self.assertEqual([(c["original"], c["corrected"]) for c in korr],
+                         [("Obesväpnad strid", "Obeväpnad strid")])
+
+    def test_handkurerat_alias_appliceras_direkt(self):
+        korr = scan_phrases_in_text("obepansrad strid", M2089)
+        self.assertTrue(korr[0]["applied"])
+
+    def test_diakritikskadad_fras_traffar_pa_normalform(self):
+        korr = scan_phrases_in_text("Obesvapnad Strid", M2089)
+        self.assertEqual(korr[0]["corrected"], "Obeväpnad strid")
+
+    def test_korrekt_fras_rattas_inte(self):
+        self.assertEqual(scan_phrases_in_text("Obeväpnad strid", M2089), [])
+
+    def test_ordgrans_kravs_inte_delstrang(self):
+        """`strid` inuti `närstrid` får inte råka bilda frasens andra led."""
+        self.assertEqual(
+            scan_phrases_in_text("obepansrad närstrid", M2089), [])
+
+    def test_frasens_ord_rattas_inte_en_gang_till(self):
+        """Annars skriver ordrättningen över frasens resultat vid applicering."""
+        korr = scan_words_in_text("Obesväpnad strid", M2089)
+        self.assertEqual(len(korr), 1)
+        self.assertEqual(
+            apply_corrections_to_text("Obesväpnad strid", korr),
+            "Obeväpnad strid")
+
+    def test_bojningsform_som_star_i_trycket_har_inget_alias(self):
+        """`Rörliga manövrar` togs BORT ur lexikonet 2026-08-06.
+
+        Det var ett kanoniseringsalias, inte en OCR-reparation: 59 av 65
+        förekomster i korpusen har `manövrer`, men de 6 som har `manövrar`
+        ligger samlade i två böcker — ingen bok blandar, alltså tryckvariation
+        mellan publikationer och inte intern drift. Advokaten verifierade
+        dark-edge-bars tryck mot skanningen. En böjningsform som står korrekt
+        i trycket får aldrig rättas tyst, och när flerordsalias blev levande
+        hade posten annars skrivit om sex print-trogna ställen.
+        """
+        self.assertEqual(scan_phrases_in_text("Rörliga manövrar", M2089), [])
+        self.assertNotIn("rörliga manövrar", M2089.aliases)
 
 
 class TestCorrectionInvariants(unittest.TestCase):
