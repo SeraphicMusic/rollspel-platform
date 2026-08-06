@@ -58,6 +58,29 @@ def _karna(token):
     return k.casefold() or token.casefold()
 
 
+def _elementtext(el):
+    """Den text ett element bidrar med till läsexporten, grovt räknat.
+
+    Grovt räcker: värdet används bara för att kvitta ord i ett TILLAGT element,
+    och kvittningen är per ord. Tas för mycket med kvittas ord som ändå inte
+    fanns i diffen, vilket inte döljer något; tas för lite med står resten kvar
+    som oförklarad, vilket är åt rätt håll.
+    """
+    delar = [el.get("text") or ""]
+    data = el.get("data")
+    if isinstance(data, dict):
+        stack = [data]
+        while stack:
+            nod = stack.pop()
+            varden = nod.values() if isinstance(nod, dict) else nod
+            for v in varden:
+                if isinstance(v, (dict, list)):
+                    stack.append(v)
+                elif v is not None:
+                    delar.append(str(v))
+    return " ".join(delar)
+
+
 def _pa_karna(counter):
     ut = collections.Counter()
     for token, n in counter.items():
@@ -73,6 +96,7 @@ def redovisad_andring(workdir):
     förklarat ord går att spåra till sin post utan att man öppnar filerna.
     """
     borta, nya = collections.Counter(), collections.Counter()
+    berorda = set()
     kallor = collections.defaultdict(list)
     pages = pathlib.Path(workdir) / "pages"
     for f in sorted(pages.glob("page_*.json")):
@@ -88,37 +112,69 @@ def redovisad_andring(workdir):
             continue
         sida = f.name[5:8]
         for el in data.get("elements") or []:
+            # Ett element som advokaten LADE TILL bär inga korrektionsposter —
+            # dess ord är nya i boken utan att någon post utger sig för att ha
+            # skapat dem. Tillägget är ändå redovisat: `added_by` säger vem som
+            # gjorde det och varför. Utan den här grenen rapporteras varje
+            # räddad rad som en oförklarad ordökning, och ett instrument som
+            # fäller en korrekt komplettering lär användaren att bortse från
+            # det. (Advokaten på sieger-bauhaus-block s. 2 fann en hel
+            # illustration som saknades i draften — ingen regel och ingen
+            # textjämförelse ser den, bara att bilderna räknas.)
+            if el.get("added_by"):
+                for ord_, n in _pa_karna(words(_elementtext(el))).items():
+                    nya[ord_] += n
+                    kallor[ord_].append((sida, el.get("id"), "tillagt"))
             for c in el.get("corrections") or []:
                 if not c.get("applied"):
                     continue
                 fore = _pa_karna(words(c.get("original") or ""))
                 efter = _pa_karna(words(c.get("corrected") or ""))
+                # Kärnor posten RÖR, utöver dem den nettoförändrar. En
+                # rättning kan byta skiljetecknen runt ett ord utan att röra
+                # ordet: advokaten skrev om `"N 2420"/"IN 2421"` till
+                # `"…N 2421"` på sieger-bauhaus-block s. 1, och kärnan `n`
+                # står då i både `original` och `corrected`, tar ut sig själv
+                # i nettot — medan `diffa` ser två olika tokens och rapporterar
+                # både ett bortfall och ett tillskott.
+                berorda.update(fore)
+                berorda.update(efter)
                 for ord_, n in (fore - efter).items():
                     borta[ord_] += n
                     kallor[ord_].append((sida, el.get("id"), c.get("kind")))
                 for ord_, n in (efter - fore).items():
                     nya[ord_] += n
                     kallor[ord_].append((sida, el.get("id"), c.get("kind")))
-    return borta, nya, kallor
+    return borta, nya, berorda, kallor
 
 
 def granska(workdir):
     d = diff(workdir)
-    red_borta, red_nya, kallor = redovisad_andring(workdir)
+    red_borta, red_nya, berorda, kallor = redovisad_andring(workdir)
+
+    kvar = {}
+    for etikett, redovisat in (("borta", red_borta), ("nya", red_nya)):
+        kvar[etikett] = _pa_karna(collections.Counter(d[etikett])) - redovisat
+
+    # Skiljeteckensbyte runt ett ord som en post RÖRT: kärnan står kvar på
+    # båda sidor och nettar till noll, men `diffa` ser två olika tokens. Det
+    # förklaras — dock aldrig mer än vad som faktiskt tar ut sig självt, så en
+    # verklig förlust kan inte kvittas av ett obesläktat tillskott.
+    for k in set(kvar["borta"]) & set(kvar["nya"]) & berorda:
+        n = min(kvar["borta"][k], kvar["nya"][k])
+        kvar["borta"][k] -= n
+        kvar["nya"][k] -= n
 
     ut = {"fore": d["fore"], "efter": d["efter"], "kallor": kallor}
-    for etikett, nyckel, redovisat in (("borta", "borta", red_borta),
-                                       ("nya", "nya", red_nya)):
-        faktisk = collections.Counter(d[nyckel])
+    for etikett in ("borta", "nya"):
         # Attribuera på kärnan, men redovisa tokenets fulla form: det är den
         # `diffa` skriver ut, och en rad som inte går att söka i diffens
         # utskrift hjälper ingen.
-        kvar = _pa_karna(faktisk) - redovisat
         oforklarat, forklarat = collections.Counter(), collections.Counter()
-        for token, n in faktisk.items():
+        for token, n in collections.Counter(d[etikett]).items():
             k = _karna(token)
-            o = min(n, kvar[k])
-            kvar[k] -= o
+            o = min(n, kvar[etikett][k])
+            kvar[etikett][k] -= o
             if o:
                 oforklarat[token] += o
             if n - o:

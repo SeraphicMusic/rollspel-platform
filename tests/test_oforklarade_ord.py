@@ -114,6 +114,84 @@ class TestAttribuering(Bokbadd):
         self.assertEqual(dict(r["oforklarat_nya"]), {"spöar": 1})
 
 
+class TestSkiljeteckensbyte(Bokbadd):
+    """En post kan byta skiljetecknen runt ett ord utan att röra ordet.
+
+    Advokaten skrev om `"N 2420"/"IN 2421"` till `"…N 2421"` på
+    sieger-bauhaus-block s. 1. Kärnan `n` står då i både `original` och
+    `corrected`, nettar till noll — medan `diffa` ser två olika tokens och
+    rapporterar både ett bortfall och ett tillskott.
+    """
+
+    def test_kvittas_nar_posten_ror_ordet(self):
+        self.bok('skylten "N 2420"', 'skylten "…N 2421"')
+        self.sida([{"id": "e1",
+                    "corrections": [self.post('skylten "N 2420"',
+                                              'skylten "…N 2421"')]}])
+        self.assertEqual(self.kvar(), 0)
+
+    def test_kvittas_inte_nar_ingen_post_ror_ordet(self):
+        self.bok('skylten "N 2420"', 'skylten "…N 2421"')
+        self.sida([{"id": "e1", "corrections": []}])
+        self.assertEqual(self.kvar(), 4)
+
+    def test_kvittningen_har_ett_tak(self):
+        """Kvittningen får aldrig gå längre än vad som tar ut sig självt.
+
+        Tre förekomster försvinner och en kommer tillbaka i ny skepnad: EN är
+        skiljeteckensbyte, de andra två är verkliga bortfall och ska stå kvar.
+        Utan taket skulle en post om ett enda tecken frita hela förlusten.
+        """
+        self.bok('"alfa" "alfa" "alfa"', "alfa")
+        self.sida([{"id": "e1", "corrections": [self.post('"alfa"', "alfa")]}])
+        r = granska(self.wd)
+        self.assertEqual(sum(r["oforklarat_borta"].values()), 2)
+        self.assertEqual(sum(r["oforklarat_nya"].values()), 0)
+
+
+class TestTillagdaElement(Bokbadd):
+    """Ett räddat element bär inga korrektionsposter — men är redovisat.
+
+    Advokaten på sieger-bauhaus-block s. 2 fann en hel illustration som
+    saknades i draften: porträttet fanns som element, den stora interiörbilden
+    som texten flödar om fanns inte. Ingen `forbesikta`-regel och ingen
+    textjämförelse ser det, bara att bilderna räknas. Tillägget är en
+    komplettering, och ett instrument som fäller den lär användaren att bortse
+    från utfallet.
+    """
+
+    def test_tillagt_element_forklarar_sina_egna_ord(self):
+        self.bok("alfa beta", "alfa beta gamma delta")
+        self.sida([{"id": "e1", "corrections": []},
+                   {"id": "e2", "text": "gamma delta",
+                    "added_by": "agent:djavulens-advokat", "corrections": []}])
+        self.assertEqual(self.kvar(), 0)
+
+    def test_element_utan_added_by_forklarar_ingenting(self):
+        """Skillnaden mellan en redovisad komplettering och tyst tillskott är
+        just fältet som säger vem som gjorde det."""
+        self.bok("alfa beta", "alfa beta gamma delta")
+        self.sida([{"id": "e1", "corrections": []},
+                   {"id": "e2", "text": "gamma delta", "corrections": []}])
+        self.assertEqual(self.kvar(), 2)
+
+    def test_tillagt_element_forklarar_inte_bortfall(self):
+        """Ett tillägg kan aldrig förklara att ord FÖRSVUNNIT."""
+        self.bok("alfa beta gamma", "alfa beta")
+        self.sida([{"id": "e2", "text": "gamma",
+                    "added_by": "agent:djavulens-advokat", "corrections": []}])
+        r = granska(self.wd)
+        self.assertEqual(dict(r["oforklarat_borta"]), {"gamma": 1})
+
+    def test_tillagt_statblock_raknar_sin_data(self):
+        self.bok("alfa", "alfa MARYAM NOM")
+        self.sida([{"id": "e1", "corrections": []},
+                   {"id": "e2", "type": "statblock",
+                    "added_by": "agent:djavulens-advokat", "corrections": [],
+                    "data": {"name": "MARYAM", "other": {"Klass": "NOM"}}}])
+        self.assertEqual(self.kvar(), 0)
+
+
 class TestSidval(Bokbadd):
     def test_validated_bredvid_final_dubbelraknas_inte(self):
         """`final.json` är sidans slutversion och `validated.json` en tidigare
