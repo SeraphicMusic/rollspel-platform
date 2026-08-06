@@ -148,13 +148,17 @@ def redovisad_andring(workdir):
     return borta, nya, berorda, kallor
 
 
-def granska(workdir):
-    d = diff(workdir)
-    red_borta, red_nya, berorda, kallor = redovisad_andring(workdir)
+def oforklarat_pa_karna(workdir, borta, nya):
+    """Vad av ordändringen `borta`/`nya` som ingen redovisad post bär.
 
-    kvar = {}
-    for etikett, redovisat in (("borta", red_borta), ("nya", red_nya)):
-        kvar[etikett] = _pa_karna(collections.Counter(d[etikett])) - redovisat
+    Delas av `granska` (mot frysningen) och `uppdatera_bibliotek` (mot
+    läskopian). De ställer samma fråga om olika jämförelsepunkter, och två
+    kopior av regeln skulle förr eller senare svara olika på samma bok.
+    Nycklarna i utfallet är ordKÄRNOR, inte tokens.
+    """
+    red_borta, red_nya, berorda, kallor = redovisad_andring(workdir)
+    kvar = {"borta": _pa_karna(collections.Counter(borta)) - red_borta,
+            "nya": _pa_karna(collections.Counter(nya)) - red_nya}
 
     # Skiljeteckensbyte runt ett ord som en post RÖRT: kärnan står kvar på
     # båda sidor och nettar till noll, men `diffa` ser två olika tokens. Det
@@ -164,7 +168,12 @@ def granska(workdir):
         n = min(kvar["borta"][k], kvar["nya"][k])
         kvar["borta"][k] -= n
         kvar["nya"][k] -= n
+    return kvar, kallor
 
+
+def granska(workdir):
+    d = diff(workdir)
+    kvar, kallor = oforklarat_pa_karna(workdir, d["borta"], d["nya"])
     ut = {"fore": d["fore"], "efter": d["efter"], "kallor": kallor}
     for etikett in ("borta", "nya"):
         # Attribuera på kärnan, men redovisa tokenets fulla form: det är den
