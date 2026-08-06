@@ -49,9 +49,39 @@ identiska 64 %, avvikande 2,8 %, obundna 33 %. Av de 96 avvikelserna passar
 bredden. Verktyget är alltså ungefär lika träffsäkert som den transkription
 det jämförs med, och lämnar hellre en lucka än sätter en box.
 
+TVÅ REGIMER
+-----------
+
+Allt ovan beskriver den RADFORMADE regimen, där transkriptet har ett element
+per tryckt rad. Ikappkörningens 29 äventyrsböcker är transkriberade STYCKE för
+stycke: medianparagrafen är 103–525 tecken mot en tryckt rad på ungefär 50–60.
+Där gick ingen tilldelning alls att räkna fram, och böckerna lämnades helt
+obundna — dels för att ett element med spärren måste täcka exakt en rad, dels
+för att skalan mättes ur redan bundna rader och de böckerna har noll.
+
+Tre ändringar öppnar den styckeformade regimen, och alla tre är mätta:
+
+* Skalan ur en BEVARANDEIDENTITET i stället för ur bundna rader
+  (`_skala_ur_bevarande`). Validerad mot del II och del III, vars skalor är
+  kända: 121,8 mot 122,4 och 116,9 mot 122,6.
+* Spärren mot flerradiga element släpps — men bara i den regim som MÄTS fram
+  av `_flerradig_regim`, aldrig på begäran.
+* Ett nytt mått, RAGGEDGRÄNSEN, tar över förskjutningsprovets roll. Provet
+  mäter om en körning blir dyrare av att skjutas ett steg, och i styckeregimen
+  gör den inte det: ett femradigt stycke tappar en kort rad i ena änden och
+  vinner en i den andra. Raggedheten pekar däremot ut gränserna direkt — ett
+  stycke slutar på en kort rad och nästa börjar på en full.
+
+Regimen har ett eget facitprov, `--utvardera-stycken`, som bygger stycken av
+del I–III:s radformade transkript med pipelinens egen styckedefinition (se
+`_syntetiska_stycken`). Utfall: del II 71,3 % identiska / 7,6 % avvikande, del
+III 62,6 % / 4,8 %, och i båda vinner verktyget domen mot trycket (17 mot 13
+respektive 19 mot 7). Den radformade regimen är oförändrad, 85,5 % / 3,6 %.
+
 Torrkörning är default. Utvärdera alltid mot facit först:
 
     python3 scripts/binda_rader.py <arbete/slug> --utvardera
+    python3 scripts/binda_rader.py <arbete/slug> --utvardera-stycken
     python3 scripts/binda_rader.py <arbete/slug> --sidor 1,8,20
     python3 scripts/binda_rader.py <arbete/slug> --sidor 1,8,20 --verkstall
 """
@@ -60,6 +90,11 @@ import json
 import statistics
 import sys
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
+from pipeline.regions import (column_count, measured_columns,  # noqa: E402
+                              normalize)
 
 # Elementtyper som bär sin text i `data` och därför kan spänna flera rader.
 BEHALLARE = {"list", "table", "statblock"}
@@ -226,11 +261,10 @@ def _skala(sidor):
     """Tecken per breddenhet, mätt ur de sidor som redan har korrekt bindning.
 
     Skalan hämtas ur BOKEN, inte ur en konstant: den beror på sättningens grad
-    och på hur mätningen normaliserar bredden. Saknas facit faller vi tillbaka
-    på de sidor som ändå har enstaka bindningar.
+    och på hur mätningen normaliserar bredden.
     """
     prov = []
-    for els, rows in sidor:
+    for els, rows, _mat in sidor:
         for el in els:
             rr = (el.get("source") or {}).get("rader") or []
             if len(rr) != 1 or el.get("type") != "paragraph":
@@ -244,15 +278,225 @@ def _skala(sidor):
     return statistics.median(prov) if len(prov) >= 30 else None
 
 
-def _radkostnad(el, rows, a, b, skala, svarta=None):
+# Minsta antal element i en region för att den ska få bidra till skalan. Under
+# det blir kvoten dominerad av en enda rubrik eller bildtext. Svept mot del II
+# och del III: 4 ger −0,5 % respektive −4,6 % mot deras kända skalor, 8 ger
+# −0,1 % och −3,7 % men halverar antalet användbara regioner i de korta
+# äventyren.
+_SKALA_MIN_ELEMENT = 4
+
+
+def _skala_ur_bevarande(sidor):
+    """Skalan UTAN någon bunden rad, ur en bevarandeidentitet per region.
+
+    `_skala` ovan kräver minst trettio enradigt bundna paragrafer. De 29
+    äventyrsböckerna har noll — de har aldrig burit `source.rader` — och utan
+    skala går ingen bindning att räkna fram alls.
+
+    Identiteten behöver ingen bindning: all sats i en region är transkriberad,
+    och all transkriberad text står på regionens textband. Summeras båda sidor
+    faller den okända tilldelningen bort och kvar står
+
+        skala ≈ Σ (teckenlängd / typfaktor) / Σ bandbredd
+
+    Regionen tas efter NORMALISERING. Med de råa namnen matchade nästan
+    ingenting i de 29 böckerna — deras transkript skriver `kolumn 1` där
+    mätningen skriver `vänsterkolumn` — så urvalet blev de få sidor som råkade
+    använda mätningens ord, och skalan sköt över med mer än det dubbla (179,9
+    mot en sättning som rymmer omkring 53 tecken på en rad av 0,425 breddenhet).
+
+    Måttet är falsifierbart och falsifierat: kört på del II och del III, vars
+    skalor är kända ur deras egna bundna rader (122,4 och 122,6). Medianen över
+    regionerna tas i stället för medelvärdet — en helsidesillustration bryter
+    identiteten på sin egen region, och medianen bryr sig inte.
+    """
+    prov = []
+    for els, rows, mat in sidor:
+        kolumner = measured_columns(mat or {})
+        tryckta = column_count([_region(el) for el in els])
+        karta = {}
+        for el in els:
+            rå = _region(el)
+            if rå not in karta:
+                karta[rå] = normalize(rå, kolumner, tryckta) or rå
+        per = {}
+        for r in rows:
+            per.setdefault(r.get("region"), []).append(r)
+        for reg, rs in per.items():
+            if reg in (None, "sidhuvud", "sidfot"):
+                continue
+            höjder = [r["bbox"][3] for r in rs if len(r.get("bbox") or []) == 4]
+            if not höjder:
+                continue
+            med = statistics.median(höjder)
+            if med <= 0:
+                continue
+            bredd = sum(r["bbox"][2] for r in rs
+                        if len(r.get("bbox") or []) == 4
+                        and TEXT_LO <= r["bbox"][3] / med <= TEXT_HI)
+            if bredd <= 0:
+                continue
+            tecken, n = 0.0, 0
+            for el in els:
+                if karta.get(_region(el)) != reg or el.get("removed"):
+                    continue
+                faktor = (TYPSKALA.get(el.get("type")) or (None,))[0]
+                längd = _textlangd(el)
+                if faktor is None or not längd:
+                    continue
+                tecken += längd / faktor
+                n += 1
+            if n >= _SKALA_MIN_ELEMENT and tecken > 0:
+                prov.append(tecken / bredd)
+    return statistics.median(prov) if prov else None
+
+
+# Under så här stor andel av regionens FULLA radbredd är raden ragged, alltså
+# ett styckes sista rad. Sättningen i de här häftena är rak: på den-vita-duvan
+# s. 2 ligger p75, p90 och max alla på 0,425 medan 18–24 % av raderna är
+# kortare. Klustret är så tätt att gränsen inte behöver vara känslig.
+RAGGED_SHARE = 0.92
+
+# Straff för en felplacerad styckegräns — en KORT rad inne i ett stycke, eller
+# ett stycke som slutar på en FULL rad.
+#
+# Det här måttet är styckeregimens motsvarighet till förskjutningsprovet, och
+# det behövdes: provet mäter om en körning blir dyrare av att skjutas ett steg,
+# och i den radformade regimen ändrar ett steg varje elements radbredd helt. I
+# den styckeformade gör det inte det. Ett femradigt stycke som skjuts ett steg
+# tappar en kort rad i ena änden och vinner en i den andra, totalbredden ändras
+# med omkring en tiondel, och brödtextens tolerans är 0,15 — alltså noll
+# kostnad.
+#
+# Raggedheten pekar däremot ut gränserna direkt: ett stycke SLUTAR på en kort
+# rad, och nästa börjar på en full. Det är en mätning i sidbilden, inte ett
+# antagande om texten.
+#
+# Nivån är mätt mot styckeprovet. Utan straffet (0,0) binder verktyget 1019
+# element rätt i del II; med 0,8 binder det 1215, alltså nära en femtedel fler,
+# mot 129 avvikelser i stället för 100. Höjs det till 1,5 faller träffarna till
+# 1146 och avvikelserna stiger till 181 — då börjar straffet styra i stället
+# för att stödja.
+RAGGED_STRAFF = 0.8
+
+# Typer som sätts som rak brödtext och därför bär raggedsignalen. Rubriker är
+# centrerade eller korta av andra skäl, behållarna har sin egen radstruktur.
+RAGGED_TYPER = {"paragraph", "boxed_text", "list_item"}
+
+# Hur hårt toleransen skärps när elementet spänner FLERA rader.
+#
+# Typernas toleranser är mätta på ENRADIGA bindningar, där hela spridningen
+# ligger i en enda rads bredd. Spänner elementet n rader summeras bredderna, och
+# den slumpmässiga variationen medelvärdesbildas bort — samma tolerans blir då
+# alldeles för slapp, och en styckegräns kan flyttas ett steg utan att kosta
+# något. Toleransen delas därför med n upphöjt till talet nedan.
+#
+# Mätt mot det syntetiska styckeprovet (se `_syntetiska_stycken`), del II och
+# del III, som identiska bindningar och avvikelser:
+#
+#   skärpning   del II            del III
+#   0,0         1183 / 133        700 / 46
+#   0,5         1204 / 132        707 / 49
+#   1,0         1215 / 129        716 / 55
+#
+# 1,0 tar alltså flest rätt och för del II dessutom färst fel. Den statistiska
+# normen hade varit 0,5 (felet i en summa av n växer som roten ur n), men
+# mätningen säger 1,0 och mätningen får gälla.
+TOLERANS_SKARPNING = 1.0
+
+# Hur många gånger längre än en tryckt rad medianparagrafen måste vara för att
+# boken ska räknas som styckeformad. Mätt: de 29 äventyrsböckerna ligger på
+# 2–10 rader per paragraf, del I–III på 1. Gränsen 1,5 skiljer dem med marginal
+# och kan inte råka slå om för en bok vars sättning bara är lite bredare.
+FLERRADIG_FAKTOR = 1.5
+
+
+def _flerradig_regim(sidor, skala):
+    """Är bokens transkript styckeformat i stället för radformat?
+
+    Regimen mäts, den sätts inte för hand. Ett radformat transkript har ett
+    element per tryckt rad; ett styckeformat har ett per stycke, och då är
+    medianparagrafen flera rader lång. Jämförelsen görs mot bokens EGEN
+    radkapacitet — skalan gånger medianbandets bredd — så den fungerar lika bra
+    för en smal trespaltig sida som för en bred tvåspaltig.
+    """
+    if not skala:
+        return False
+    langder, bredder = [], []
+    for els, rows, _mat in sidor:
+        for el in els:
+            if el.get("type") == "paragraph" and not el.get("removed"):
+                n = _textlangd(el)
+                if n:
+                    langder.append(n)
+        for r in rows:
+            b = r.get("bbox") or []
+            if len(b) == 4 and b[2] > 0.05:
+                bredder.append(b[2])
+    if len(langder) < 10 or not bredder:
+        return False
+    kapacitet = skala * statistics.median(bredder)
+    if kapacitet <= 0:
+        return False
+    return statistics.median(langder) > FLERRADIG_FAKTOR * kapacitet
+
+
+def _full_bredd(rows):
+    """Regionens FULLA radbredd — den raka sättningens högerkant.
+
+    Tas som p85 och inte som max: en enstaka rad kan sticka ut över spalten
+    (en tabellrubrik, ett brutet ord), och max skulle då flytta hela
+    referensen. På piloten ligger p75, p90 och max alla på 0,425, så måttet är
+    okänsligt för var i det intervallet gränsen läggs.
+    """
+    w = sorted(r["bbox"][2] for r in rows if len(r.get("bbox") or []) == 4)
+    if not w:
+        return None
+    return w[min(int(0.85 * len(w)), len(w) - 1)] or None
+
+
+def _raggedstraff(el, rows, a, b, flerradiga, full_bredd):
+    """Kostnaden för styckegränser som strider mot den raka sättningen.
+
+    Två fel, båda mätbara i sidbilden: en KORT rad inne i stycket (där slutade
+    i själva verket ett stycke) och en FULL sista rad (där slutade det inte).
+    """
+    if not flerradiga or not full_bredd:
+        return 0.0
+    if el.get("type") not in RAGGED_TYPER or b - a < 2:
+        return 0.0
+    gräns = RAGGED_SHARE * full_bredd
+    straff = 0.0
+    for j in range(a, b - 1):
+        box = rows[j].get("bbox") or []
+        if len(box) == 4 and box[2] < gräns:
+            straff += RAGGED_STRAFF
+    sista = rows[b - 1].get("bbox") or []
+    if len(sista) == 4 and sista[2] >= gräns:
+        straff += RAGGED_STRAFF
+    return min(straff, MAX_KOSTNAD)
+
+
+def _radkostnad(el, rows, a, b, skala, svarta=None, flerradiga=False,
+                full_bredd=None):
     """Kostnaden för att låta `el` täcka raderna [a, b).
 
-    None betyder omöjligt: ett element som inte är en behållare täcker per
-    transkriptionskontraktet exakt EN tryckt rad.
+    None betyder omöjligt. I den RADFORMADE regimen — den som del I–III är
+    transkriberade i — täcker ett element som inte är en behållare exakt EN
+    tryckt rad, och allt annat är uteslutet på förhand.
+
+    `flerradiga` slår av den spärren för den STYCKEFORMADE regimen. De 29
+    äventyrsböckerna är transkriberade stycke för stycke: medianparagrafen är
+    103–525 tecken mot en tryckt rad på ungefär 50–60, alltså två till tio
+    rader per element. Med spärren kvar går ingen tilldelning alls att räkna
+    fram och hela boken lämnas obunden. Regimen mäts per bok i
+    `_flerradig_regim`, den sätts inte för hand — och bredkostnaden nedan
+    gäller oförändrat, så ett stycke som sträcker sig över för många rader
+    kostar precis lika mycket som ett som täcker för få.
     """
     n = b - a
     typ = el.get("type")
-    if typ not in BEHALLARE and n != 1:
+    if typ not in BEHALLARE and n != 1 and not flerradiga:
         return None
     faktor, tolerans = TYPSKALA.get(typ, (None, None))
     if faktor is None:
@@ -280,8 +524,12 @@ def _radkostnad(el, rows, a, b, skala, svarta=None):
     # list-element kunde då lägga sig över en hel spalt nästan gratis.
     fel = abs(väntat - väntad_bredd) / max(1e-9, min(väntat, väntad_bredd))
     # Toleransen är typens egen uppmätta spridning: inom den kostar avvikelsen
-    # ingenting, utanför växer den linjärt.
-    return min(max(0.0, fel - tolerans), MAX_KOSTNAD) + svart
+    # ingenting, utanför växer den linjärt. Över flera rader skärps den — se
+    # TOLERANS_SKARPNING.
+    if flerradiga and n > 1 and TOLERANS_SKARPNING:
+        tolerans = tolerans / (n ** TOLERANS_SKARPNING)
+    kostnad = min(max(0.0, fel - tolerans), MAX_KOSTNAD) + svart
+    return kostnad + _raggedstraff(el, rows, a, b, flerradiga, full_bredd)
 
 
 def _svarta(rows, png):
@@ -364,7 +612,8 @@ def _hoppstraff(rows, svarta=None):
     return ut
 
 
-def _losning(els, rows, skala, max_spann, svarta=None):
+def _losning(els, rows, skala, max_spann, svarta=None, flerradiga=False):
+    full = _full_bredd(rows) if flerradiga else None
     """Billigaste tilldelningen med en marginal per bindning.
 
     Returnerar `(kostnad, [(elementindex, [radindex], marginal)])`.
@@ -414,7 +663,8 @@ def _losning(els, rows, skala, max_spann, svarta=None):
         for j in range(k - 1, -1, -1):
             bind_bäst, bind_val = INF, None
             for n in range(1, min(max_spann, k - j) + 1):
-                c = _radkostnad(els[i], rows, j, j + n, skala, hopp_svarta)
+                c = _radkostnad(els[i], rows, j, j + n, skala, hopp_svarta,
+                                flerradiga, full)
                 if c is None:
                     continue
                 kost[(i, j, n)] = c
@@ -511,7 +761,8 @@ def _losning(els, rows, skala, max_spann, svarta=None):
     return optimal, ut
 
 
-def binda_sida(els, rows, skala, max_spann=80, png=None):
+def binda_sida(els, rows, skala, max_spann=80, png=None, flerradiga=False,
+               radboxar=None):
     """Bind en sidas element till dess uppmätta rader, region för region.
 
     Returnerar `(bindningar, anmarkningar)` där bindningar är
@@ -519,17 +770,30 @@ def binda_sida(els, rows, skala, max_spann=80, png=None):
     """
     bindningar, anm = {}, []
     svarta = _svarta(rows, png)
-    regioner = []
-    for r in rows:
-        if r.get("region") not in regioner:
-            regioner.append(r.get("region"))
+    # Elementets region står i fritext och mätningens i en kontrollerad
+    # vokabulär; `pipeline.regions` översätter, och lämnar det tvetydiga
+    # oöversatt (se modulens docstring). Utan översättningen matchar `kolumn 1`
+    # aldrig `vänsterkolumn`, och hela bindningen uteblir.
+    kolumner = measured_columns(radboxar or {})
+    tryckta = column_count([_region(el) for el in els])
+    karta = {}
+    for el in els:
+        rå = _region(el)
+        if rå not in karta:
+            karta[rå] = normalize(rå, kolumner, tryckta) or rå
+    if tryckta and kolumner and tryckta != len(kolumner):
+        anm.append("trycket har %d spalter, mätningen %d — spaltelementen "
+                   "lämnas obundna (mätningen har slagit ihop spalter)"
+                   % (tryckta, len(kolumner)))
+
     elregioner = []
     for el in els:
-        if _region(el) not in elregioner:
-            elregioner.append(_region(el))
+        reg = karta[_region(el)]
+        if reg not in elregioner:
+            elregioner.append(reg)
 
     for reg in elregioner:
-        eidx = [i for i, el in enumerate(els) if _region(el) == reg]
+        eidx = [i for i, el in enumerate(els) if karta[_region(el)] == reg]
         ridx = [j for j, r in enumerate(rows) if r.get("region") == reg]
         if not eidx:
             continue
@@ -540,12 +804,12 @@ def binda_sida(els, rows, skala, max_spann=80, png=None):
         delels = [els[i] for i in eidx]
         delrows = [rows[j] for j in ridx]
         delsv = [svarta[j] for j in ridx]
-        _, lösn = _losning(delels, delrows, skala, max_spann, delsv)
+        _, lösn = _losning(delels, delrows, skala, max_spann, delsv,
+                           flerradiga)
         if not lösn:
             anm.append("region %r: ingen tilldelning gick att räkna fram"
                        % (reg,))
             continue
-        svaga = 0
         # Varje körning prövas mot en förskjutning ett steg åt vardera hållet.
         bevis = {}
         jämnt = (len(lösn) == len(delels)
@@ -553,7 +817,8 @@ def binda_sida(els, rows, skala, max_spann=80, png=None):
         körningar = _kor(lösn)
         klar = []
         for körning in körningar:
-            b = _tal_forskjutning(delels, delrows, skala, delsv, körning, jämnt)
+            b = _tal_forskjutning(delels, delrows, skala, delsv, körning,
+                                  jämnt, flerradiga)
             klar.append(b >= FORSKJUTNING)
             for i, _rr, _m in körning:
                 bevis[i] = b
@@ -585,15 +850,27 @@ def binda_sida(els, rows, skala, max_spann=80, png=None):
         if utan:
             anm.append("region %r: %d av %d element fick ingen rad — mätningen "
                        "saknar band där" % (reg, utan, len(delels)))
+        # De två spärrarna redovisas var för sig. Sammanslagna sa
+        # anmärkningen "går att skjuta ett steg lika billigt" också om element
+        # vars körning var bevisad men vars egen marginal var för tunn, och den
+        # felskyltningen kostade en timmes felsökning i fel ände av koden.
+        svag_forskjutning = svag_marginal = 0
         for i, rr, marginal in lösn:
-            if bevis.get(i, 0.0) < FORSKJUTNING or marginal < MARGINAL:
-                svaga += 1
+            if bevis.get(i, 0.0) < FORSKJUTNING:
+                svag_forskjutning += 1
+                continue
+            if marginal < MARGINAL:
+                svag_marginal += 1
                 continue
             bindningar[eidx[i]] = [ridx[j] for j in rr]
-        if svaga:
+        if svag_forskjutning:
             anm.append("region %r: %d av %d element ligger i en körning som "
                        "går att skjuta ett steg lika billigt — lämnade obundna "
-                       "för advokaten" % (reg, svaga, len(lösn)))
+                       "för advokaten" % (reg, svag_forskjutning, len(lösn)))
+        if svag_marginal:
+            anm.append("region %r: %d av %d element har en näst bästa "
+                       "tilldelning som ligger för nära — lämnade obundna "
+                       "för advokaten" % (reg, svag_marginal, len(lösn)))
     return bindningar, anm
 
 
@@ -613,7 +890,8 @@ def _kor(losn):
     return ut
 
 
-def _tal_forskjutning(els, rows, skala, svarta, korning, jamnt=True):
+def _tal_forskjutning(els, rows, skala, svarta, korning, jamnt=True,
+                      flerradiga=False):
     """Hur mycket dyrare körningen blir om den skjuts ett steg åt något håll.
 
     Det här är körningens egen bevisbörda. En körning där varje rad är lika
@@ -630,9 +908,11 @@ def _tal_forskjutning(els, rows, skala, svarta, korning, jamnt=True):
     färre band än poster, och körningen fyllde regionen från kant till kant
     med två poster obundna — den såg bevisad ut och låg två steg fel.
     """
+    full = _full_bredd(rows) if flerradiga else None
     bas = 0.0
     for i, rr, _m in korning:
-        c = _radkostnad(els[i], rows, rr[0], rr[-1] + 1, skala, svarta)
+        c = _radkostnad(els[i], rows, rr[0], rr[-1] + 1, skala, svarta,
+                        flerradiga, full)
         if c is None:
             return 0.0
         bas += c
@@ -644,7 +924,8 @@ def _tal_forskjutning(els, rows, skala, svarta, korning, jamnt=True):
             if a < 0 or b > len(rows):
                 möjligt = False
                 break
-            c = _radkostnad(els[i], rows, a, b, skala, svarta)
+            c = _radkostnad(els[i], rows, a, b, skala, svarta, flerradiga,
+                            full)
             if c is None:
                 möjligt = False
                 break
@@ -676,9 +957,9 @@ def _lasin(workdir):
         if not rb.exists():
             continue
         png = workdir / "pages" / ("page_%03d.png" % n)
+        mat = json.loads(rb.read_text(encoding="utf-8"))
         sidor[n] = (f, json.loads(f.read_text(encoding="utf-8")),
-                    _rader(json.loads(rb.read_text(encoding="utf-8"))),
-                    png if png.exists() else None)
+                    _rader(mat), png if png.exists() else None, mat)
     return sidor
 
 
@@ -703,7 +984,79 @@ def _domare(el, rows, facit, mitt, skala, svarta):
     return "mitt" if b < a else "facit"
 
 
-def utvardera(sidor, skala):
+def _syntetiska_stycken(els):
+    """Slå ihop enradiga paragrafer till STYCKEN, med facit bevarat.
+
+    Styckeregimen kan inte prövas mot någon befintlig bok: del I–III är
+    transkriberade rad för rad och de 29 äventyrsböckerna har ingen bindning
+    alls. Utan ett prov får den flerradiga bindningen enligt repots egen regel
+    inte skrivas — ett verktyg som inte kan återskapa en känd bindning får inte
+    skriva en okänd.
+
+    Provet går ändå att bygga, och det behöver inget nytt facit: en följd av
+    enradiga paragrafer som hör till SAMMA tryckta stycke slås ihop till ett
+    element, och facit blir unionen av deras rader. Det enda som är syntetiskt
+    är elementindelningen — geometrin, texten och sanningen är verkliga.
+
+    Var styckena går avgörs av `pipeline.export._starts_paragraph`, alltså av
+    pipelinens EGEN definition och inte av en ny. Det spelar roll: slås raderna
+    ihop blint, till löpande körningar, slutar de syntetiska styckena var som
+    helst i satsen i stället för på en kort utsluten rad. Provet blir då både
+    orättvist och orepresentativt — riktiga styckeformade transkript slutar
+    alltid vid ett tryckt styckeslut, för det är vad en läsare ser.
+    """
+    from pipeline.export import _bbox as _ebbox, _starts_paragraph
+
+    boxar = [b for b in (_ebbox(e) for e in els) if b]
+
+    def samma_stycke(i):
+        """Hör els[i] till samma tryckta stycke som els[i - 1]?"""
+        nxt = els[i + 1] if i + 1 < len(els) else None
+        return not _starts_paragraph(els[i], els[i - 1], nxt, boxar, boxar)
+
+    def enradig(el):
+        return (el.get("type") == "paragraph"
+                and len((el.get("source") or {}).get("rader") or []) == 1)
+
+    ut, i = [], 0
+    while i < len(els):
+        el = els[i]
+        if not enradig(el):
+            ut.append(el)
+            i += 1
+            continue
+        grupp, rader = [el], list(el["source"]["rader"])
+        j = i + 1
+        while (j < len(els) and enradig(els[j])
+               and _region(els[j]) == _region(el)
+               and els[j]["source"]["rader"][0] == rader[-1] + 1
+               and samma_stycke(j)):
+            grupp.append(els[j])
+            rader.append(els[j]["source"]["rader"][0])
+            j += 1
+        if len(grupp) < 2:
+            ut.append(el)
+            i += 1
+            continue
+        # Texten fogas ihop som exporten gör det: avstavning läks, annars
+        # mellanslag. Teckenlängden är hela poängen med provet och måste bli
+        # den ett riktigt styckeformat transkript hade haft.
+        bitar = []
+        for g in grupp:
+            s = (g.get("text") or "").strip()
+            if bitar and bitar[-1].endswith("-"):
+                bitar[-1] = bitar[-1][:-1] + s
+            else:
+                bitar.append(s)
+        källa = dict(el.get("source") or {})
+        källa["rader"] = rader
+        ut.append({"id": el.get("id"), "type": "paragraph",
+                   "text": " ".join(bitar), "source": källa})
+        i = j
+    return ut
+
+
+def utvardera(sidor, skala, flerradiga=False, stycken=False):
     """Kör bindningen på sidor som REDAN har facit och redovisa träffsäkerhet.
 
     Det här är skriptets existensberättigande: en tilldelning som inte kan
@@ -718,8 +1071,10 @@ def utvardera(sidor, skala):
     rätt = fel = utan = 0
     dom = {"mitt": 0, "facit": 0, None: 0}
     värst = []
-    for n, (_, d, rows, png) in sorted(sidor.items()):
+    for n, (_, d, rows, png, mat) in sorted(sidor.items()):
         els = d.get("elements") or []
+        if stycken:
+            els = _syntetiska_stycken(els)
         facit = {i: rr for i, el in enumerate(els)
                  if (rr := (el.get("source") or {}).get("rader"))}
         if len(facit) < 10:
@@ -732,7 +1087,8 @@ def utvardera(sidor, skala):
             s.pop("bbox", None)
             kopia["source"] = s
             rensade.append(kopia)
-        bind, _ = binda_sida(rensade, rows, skala, png=png)
+        bind, _ = binda_sida(rensade, rows, skala, png=png,
+                             flerradiga=flerradiga, radboxar=mat)
         svarta = _svarta(rows, png)
         sid_fel = 0
         for i, rr in facit.items():
@@ -775,6 +1131,10 @@ def main(argv=None):
     ap.add_argument("--sidor", help="t.ex. 1,8,20 eller 8-12")
     ap.add_argument("--utvardera", action="store_true",
                     help="kör mot sidor som redan har bindning och jämför")
+    ap.add_argument("--utvardera-stycken", action="store_true",
+                    dest="utvardera_stycken",
+                    help="samma prov, men med enradiga paragrafer hopslagna "
+                         "till stycken — provar den STYCKEFORMADE regimen")
     ap.add_argument("--verkstall", action="store_true")
     a = ap.parse_args(argv)
 
@@ -785,17 +1145,26 @@ def main(argv=None):
     if not alla:
         ap.error("inga sidor med både final.json och radboxar.json")
 
-    skala = _skala([(d.get("elements") or [], rows)
-                    for _, d, rows, _png in alla.values()])
+    sidprov = [(d.get("elements") or [], rows, mat)
+               for _, d, rows, _png, mat in alla.values()]
+    skala, källa = _skala(sidprov), "bokens egna bundna rader"
     if skala is None:
-        ap.error("för få bundna rader i boken för att mäta tecken per bredd")
-    print("Skala: %.1f tecken per breddenhet (mätt ur bokens egna bundna rader)"
-          % skala)
+        skala, källa = _skala_ur_bevarande(sidprov), "bevarandeidentiteten"
+    if skala is None:
+        ap.error("skalan går inte att mäta: varken bundna rader eller "
+                 "tillräckligt många regioner med både sats och band")
+    flerradiga = _flerradig_regim(sidprov, skala)
+    print("Skala: %.1f tecken per breddenhet (mätt ur %s)" % (skala, källa))
+    print("Regim: %s" % ("STYCKEFORMAD — ett element spänner flera rader"
+                         if flerradiga else
+                         "radformad — ett element per tryckt rad"))
 
-    if a.utvardera:
+    if a.utvardera or a.utvardera_stycken:
         # Exitkoden speglar domen, inte avvikelseantalet: verktyget underkänns
         # när facit passar trycket bättre oftare än verktyget gör.
-        return 0 if utvardera(alla, skala) <= 0 else 1
+        läge = bool(a.utvardera_stycken) or flerradiga
+        return 0 if utvardera(alla, skala, läge,
+                              a.utvardera_stycken) <= 0 else 1
 
     if a.sidor:
         önskade = set()
@@ -808,10 +1177,11 @@ def main(argv=None):
         alla = {n: v for n, v in alla.items() if n in önskade}
 
     total = 0
-    for n, (f, d, rows, png) in sorted(alla.items()):
+    for n, (f, d, rows, png, mat) in sorted(alla.items()):
         els = d.get("elements") or []
         redan = sum(1 for el in els if (el.get("source") or {}).get("rader"))
-        bind, anm = binda_sida(els, rows, skala, png=png)
+        bind, anm = binda_sida(els, rows, skala, png=png,
+                               flerradiga=flerradiga, radboxar=mat)
         nya = {i: rr for i, rr in bind.items()
                if not (els[i].get("source") or {}).get("rader")}
         print("\ns. %d — %d element, %d uppmätta rader, %d hade redan bindning"

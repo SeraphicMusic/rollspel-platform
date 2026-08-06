@@ -9,7 +9,9 @@ fram någon bbox — läsexporten bryter då varje TRYCKT rad till ett eget styc
 import unittest
 
 from scripts.binda_rader import (SVARTA_GRAFIK, _djuplangd, _domare,
-                                 _hoppstraff, _kor, binda_sida)
+                                 _flerradig_regim, _hoppstraff, _kor,
+                                 _raggedstraff, _skala_ur_bevarande,
+                                 binda_sida)
 
 SKALA = 120.0
 TAKT = 0.015
@@ -177,3 +179,102 @@ class TestIdempotens(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestStyckeformadRegim(unittest.TestCase):
+    """De 29 äventyrsböckerna är transkriberade STYCKE för stycke.
+
+    Medianparagrafen är 103–525 tecken mot en tryckt rad på ungefär 50–60,
+    alltså två till tio rader per element. Med kravet att ett element täcker
+    exakt en rad gick ingen tilldelning alls att räkna fram, och böckerna
+    lämnades helt obundna.
+    """
+
+    def test_regimen_mats_inte_gissas(self):
+        rows = spalt([0.42] * 20)
+        radformad = stycke([text(50) for _ in range(20)])
+        styckeformad = stycke([text(250) for _ in range(12)])
+        self.assertFalse(_flerradig_regim([(radformad, rows, {})], SKALA))
+        self.assertTrue(_flerradig_regim([(styckeformad, rows, {})], SKALA))
+
+    def test_for_fa_prov_ger_radformad_regim(self):
+        """Hellre den spärrade regimen än ett hopp i mörkret på fyra stycken.
+
+        Spärren biter aldrig i praktiken — de 29 böckerna har 20–239 paragrafer
+        var — men den ska finnas: styckeregimen släpper en säkerhetsspärr, och
+        den får inte slås av på ett tunt underlag.
+        """
+        rows = spalt([0.42] * 20)
+        self.assertFalse(
+            _flerradig_regim([(stycke([text(250) for _ in range(4)]),
+                               rows, {})], SKALA))
+
+    def test_flerradigt_stycke_binds_i_styckeregimen(self):
+        rows = spalt([0.42, 0.42, 0.42, 0.20])
+        els = stycke([text(int(SKALA * (0.42 * 3 + 0.20)))])
+        bind, _ = binda_sida(els, rows, SKALA, flerradiga=True)
+        self.assertEqual(bind.get(0), [0, 1, 2, 3])
+
+    def test_samma_stycke_binds_inte_i_radregimen(self):
+        """Motprovet: spärren står kvar där transkriptet är radformat."""
+        rows = spalt([0.42, 0.42, 0.42, 0.20])
+        els = stycke([text(int(SKALA * (0.42 * 3 + 0.20)))])
+        bind, _ = binda_sida(els, rows, SKALA, flerradiga=False)
+        self.assertEqual(bind, {})
+
+
+class TestRaggedGrans(unittest.TestCase):
+    """Ett stycke slutar på en KORT rad — det är den raka sättningens signal.
+
+    Utan måttet var styckeregimens gränser fria att flytta: ett femradigt
+    stycke som skjuts ett steg tappar en kort rad i ena änden och vinner en i
+    den andra, och totalbredden ändras mindre än brödtextens tolerans.
+    """
+
+    FULL = 0.42
+
+    def test_full_sista_rad_straffas(self):
+        rows = spalt([self.FULL] * 4)
+        el = stycke([text(100)])[0]
+        self.assertGreater(_raggedstraff(el, rows, 0, 3, True, self.FULL), 0)
+
+    def test_kort_sista_rad_ar_gratis(self):
+        rows = spalt([self.FULL, self.FULL, 0.20])
+        el = stycke([text(100)])[0]
+        self.assertEqual(_raggedstraff(el, rows, 0, 3, True, self.FULL), 0.0)
+
+    def test_kort_rad_INNE_i_stycket_straffas(self):
+        """Där slutade i själva verket ett stycke."""
+        rows = spalt([self.FULL, 0.20, self.FULL, 0.20])
+        el = stycke([text(100)])[0]
+        self.assertGreater(_raggedstraff(el, rows, 0, 4, True, self.FULL), 0)
+
+    def test_rubriker_bar_inte_signalen(self):
+        """En rubrik är kort av andra skäl än att stycket tog slut."""
+        rows = spalt([self.FULL] * 3)
+        rubrik = {"type": "heading", "text": "X", "source": {}}
+        self.assertEqual(_raggedstraff(rubrik, rows, 0, 3, True, self.FULL),
+                         0.0)
+
+    def test_matet_ar_avstangt_i_radregimen(self):
+        rows = spalt([self.FULL] * 4)
+        el = stycke([text(100)])[0]
+        self.assertEqual(_raggedstraff(el, rows, 0, 3, False, self.FULL), 0.0)
+
+
+class TestSkalaUtanBundnaRader(unittest.TestCase):
+    """Skalan måste gå att mäta i en bok som aldrig burit `source.rader`."""
+
+    def test_bevarandeidentiteten_ger_skalan(self):
+        rows = spalt([0.42] * 10)
+        for r in rows:
+            r["region"] = "vänsterkolumn"
+        els = stycke([text(int(0.42 * SKALA * 2)) for _ in range(5)])
+        ur = _skala_ur_bevarande([(els, rows, {})])
+        self.assertIsNotNone(ur)
+        self.assertAlmostEqual(ur, SKALA, delta=SKALA * 0.05)
+
+    def test_for_fa_element_ger_ingen_skala(self):
+        """Hellre ingen skala än en mätt på ett enda stycke."""
+        rows = spalt([0.42] * 10)
+        self.assertIsNone(_skala_ur_bevarande([(stycke([text(50)]), rows, {})]))
