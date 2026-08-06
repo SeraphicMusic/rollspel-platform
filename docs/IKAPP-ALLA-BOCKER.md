@@ -59,8 +59,16 @@ aldrig prövats mot de här böckerna förrän nu.
 
 ### Vad som återstår
 
+**Överlämningen till Etapp 4 ligger i [IKAPP-ETAPP4-PROMPT.md](IKAPP-ETAPP4-PROMPT.md)**
+— med sidlistor, kandidatuppdelning, flaggor per bok och en färdig prompt att
+klistra in i en ny session.
+
 1. **Etapp 4** — agentarbetet: 63 sidor utan `final.json`, 1016 öppna flaggor,
-   och de 337 kandidaterna, tabellgränserna först. Ramarna står i §Etapp 4.
+   och de 337 kandidaterna. OBS att `tabellkandidat` fyrar NOLL gånger: regeln
+   letar korta element i x-kluster, en cell per element, och de här böckernas
+   styckeformade transkript har inte den formen. Tabellräddningen är därmed ett
+   advokatjobb mot sidbilden, inte ett mekaniskt — den mekaniska halvan finns
+   inte att köra först.
 2. **Bindningstäckningen** på de böcker där mätningen ännu inte hittar
    spalterna. Grind 2:s villkor 3 och 4 håller inte överallt — screeningen är
    igång på alla böcker, men *Sidor utan användbar geometri* är inte tom.
