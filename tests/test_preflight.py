@@ -674,6 +674,53 @@ class TestPlusminusSigned(unittest.TestCase):
         self.assertEqual(counts["plusminus-varde"], 0)
 
 
+class TestStatblockFalt(unittest.TestCase):
+    """Statblocket var reglernas blinda fläck — och det är där spelvärdena bor.
+
+    Reglerna lärde sig läsa tabellceller efter att `Dvärg PSY ±2` överlevt tre
+    agentvarv i `data.rows`. Statblocket har samma rutnätsform men en annan
+    lagring — `data.stats` / `skills` / `other` — så det förblev osynligt: ett
+    statblock har tom `el["text"]` och inga `rows`, alltså såg reglerna
+    ingenting alls där.
+    """
+
+    @staticmethod
+    def _sb(**stats):
+        return {"id": "e1", "type": "statblock",
+                "data": {"name": "TYPISK WIDOW", "stats": stats}}
+
+    def test_plusminus_varde_i_statblockfalt_flaggas(self):
+        _, counts = scan_page({"page": 3,
+                               "elements": [self._sb(SB="±2", STY=14)]})
+        self.assertEqual(counts["plusminus-varde"], 1)
+
+    def test_flaggan_pekar_ut_blocket_gruppen_och_faltet(self):
+        out, _ = scan_page({"page": 3,
+                            "elements": [self._sb(SB="±2", STY=14)]})
+        skäl = " ".join(out["elements"][0]["review_reasons"])
+        self.assertIn("TYPISK WIDOW", skäl)
+        self.assertIn("fältet ’SB’", skäl)
+
+    def test_korrekt_notation_i_statblock_ror_inte(self):
+        for värde in ("+1T6", "±0", "—", "+2", "-2"):
+            _, counts = scan_page({"page": 3,
+                                   "elements": [self._sb(SB=värde, STY=14)]})
+            self.assertEqual(counts["plusminus-varde"], 0, värde)
+
+    def test_falt_i_other_och_skills_lases_ocksa(self):
+        el_ = {"id": "e1", "type": "statblock",
+               "data": {"name": "X", "stats": {"STY": 14},
+                        "skills": {"Pistol": "±3"},
+                        "other": {"Klass": "NOM (Krim)"}}}
+        _, counts = scan_page({"page": 3, "elements": [el_]})
+        self.assertEqual(counts["plusminus-varde"], 1)
+
+    def test_tabellens_rows_gar_fortfarande_via_cells(self):
+        """Regressionsvakt: statblockläsningen får inte kapa `table`."""
+        _, counts = scan_page({"page": 11, "elements": [rastabell()]})
+        self.assertEqual(counts["plusminus-varde"], 1)
+
+
 class TestDotLeaders(unittest.TestCase):
     """Låsdyrkningens fummeltabell (s. 53) blev löptext med ledarlinjer kvar."""
 

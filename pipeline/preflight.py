@@ -325,10 +325,41 @@ def _cells(el):
     return ut
 
 
+def _statblock_fields(el):
+    """Alla fältvärden i ett `statblock`-element som (etikett, text).
+
+    Ett statblock är strukturerat som ett rutnät men lagras inte som ett:
+    värdena ligger i `data.stats`, `data.skills` och `data.other`, inte i
+    `data.rows`. `_cells` ser dem därför inte, och reglerna såg bara
+    `el["text"]` — som för ett statblock är tom.
+
+    Det är exakt den felform CLAUDE.md redan beskriver ett steg ovanför:
+    `Dvärg PSY ±2` överlevde tre agentvarv i del I därför att felet satt i
+    `data.rows` och ingen regel såg dit. Reglerna lärde sig läsa tabellceller,
+    men statblocken förblev en blind fläck — och det är där spelvärdena bor.
+    """
+    data = el.get("data")
+    if not isinstance(data, dict) or data.get("rows") is not None:
+        return []
+    namn = str(data.get("name") or "").strip() or el.get("id") or "statblock"
+    ut = []
+    for grupp in ("stats", "skills", "other"):
+        falt = data.get(grupp)
+        if not isinstance(falt, dict):
+            continue
+        for nyckel, varde in falt.items():
+            if isinstance(varde, (dict, list)):
+                continue
+            ut.append(("%s ’%s’, fältet ’%s’" % (namn, grupp, nyckel),
+                       str(varde)))
+    return ut
+
+
 def _texts(el):
-    """Elementets egen text plus dess tabellceller, som (etikett, text)."""
+    """Elementets egen text plus dess tabellceller och statblockfält."""
     ut = [("elementets text", (el.get("text") or ""))]
     ut.extend(_cells(el))
+    ut.extend(_statblock_fields(el))
     return [(etikett, text) for etikett, text in ut if text]
 
 

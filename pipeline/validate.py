@@ -118,12 +118,30 @@ def validate_statblock(el, adapter, flags):
                              % (ckey, iv, lo, hi))
     data["stats"] = new_stats
 
-    # Härledda formler (t.ex. KP = STO + FYS)
-    values = {k: _as_int(v) for k, v in new_stats.items()}
+    # Härledda formler (t.ex. KP = STO + FYS).
+    #
+    # Uppslaget måste gå i BÅDE `stats` och `other`. Transkriptionen lägger
+    # grundegenskaperna i `stats` och de härledda värdena där trycket har dem —
+    # och `Förflyttning` står i `other` i praktiskt taget varje statblock, medan
+    # `KP` oftast står i `stats`. Så länge kontrollen bara läste `stats` gällde
+    # den därför KP men aldrig Förflyttning, utan att något sa ifrån: en
+    # kontroll som tyst gäller halva sin lista ser i rapporten ut precis som en
+    # som gäller hela. Sju avvikelser låg dolda så — bl.a. FRANZ HAUSER
+    # (`MUT-VRL-sieger-bauhaus-block` s. 4) helt oflaggad, medan LOKALA
+    # TERRORISTER (`MUT-AVE-dodspatrullen` s. 10) hittades först av en advokat
+    # för hand i 12× zoom. Det är samma jobb som formeln gör gratis.
+    #
+    # Värdena som formeln räknar med hämtas ur båda, av samma skäl: en formel
+    # kan referera ett fält som råkat hamna i `other` hos en transkription och i
+    # `stats` hos nästa, och skillnaden är inte en egenskap hos boken.
+    other = data.get("other") or {}
+    values = {k: _as_int(v) for k, v in list(other.items()) + list(new_stats.items())}
     values = {k: v for k, v in values.items() if v is not None}
     for check in adapter.system.get("derived_checks", []):
         field, formula = check["field"], check["formula"]
         stated = _as_int(new_stats.get(field))
+        if stated is None:
+            stated = _as_int(other.get(field))
         if stated is None:
             continue
         try:

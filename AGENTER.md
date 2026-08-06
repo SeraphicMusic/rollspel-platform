@@ -109,6 +109,17 @@ regler bygger på bbox, så deras utfall ändras när geometrin mäts om.
 `heuristik.json` bär numera `source_file`, så det går att se om en screening
 räknades ur draften eller ur den färdiga sidan.
 
+**Att en screening är körd är ett påstående — räkna filerna.** `forbesikta`
+skriver en `heuristik.json` per sida, så täckningen är mätbar: antalet
+`heuristik.json` mot antalet sidor. En överlämning som säger att screeningen
+körts med `--force` över samtliga sidor kan ha rätt om kommandot och fel om
+utfallet. Så var det 2026-08-06: 398 filer på 437 sidor, och de 39 som fattades
+låg i den bok som mest behövde dem — `MUT-AVE-terminal-state` hade 32
+okorrekturlästa sidor och hade aldrig screenats en enda gång. Dessutom var
+del II:s filer räknade ur en äldre sidversion och gav 9 kandidater där en
+omkörning ger 147, varav 16 punktledarrader i en tryckt tabell som ligger som
+`list_item`. Kontrollen kostar en `find … -name heuristik.json | wc -l`.
+
 **Kör skripten före agenterna** (Regel 5) när du betar av en kandidatlista:
 
 ```bash

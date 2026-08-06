@@ -56,6 +56,39 @@ class TestStatblockValidation(unittest.TestCase):
         validate_element(el, M2089)
         self.assertTrue(any("STO + FYS" in r for r in el["review_reasons"]))
 
+    def test_forflyttning_i_other_korsvalideras(self):
+        """Härledda fält står i `other`, inte i `stats` — och kontrolleras ändå.
+
+        `Förflyttning` ligger i `data.other` i praktiskt taget varje statblock i
+        materialet, medan `KP` ligger i `stats`. Så länge uppslaget bara gick i
+        `stats` gällde derived_checks alltså KP men aldrig Förflyttning, utan
+        att någonting sa ifrån. Sju avvikelser låg dolda bakom det.
+        """
+        el = {"type": "statblock",
+              "data": {"name": "Franz", "stats": {"FYS": 14, "SMI": 17},
+                       "other": {"Förflyttning": 32}}}
+        validate_element(el, M2089)
+        self.assertTrue(any("Förflyttning=32" in r and "FYS + SMI" in r
+                            for r in el["review_reasons"]),
+                        el.get("review_reasons"))
+
+    def test_korrekt_forflyttning_i_other_flaggas_inte(self):
+        el = {"type": "statblock",
+              "data": {"name": "Franz", "stats": {"FYS": 14, "SMI": 17},
+                       "other": {"Förflyttning": 31}}}
+        validate_element(el, M2089)
+        self.assertFalse(el.get("needs_review"), el.get("review_reasons"))
+
+    def test_kp_i_other_korsvalideras(self):
+        """Samma fält kan hamna i `stats` hos en transkription och `other` hos
+        nästa; skillnaden är inte en egenskap hos boken."""
+        el = {"type": "statblock",
+              "data": {"name": "Gil", "stats": {"STO": 16, "FYS": 17},
+                       "other": {"KP": 37}}}
+        validate_element(el, M2089)
+        self.assertTrue(any("KP=37" in r for r in el["review_reasons"]),
+                        el.get("review_reasons"))
+
     def test_mutant_procent_delbar_med_5(self):
         el = {"type": "statblock",
               "data": {"name": "Korp", "stats": {"STO": 7, "FYS": 10},

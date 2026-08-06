@@ -38,7 +38,21 @@ Principer (bindande):
 - **Frys läsexporten före varje strukturingrepp.** `python3 -m pipeline frys`
   och sedan `diffa` jämför ordfrekvenser — formen får ändras, orden aldrig
   oförklarat. Det var så de sju tabellrader upptäcktes som föll ur `bok.md`
-  utan att något varnade.
+  utan att något varnade. Men `diffa` svarar bara på OM orden ändrats, inte om
+  ändringen var avsedd, och grinden är noll *oförklarade* ändringar.
+  `python3 scripts/oforklarade_ord.py <arbete/slug>` (eller `--alla`)
+  attribuerar varje ordändring till den applicerade korrektionspost som tar
+  ansvar för den och skriver ut det som ingen post bär. Exitkod 1 om något
+  kvarstår.
+- **Reglerna måste titta in i STATBLOCKEN också.** Statblocket har rutnätets
+  form men inte dess lagring: värdena ligger i `data.stats`/`skills`/`other`,
+  aldrig i `data.rows`, och `el["text"]` är tom. Reglerna lärde sig läsa
+  tabellceller efter `Dvärg PSY ±2` men statblocket förblev en blind fläck —
+  och det är där spelvärdena bor. Samma lucka satt i `validera`: dess
+  `derived_checks` slog bara upp fältet i `stats`, så `KP` kontrollerades men
+  `Förflyttning` (som står i `other`) aldrig. Sju räkneavvikelser låg dolda
+  bakom det, varav en hittades av en advokat för hand i 12× zoom — samma jobb
+  som formeln nu gör gratis.
 - **En uppskjuten boknivåfråga måste i kön.** `beslut.md` under `## Öppen kö`,
   som `- [ ] BQ-NNN <frågan>`. `rapport` och `status` redovisar inte boken som
   avslutad medan kön har poster.
