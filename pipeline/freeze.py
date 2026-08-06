@@ -26,7 +26,21 @@ from .manifest import export_dir
 # Markdownens egen skiljetecken räknas inte som ord: `#`, `>`, `|`, `*` och `_`
 # tillkommer och försvinner när rubriker, citatblock och tabeller typas om,
 # och de säger ingenting om huruvida boktext gått förlorad.
+#
 _TOKEN = re.compile(r"[^\s|#*_`>]+")
+
+# Listans märke räknas inte heller som ord, och lades till 2026-08-06. En rad
+# som typas om från `paragraph` till `list_item` — vilket `scripts/punktrader.py`
+# gör, och som är en RÄTTELSE, för som löptext fogas raden in i föregående
+# stycke och listan försvinner som struktur — byter tryckets `•` mot markdownens
+# `-`. Diffen larmade då för två "borta" ord i Edsbrytarna: riktigt räknat och
+# fel i sak, och ett instrument som fäller en korrekt omtypning lär användaren
+# att bortse från det.
+#
+# Bara det ENSAMMA tecknet räknas bort. Bindestreck inne i ett ord bär
+# betydelse — sammansättningar, talintervall, avstavningar som exporten läker —
+# och de ska fortfarande vägas.
+_MARKERINGAR = {"-", "•"}
 
 FREEZE_NAME = "bok.frysning.md"
 
@@ -40,7 +54,8 @@ def markdown_path(workdir):
 
 
 def words(text):
-    return collections.Counter(_TOKEN.findall(text))
+    return collections.Counter(t for t in _TOKEN.findall(text)
+                               if t not in _MARKERINGAR)
 
 
 def freeze(workdir):

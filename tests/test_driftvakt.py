@@ -373,3 +373,29 @@ class TestKoklass(unittest.TestCase):
         self._skriv("- [ ] BQ-001 [verktyg] Mätmotorn delar inte spalter.",
                     "- [ ] BQ-002 [verktyg] Regeln läser inte i celler.")
         self.assertEqual(blocking_questions(self.dir), [])
+
+
+class TestPunkttecknetRaknasInteSomOrd(unittest.TestCase):
+    """`•` är listans märke, inte bokens text.
+
+    `scripts/punktrader.py` typar om en rad som börjar med punkttecken från
+    `paragraph` till `list_item` — en RÄTTELSE, för som löptext fogas raden in
+    i föregående stycke och listan försvinner som struktur. Markdownen skriver
+    då `-` i stället för tryckets `•`, och diffen larmade för två borta ord i
+    Edsbrytarna. Larmet var riktigt räknat och fel i sak, och ett instrument
+    som fäller en korrekt omtypning lär användaren att bortse från det.
+    """
+
+    def test_punkttecken_och_bindestreck_ar_samma_ordmangd(self):
+        self.assertEqual(words("• Handelshuset sålde lasten"),
+                         words("- Handelshuset sålde lasten"))
+
+    def test_orden_raknas_fortfarande(self):
+        self.assertEqual(sum(words("• ett två tre").values()), 3)
+
+    def test_bindestreck_inne_i_ord_vags_fortfarande(self):
+        """Sammansättningar och talintervall bär betydelse och räknas."""
+        self.assertEqual(words("halv-elva 3-5 x"),
+                         words("halv-elva 3-5 x"))
+        self.assertIn("halv-elva", words("halv-elva"))
+        self.assertIn("3-5", words("3-5"))

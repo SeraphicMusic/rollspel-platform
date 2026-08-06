@@ -5,70 +5,66 @@ varje siffra nedan går att räkna fram igen med kommandona i §7.*
 
 ---
 
-## LÄGE 2026-08-06 — Etapp 0–1 klara, Grind 2 föll, grundorsaken lagad
+## LÄGE 2026-08-06 — Etapp 0, 1, 3 och 5 körda; Etapp 4 återstår
 
-Etapp 0 och 1 är genomförda och verifierade. Etapp 2 föll, och det som fällde
-den satt inte där planen trodde. Sammanfattning; detaljerna står i §0 nedan.
+Etapp 0–3 och det deterministiska avslutet är genomförda. Etapp 4 är
+agentarbetet och har inte påbörjats — det är den enda etapp som kostar tokens
+och lyder under AGENTER.md.
 
-**Klart och verifierat**
+**Grundinsikten stod sig, men grinden satt ett lager ned.** §1 nedan har rätt i
+att geometrin är grinden. Det den inte kunde veta är VARFÖR geometrin saknades:
+`pipeline/rows.py` kunde bara mäta två spalter, och 135 av de 217 sidorna — i
+25 av 29 böcker — är trespaltiga. De svenska rollspelshäftena är satta som
+tidningar. Mätningen tog den första rännan den fann, så mitt- och högerspalten
+slogs ihop: på Kopparringen s. 3 blev `högerkolumn` dubbelt så bred som
+`vänsterkolumn`. Det är kolumnsammanslagning producerad av mätningen själv, och
+ingenting nedströms kan skilja den från en verklig fullbredds rad.
 
-- Alla 33 böcker frysta (263 tusen ord som facit). Städskripten körda —
-  1 040 `kind`-poster, 36 `verdict`, 2 punktrader — och idempotenta.
-- Spindelkonungens käll-PDF ligger i `arkiv/` med oförändrad hash; delningen av
-  dess två läskopior är nu `scripts/dela_spindelkonungen.py` i stället för en
-  handdelning. De nya kopiorna vinner 21 statblock-vapentabeller utan att tappa
-  ett ord.
-- `status` räknar granskningsflaggor ur sidfilerna: **1016 öppna, 949
-  avgjorda**, exakt planens siffror. Grind 1 passerad.
-- BQ-013 och BQ-021 (b) stängda MED LAGNING, verifierade mot facit i en kastbar
-  arbetskatalog. BQ-021 (a) lever kvar och är nedskriven som olöst.
-- Alla 33 exporter ombyggda på HEAD och diffade mot frysningen: **noll
-  oförklarade ordförändringar** (Edsbrytarnas två är punktradernas `•` → `-`).
+### Vad som gjordes
 
-**Grind 2 föll — och orsaken låg ett lager ned**
+| Steg | Utfall |
+| --- | --- |
+| Etapp 0 | 33 böcker frysta (263 tusen ord). 1 040 `kind`-poster, 36 `verdict`, 2 punktrader — alla idempotenta. Spindelkonungens käll-PDF till `arkiv/`, delningen till `scripts/dela_spindelkonungen.py` (+21 statblock-vapentabeller, noll ord tappade). |
+| Etapp 1a | `status` räknar flaggor ur sidfilerna: **1016 öppna, 949 avgjorda** — planens siffror reproducerade exakt. |
+| Etapp 1b | BQ-013 och BQ-021 (b) stängda MED LAGNING, verifierade mot facit. BQ-021 (a) lever kvar och är nedskriven som olöst, inte bortförklarad. |
+| `rows.py` | Flera rännor i stället för en, tomhet mätt mot profilens eget omfång. Rätt spaltantal **21 % → 71 %** över 160 sidor med facit; hopslagna spalter 106 → 25 fall. |
+| `regions.py` | Ny modul. Transkriptens **573 fria regionnamn** avbildas på mätningens vokabulär — och vägrar när namnet spänner två spalter eller när trycket och mätningen är oense om spaltantalet. |
+| `binda_rader` | Ny STYCKEFORMAD regim. Skalan ur en bevarandeidentitet (validerad: 121,8 mot 122,4 och 116,9 mot 122,6), spärren mot flerradiga element släppt först när regimen är uppmätt, och raggedgränsen i stället för förskjutningsprovet. Eget facitprov, `--utvardera-stycken`. |
+| Etapp 3 | Mätvågen över alla 29 (`scripts/matvag.py`). |
+| Etapp 5 | Rapporter om, 21 läskopior uppdaterade (`scripts/uppdatera_bibliotek.py`), alla käll-PDF:er i `arkiv/`. |
 
-`binda_rader.py` vägrade köra på samtliga 29 böcker. Först såg det ut som ett
-regimfel: verktyget är byggt för transkript med ETT element per tryckt rad,
-och de här böckerna har styckeformade element (median 103–525 tecken mot en
-tryckt rad på ~50–60). Det stämmer, men det är inte grundorsaken.
+### Vad det gav
 
-**Grundorsaken: `pipeline/rows.py` kunde bara mäta två spalter, och 135 av de
-217 sidorna — i 25 av 29 böcker — är TRESPALTIGA.** De svenska rollspels-
-häftena är satta som tidningar. Mätningen letade en enda ränna innanför sidans
-mittersta 30–70 % och tog den första den fann, så mitt- och högerspalten slogs
-ihop. På Kopparringen s. 3 gav det en `vänsterkolumn` på 0,25 av bredden och en
-`högerkolumn` på 0,47. Det är kolumnsammanslagning producerad av mätningen
-själv, omöjlig att skilja nedströms från en verklig fullbredds rad. Att utöka
-bindningen INNAN det var lagat hade bundit stycken till regioner som redan var
-fel — en gissning som ser ut som data.
+**Geometri: 12 334 av 16 097 element har bbox — 77 %, mot noll i de 29
+böckerna.** Täckningen är avsiktligt ojämn (Edsbrytarna 68 %, Robotar 55 %, mot
+i-drakens-klor 2 %): bindningen vägrar hellre än gissar, och de låga siffrorna
+är sidor där mätningen och trycket är oense om spaltantalet.
 
-**Lagat (HEAD `cd232fe`):** flera rännor i stället för en, och tomheten mätt mot
-profilens eget omfång i stället för mot dess topp (en skanning med grå botten
-gav förut NOLL rännor). Mätt över alla 217 sidorna mot facit — transkriptens
-egna spaltnamn, avlästa medan transkriberaren såg sidan — går rätt spaltantal
-från **21 % till 71 %**, och de hopslagna spalterna från 106 fall till 25.
+**Screeningen vändes.** §1 mätte EN regel av sexton som fyrande. Nu fyrar tolv
+och ger **337 kandidater**:
 
-**Kvar innan Etapp 3 kan börja**
+| Regel | Kandidater | | Regel | Kandidater |
+| --- | ---: | --- | --- | ---: |
+| `bandbredd` | 113 | | `radsammanslagning` | 7 |
+| `raka-citattecken` | 91 | | `plusminus` | 6 |
+| `forskjuten-kedja` | 48 | | `tomt-radband` | 4 |
+| `bbox-felkoppling` | 44 | | `lasordning` | 3 |
+| `kolumnsammanslagning` | 18 | | `kolumnkollaps` / `punktledare` / `plusminus-varde` | 1 var |
 
-1. **Regionnormalisering.** `binda_sida` matchar elementets region mot
-   mätningens med exakt strängjämförelse, och transkripten skriver fri prosa:
-   573 distinkta regionnamn över de 29 böckerna (`kolumn 1`, `vänsterspalt`,
-   `mittenkolumn`, `huvudtext`, `faktaruta`, `sidfot höger`). De måste
-   avbildas på den kontrollerade vokabulären — konservativt, så att ett namn
-   som spänner två spalter (`mittkolumn–högerkolumn`, `fortsätter i…`) lämnas
-   OBUNDET i stället för att tvingas in i en spalt.
-2. **`binda_rader` till styckeregimen.** Skalan måste mätas utan redan bundna
-   rader. En bevarandeidentitet per region duger och är validerad: den återger
-   del II:s 122,4 som 122,2 och del III:s 122,6 som 118,0. Dessutom måste
-   `_radkostnad` släppa fram flerradiga `paragraph`.
-3. Därefter piloten om, och Grind 2:s fyra villkor på nytt.
+**Sidtypen följer med:** 119 sidor klassas nu som löptext och 21 som blankett,
+mot noll tidigare. Läsordningsreglerna körs bara på tvåspaltig löptext och hade
+aldrig prövats mot de här böckerna förrän nu.
 
----
+**Ordkonserveringen höll.** Alla 33 böcker diffar rent mot sin frysning.
 
-Pipelinen har vuxit snabbare än böckerna. Tre böcker (DoD-grundreglerna del I–III)
-har fått hela behandlingen; de trettio övriga rippades innan `radboxar`,
-`forbesikta`, driftvakten, `frys`/`diffa`, `close_review_reason()` och
-proveniensstämpeln fanns. Det här dokumentet är arbetsordern för att ta ikapp.
+### Vad som återstår
+
+1. **Etapp 4** — agentarbetet: 63 sidor utan `final.json`, 1016 öppna flaggor,
+   och de 337 kandidaterna, tabellgränserna först. Ramarna står i §Etapp 4.
+2. **Bindningstäckningen** på de böcker där mätningen ännu inte hittar
+   spalterna. Grind 2:s villkor 3 och 4 håller inte överallt — screeningen är
+   igång på alla böcker, men *Sidor utan användbar geometri* är inte tom.
+3. **BQ-021 (a)** — en avsnittsgräns kan fortfarande kapa en tryckt rad.
 
 ---
 
