@@ -15,8 +15,9 @@ from pipeline.preflight import (PAGE_FORM, PAGE_PROSE, PAGE_TABLE,
                                 rule_column_interleaving, rule_column_merge,
                                 rule_heading_dash, rule_plusminus,
                                 rule_reading_order, rule_row_merge,
-                                rule_straight_quotes, rule_table_candidate,
-                                scan_page, table_blocks)
+                                rule_embedded_table_rows, rule_shifted_chain,
+                                rule_straight_quotes,
+                                rule_table_candidate, scan_page, table_blocks)
 
 
 def el(id_, text, bbox=None, region=None, **extra):
@@ -381,6 +382,77 @@ class TestTableCandidate(unittest.TestCase):
 LANG_RUBRIK = "PRIMÄRA FÄRDIGHETER"
 
 
+class TestEmbeddedTableRows(unittest.TestCase):
+    """En tryckt tabellrad som ligger som ETT textlagerblock med radbrutna celler."""
+
+    def _rad(self, id_, text):
+        e = el(id_, text, bbox=[0.09, 0.5, 0.35, 0.016])
+        e["source"]["method"] = "embedded"
+        return e
+
+    def test_vapentabell_flaggas(self):
+        rader = [self._rad("e1", "Vapen\nGCL\nSkada"),
+                 self._rad("e2", "Laservärja\n80 %\n3T6+2")]
+        hits = rule_embedded_table_rows(rader)
+        self.assertEqual([e["id"] for e, _ in hits], ["e1"])
+        self.assertIn("tabellrad i element", hits[0][1])
+        self.assertIn("e1, e2", hits[0][1])
+
+    def test_statblockets_attributrutnat_flaggas(self):
+        rader = [self._rad("e1", "STY\n10\nINT\n13\nPER\n8/15"),
+                 self._rad("e2", "SMI\n11\nSTO\n10\nFYS\n18"),
+                 self._rad("e3", "MST\n12\nSB\n-\nKP\n28")]
+        self.assertEqual([e["id"] for e, _ in rule_embedded_table_rows(rader)],
+                         ["e1"])
+
+    def test_loptext_med_radbrytning_ar_inte_tabell(self):
+        """Ett styckes rader är LÅNGA och olika många i varje block."""
+        rader = [self._rad("e1", "Härinne finns det TV-skärmar som visar rum 1,\n"
+                                 "10, 16, 22. En terrorist står gömd bakom väggen"),
+                 self._rad("e2", "Eldritch står som sagt bakom väggen och\n"
+                                 "försöker överraska någon som går förbi.\nLyckas han")]
+        self.assertEqual(rule_embedded_table_rows(rader), [])
+
+    def test_olika_cellantal_bryter_kedjan(self):
+        rader = [self._rad("e1", "Vapen\nGCL\nSkada"),
+                 self._rad("e2", "Pansar\nMC-ställ")]
+        self.assertEqual(rule_embedded_table_rows(rader), [])
+
+    def test_matt_sida_agas_av_tabellkandidat(self):
+        """Utan `method: embedded` är cellerna egna element — annan signatur."""
+        rader = [el("e1", "Vapen\nGCL\nSkada", bbox=[0.09, 0.5, 0.35, 0.016]),
+                 el("e2", "Laservärja\n80 %\n3T6+2", bbox=[0.09, 0.48, 0.35, 0.016])]
+        self.assertEqual(rule_embedded_table_rows(rader), [])
+
+
+class TestShiftedChain(unittest.TestCase):
+    """`forskjuten-kedja` letar efter ett element som bär FEL uppmätt band."""
+
+    def _sida(self, n=12):
+        return [el("e%d" % i, LANG_RAD,
+                   bbox=[0.067, 0.90 - i * 0.016, 0.435, 0.016])
+                for i in range(n)]
+
+    def test_avvikande_teckenbredd_flaggas(self):
+        elements = self._sida()
+        elements.append(el("e99", LANG_RAD, bbox=[0.067, 0.60, 0.070, 0.016]))
+        self.assertEqual([e["id"] for e, _ in rule_shifted_chain(elements)],
+                         ["e99"])
+
+    def test_textlagerelement_undantas(self):
+        """`method: embedded` — det finns ingen kedja att förskjuta.
+
+        `radboxar` mäter banden i ett eget steg och `jobs.py` parar dem mot
+        elementen på index, så kedjan KAN glida. På textlagret hämtas text och
+        bbox atomärt ur samma PDF-block. MUT-AVE-terminal-state gav 179 sådana
+        kandidater; ingen av dem kan vara en förskjutning.
+        """
+        elements = self._sida()
+        avvikande = el("e99", LANG_RAD, bbox=[0.067, 0.60, 0.070, 0.016])
+        avvikande["source"]["method"] = "embedded"
+        self.assertEqual(rule_shifted_chain(elements + [avvikande]), [])
+
+
 class TestRowMerge(unittest.TestCase):
     def _sida(self, n=12):
         return [el("e%d" % i, LANG_RAD,
@@ -436,6 +508,24 @@ class TestRowMerge(unittest.TestCase):
     def test_liten_sida_kraschar_inte(self):
         self.assertEqual(rule_row_merge([el("e1", "text", bbox=[0, 0, 1, 1])]),
                          [])
+
+    def test_textlagerblock_ar_inte_sammanslagning(self):
+        """`method: embedded` — regelns premiss är att boktext SAKNAS.
+
+        Ett textlagerblock är ett helt stycke och bär alla sina rader med `\\n`
+        emellan, så ingenting saknas: höjdfaktorn är antalet rader i stycket.
+        MUT-AVE-terminal-state gav 45 sådana kandidater där noll är fel, och
+        de dolde bokens tio `tabellkandidat` — den oåterkalleliga klassen.
+        """
+        elements = self._sida()
+        block = el("e99", "\n".join([LANG_RAD] * 3),
+                   bbox=[0.067, 0.60, 0.325, 0.0504])
+        block["source"]["method"] = "embedded"
+        self.assertEqual(rule_row_merge(elements + [block]), [])
+        # Samma box UTAN textlagermärket är fortfarande en kandidat.
+        blind = el("e98", LANG_RAD, bbox=[0.067, 0.60, 0.325, 0.0336])
+        self.assertEqual([e["id"] for e, _ in rule_row_merge(elements + [blind])],
+                         ["e98"])
 
 
 class TestClassifyPage(unittest.TestCase):

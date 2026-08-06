@@ -119,8 +119,31 @@ def collect_artifacts(doc, manifest):
     return {k for k, c in counter.items() if c >= threshold}
 
 
+def _normalized_box(bbox, width, height):
+    """PyMuPDF:s `[x0, y0, x1, y1]` (punkter, y uppifrån) -> pipelinens form.
+
+    `source.bbox` är EN storhet med EN betydelse i hela repot: normaliserad
+    `[x, y, bredd, höjd]` med y från sidans NEDERKANT — så skriver
+    `pipeline/rows.py` (`_box`) och så läser `pipeline/export.py` (indraget
+    0,018, den fulla raden 0,92, spaltfönstret 0,04) och `pipeline/tables.py`.
+
+    Textlagret skrev tidigare PyMuPDF:s råa kanter rakt in i samma fält. Formen
+    är en annan storhet med samma namn, och ingenting varnade: `preflight`
+    läser `box[2]` som BREDD, fick x1, och gav 236 `forskjuten-kedja` på
+    MUT-AVE-terminal-state — 86 % av bokens screening — plus 22
+    `radsammanslagning` där `box[3]` lästes som höjd men var y1. Sidfoten
+    `TERMINAL STATE 14` mätte då 250,8 bred och 627,3 hög.
+    """
+    x0, y0, x1, y1 = bbox
+    return [round(x0 / width, 6),
+            round((height - y1) / height, 6),
+            round((x1 - x0) / width, 6),
+            round((y1 - y0) / height, 6)]
+
+
 def extract_page(page, page_no, boilerplate, artifacts, dominant_size):
     h = page.rect.height or 1.0
+    w = page.rect.width or 1.0
     blocks = []
     for b in page.get_text("dict")["blocks"]:
         if b.get("type") == 0:
@@ -142,7 +165,8 @@ def extract_page(page, page_no, boilerplate, artifacts, dominant_size):
                 "text": text,
                 "source": {
                     "page": page_no,
-                    "bbox": [round(v, 1) for v in b["bbox"]],
+                    "bbox": _normalized_box(b["bbox"], w, h),
+                    "bbox_source": "pipeline.extract_text",
                     "region": ("kolumn %d" % (ci + 1)) if n_cols > 1 else "huvudtext",
                     "method": "embedded",
                 },

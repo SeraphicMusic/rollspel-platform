@@ -120,6 +120,40 @@ class TestExtractText(PipelineCase):
         headings = [el for el in data["elements"] if el["type"] == "heading"]
         self.assertTrue(any("Kapitel 2" in el["text"] for el in headings))
 
+    def test_bbox_foljer_pipelinens_konvention(self):
+        """Textlagrets bbox är samma storhet som `radboxar`s, inte PyMuPDF:s.
+
+        `source.bbox` betyder normaliserad `[x, y, bredd, höjd]` med y från
+        NEDERKANTEN i hela repot — `pipeline/rows.py` skriver den så och
+        `export`, `tables` och samtliga bbox-regler i `preflight` läser den så.
+        Textlagret skrev tidigare PyMuPDF:s råa `[x0, y0, x1, y1]` i punkter
+        under samma namn, och då lästes x1 som bredd och y1 som höjd:
+        MUT-AVE-terminal-states sidfot mätte 250,8 bred och 627,3 hög på en
+        sida som är 431 punkter bred, och boken fick 258 screeningkandidater
+        som bara var enhetsfel.
+        """
+        pdf = self.tmp / "kolumner.pdf"
+        fixtures.two_column_pdf(pdf)
+        wd = self.wd("kolumner-bbox")
+        analyze(pdf, wd)
+        extract_text(pdf, wd)
+        data = read_json(page_file(wd, 1, "embedded.json"))
+        boxes = [el["source"]["bbox"] for el in data["elements"]]
+        self.assertTrue(boxes)
+        for box, el in zip(boxes, data["elements"]):
+            self.assertEqual(4, len(box))
+            for v in box:
+                self.assertGreaterEqual(v, -0.001, "%s: %s" % (el["id"], box))
+                self.assertLessEqual(v, 1.001, "%s: %s" % (el["id"], box))
+            self.assertGreater(box[2], 0, "bredden är box[2]: %s" % (box,))
+            self.assertGreater(box[3], 0, "höjden är box[3]: %s" % (box,))
+            self.assertLessEqual(box[0] + box[2], 1.001, "x+bredd ryms på sidan")
+            self.assertLessEqual(box[1] + box[3], 1.001, "y+höjd ryms på sidan")
+            self.assertEqual("pipeline.extract_text", el["source"]["bbox_source"])
+        # y räknas från NEDERKANTEN: det översta elementet har störst y.
+        overst = max(data["elements"], key=lambda el: el["source"]["bbox"][1])
+        self.assertEqual(data["elements"][0]["id"], overst["id"])
+
 
 class TestDetectSystem(PipelineCase):
     def test_dod_identifieras(self):

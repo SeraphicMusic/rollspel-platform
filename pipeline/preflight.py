@@ -190,8 +190,18 @@ PAGE_FORM_MIN_CLUSTERS = 3
 RULES = ("linjeregel-prefix", "linjeregel-suffix", "raka-citattecken",
          "plusminus", "plusminus-varde", "punktledare", "kolumnkollaps",
          "kolumnsammanslagning", "lasordning", "radsammanslagning",
-         "tabellkandidat", "bbox-felkoppling", "tabell-svalt-titelband",
-         "forskjuten-kedja", "tomt-radband", "bandbredd")
+         "tabellkandidat", "tabellrad-i-element", "bbox-felkoppling",
+         "tabell-svalt-titelband", "forskjuten-kedja", "tomt-radband",
+         "bandbredd")
+
+# En cell i en tryckt tabellrad som ligger radbruten i ett textlagerblock.
+# Taket är rundligare än TABLE_CELL_MAX_TEXT (som gäller ett HELT element) men
+# håller löptext utanför: uppmätt på MUT-AVE-terminal-state är den längsta
+# äkta cellen 21 tecken (`Reflecrustning (20/1)`) medan bokens kortaste
+# brödtextrad är 34.
+EMBEDDED_CELL_MAX_TEXT = 28
+# Två rader räcker — en vapentabell är ofta bara rubrikrad plus ett vapen.
+EMBEDDED_TABLE_MIN_ROWS = 2
 
 
 def _bbox(el):
@@ -206,6 +216,30 @@ def _bbox(el):
 
 def _region(el):
     return (el.get("source") or {}).get("region") or "?"
+
+
+def _is_embedded(el):
+    """Kommer elementets geometri ur PDF:ens textlager i stället för mätningen?
+
+    Skillnaden är inte en detalj i proveniensen utan avgör vilka regler som får
+    tala. Två av dem vilar helt på transkriptionskontraktets *ett element = en
+    tryckt rad*:
+
+    - `forskjuten-kedja` letar efter ett element som bär FEL uppmätt band. Den
+      felformen förutsätter en kedja: `radboxar` mäter banden i ett eget steg
+      och `jobs.py` parar dem mot elementen på index, så kedjan KAN glida. På
+      `method: "embedded"` hämtas text och bbox atomärt ur samma PDF-block —
+      det finns ingen kedja att förskjuta.
+    - `radsammanslagning` larmar på att elementet spänner över två tryckta
+      rader och återger bara den ena, alltså att boktext SAKNAS. Ett
+      textlagerblock är ett helt stycke och bär alla sina rader med `\\n`
+      emellan; ingenting saknas.
+
+    Mätt på MUT-AVE-terminal-state (korpusens enda digitala utgåva): reglerna
+    gav 179 + 45 kandidater där noll är fel. De döljer det som ÄR fel —
+    samma bok bär tio `tabellkandidat`, den oåterkalleliga klassen.
+    """
+    return (el.get("source") or {}).get("method") == "embedded"
 
 
 def _add_candidate(el, correction):
@@ -675,6 +709,7 @@ def rule_row_merge(elements):
     """
     boxes = [(el, _bbox(el)) for el in elements
              if _bbox(el) and not el.get("removed")
+             and not _is_embedded(el)
              and el.get("type") not in MULTIROW_TYPES
              and (el.get("text") or "").strip()]
     if len(boxes) < MIN_HEIGHT_ELEMENTS:
@@ -943,6 +978,8 @@ def rule_shifted_chain(elements):
     for el in elements:
         if el.get("type") != "paragraph" or el.get("removed"):
             continue
+        if _is_embedded(el):
+            continue
         box = _bbox(el)
         text = (el.get("text") or "").strip()
         if not box or len(text) < 4:
@@ -1118,6 +1155,77 @@ def rule_table_candidate(elements):
     return hits
 
 
+def rule_embedded_table_rows(elements):
+    """Tryckt tabellRAD som ligger som ETT element med cellerna radbrutna.
+
+    `rule_table_candidate` letar efter många KORTA element vars vänsterkanter
+    bildar x-kluster. Den signaturen uppstår när en transkription typar varje
+    cell för sig. En DIGITAL utgåva ger den aldrig: PDF:ens textlager samlar
+    hela den tryckta raden i ETT block och skiljer cellerna med radbrytning, så
+    tabellen ser ut som en handfull vanliga `paragraph` och rutnätet finns
+    ingenstans att mäta.
+
+    Följden är densamma och lika oåterkallelig (CLAUDE.md §Tabeller): rad- och
+    kolumnstrukturen är borta, `tables.assemble` har inget att montera, och
+    läsexporten skriver cellerna som löptext. MUT-AVE-terminal-state bär 19
+    vapentabeller (`Vapen\\nGCL\\nSkada` följt av `Laservärja\\n80 %\\n3T6+2`)
+    och 57 statblockrader (`STY\\n10\\nINT\\n13\\nPER\\n8/15`) i den formen, och
+    ingen regel såg en enda av dem.
+
+    Signalen är rent index-baserad och kräver varken bild eller bbox: två eller
+    flera element i FÖLJD som var för sig delas av radbrytning i lika många
+    korta fält. Löptext slås ut av båda villkoren — ett styckes rader är olika
+    många i varje block och långa var för sig.
+    """
+    hits = []
+    kedja = []
+
+    def _fält(el):
+        if el.get("type") not in TABLE_SUSPECT_TYPES or el.get("removed"):
+            return None
+        if not _is_embedded(el):
+            return None
+        delar = [d.strip() for d in (el.get("text") or "").split("\n")]
+        if len(delar) < TABLE_MIN_COLUMNS or not all(delar):
+            return None
+        if max(len(d) for d in delar) > EMBEDDED_CELL_MAX_TEXT:
+            return None
+        return delar
+
+    def _stäng():
+        if len(kedja) < EMBEDDED_TABLE_MIN_ROWS:
+            return
+        ids = [el["id"] for el, _ in kedja]
+        kolumner = len(kedja[0][1])
+        hits.append((kedja[0][0],
+                     "Heuristik (tabellrad i element): %d element i följd bär "
+                     "var sitt tryckta tabellRAD med %d celler åtskilda av "
+                     "radbrytning — en tryckt tabell som typats `paragraph` i "
+                     "stället för `table` med `data.headers`/`data.rows`. Så ser "
+                     "en tabell ut när den kommer ur PDF:ens textlager: hela "
+                     "raden i ett block, rutnätet ingenstans. Strukturen går "
+                     "inte att återskapa nedströms. Deltagande element: %s. "
+                     "Verifiera mot PNG:n — är det en tabell, typa om till "
+                     "`table` (första raden är oftast rubrikraden); är det ett "
+                     "statblock, typa om till `statblock` med "
+                     "`data.stats`/`skills`/`other`. Detta är ett typningsfel "
+                     "och ska aldrig bli en korrektionspost."
+                     % (len(ids), kolumner, ", ".join(ids))))
+
+    for el in elements:
+        delar = _fält(el)
+        if delar and kedja and len(delar) != len(kedja[0][1]):
+            _stäng()
+            kedja = []
+        if delar:
+            kedja.append((el, delar))
+        else:
+            _stäng()
+            kedja = []
+    _stäng()
+    return hits
+
+
 def classify_page(elements):
     """Sidtyp ur ren geometri: löptext, tabellsida, blankett eller annat.
 
@@ -1216,6 +1324,7 @@ def scan_page(data, image=None, bands=None, regions=None):
     sidtyp = classify_page(elements)
     sidnivå = [("radsammanslagning", rule_row_merge),
                ("tabellkandidat", rule_table_candidate),
+               ("tabellrad-i-element", rule_embedded_table_rows),
                ("bbox-felkoppling", rule_bbox_miscoupling),
                ("tabell-svalt-titelband", rule_table_ate_caption),
                ("forskjuten-kedja", rule_shifted_chain)]
