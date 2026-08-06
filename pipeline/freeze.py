@@ -40,7 +40,21 @@ _TOKEN = re.compile(r"[^\s|#*_`>]+")
 # Bara det ENSAMMA tecknet räknas bort. Bindestreck inne i ett ord bär
 # betydelse — sammansättningar, talintervall, avstavningar som exporten läker —
 # och de ska fortfarande vägas.
+#
+# Tabellens avdelarrad `| --- | --- |` hör till samma klass och lades till
+# 2026-08-06. En tryckt tabell som räddas ur löptext — del II s. 25:s
+# hemvistuppställning låg som 33 `list_item` och exporten hade där slagit ihop
+# skilda tabellrader — tillför sex `---` per tabell som markdownSYNTAX, inte
+# som boktext. Utan undantaget rapporterar ordgrinden en korrekt tabellräddning
+# som oförklarad ordökning, och ett instrument som fäller rätt ingrepp lär
+# användaren att bortse från utfallet. Talstrecket `–` och tankstrecket `—`
+# står kvar som ord: de förekommer ensamma i tryckta tabellceller och betyder
+# där "inget värde".
 _MARKERINGAR = {"-", "•"}
+
+
+def _ar_markering(token):
+    return token in _MARKERINGAR or (len(token) > 1 and set(token) == {"-"})
 
 FREEZE_NAME = "bok.frysning.md"
 
@@ -55,7 +69,7 @@ def markdown_path(workdir):
 
 def words(text):
     return collections.Counter(t for t in _TOKEN.findall(text)
-                               if t not in _MARKERINGAR)
+                               if not _ar_markering(t))
 
 
 def freeze(workdir):

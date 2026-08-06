@@ -398,4 +398,23 @@ class TestPunkttecknetRaknasInteSomOrd(unittest.TestCase):
         self.assertEqual(words("halv-elva 3-5 x"),
                          words("halv-elva 3-5 x"))
         self.assertIn("halv-elva", words("halv-elva"))
+
+    def test_tabellens_avdelarrad_ar_syntax_inte_text(self):
+        """Samma klass som listmärket, och den dök upp av samma skäl.
+
+        Del II s. 25:s hemvistuppställning låg som 33 `list_item` och exporten
+        hade slagit ihop skilda tabellrader — post 6, 11, 13, B och D hade
+        tappat sin radidentitet. Räddningen till `table` tillför sex `---` per
+        tabell som markdownSYNTAX, och utan undantaget rapporteras ett korrekt
+        ingrepp som oförklarad ordökning.
+        """
+        self.assertEqual(words("| --- | --- | --- |"), words(""))
+        self.assertEqual(words("| 1 | REGNSKOG. |\n| --- | --- |"),
+                         words("1 REGNSKOG."))
+
+    def test_tankstreck_som_cellvarde_star_kvar(self):
+        """`—` ensamt i en cell betyder "inget värde" och ÄR bokens text —
+        till skillnad från en rad hopdragna bindestreck."""
+        self.assertIn("—", words("| SB | — |"))
+        self.assertIn("–", words("| Skada | – |"))
         self.assertIn("3-5", words("3-5"))
