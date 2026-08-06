@@ -1,9 +1,14 @@
 """Tester för reparationsalgoritmer och korrektionspostens invarianter."""
+import json
 import unittest
+from pathlib import Path
+
+from pipeline.manifest import Manifest
 
 from pipeline.corrections import (KIND_EMENDATION, KIND_OCR,
                                   apply_corrections_to_text,
                                   close_review_reason, make_correction,
+                                  review_flag_counts,
                                   repair_dice_token, repair_word,
                                   scan_dice_in_text)
 from pipeline.systems import load
@@ -297,3 +302,80 @@ class TestDiceArithmeticIsNotNotation(unittest.TestCase):
                                     self.dice, self.words)
         self.assertEqual([c["corrected"] for c in corr], ["1T6"])
         self.assertTrue(corr[0]["applied"])
+
+
+class TestGranskningsflaggeRakning(unittest.TestCase):
+    """`status` mätte kampanjens backlogg med manifestets `needs_review`.
+
+    Den siffran sätts vid bokföringen och följer inte med när advokaten lägger
+    till eller stänger en flagga: över de 33 böckerna sa manifestet 167 medan
+    sidfilerna bar 1016. Räkningen ska läsa sidfilerna, och bara den bästa
+    versionen per sida — annars räknas samma flagga en gång per version.
+    """
+
+    def setUp(self):
+        import shutil
+        import tempfile
+        self.wd = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, self.wd, ignore_errors=True)
+        (self.wd / "pages").mkdir()
+
+    def _bok(self, n_sidor):
+        pdf = self.wd / "kalla.pdf"
+        pdf.write_bytes(b"%PDF-1.4\n")
+        Manifest.create(self.wd, pdf, n_sidor)
+
+    def _sida(self, no, suffix, elements):
+        (self.wd / "pages" / ("page_%03d.%s" % (no, suffix))).write_text(
+            json.dumps({"page": no, "elements": elements}), encoding="utf-8")
+
+    def test_raknar_oppna_och_avgjorda_ur_sidfilerna(self):
+        self._bok(2)
+        self._sida(1, "final.json", [
+            {"id": "e1", "review_reasons": ["a", "b"]},
+            {"id": "e2", "review_reasons": [],
+             "resolved_reasons": [{"reason": "c", "resolution": "x",
+                                   "closed_by": "skript"}]},
+        ])
+        self._sida(2, "final.json", [{"id": "e3", "review_reasons": ["d"]}])
+        r = review_flag_counts(self.wd)
+        self.assertEqual(r["oppna"], 3)
+        self.assertEqual(r["avgjorda"], 1)
+        self.assertEqual(r["sidor_med_oppna"], 2)
+        self.assertEqual(r["per_sida"], {1: 2, 2: 1})
+
+    def test_bara_basta_versionen_per_sida_raknas(self):
+        """final.json vinner över validated.json — annars dubbelräknas allt."""
+        self._bok(1)
+        self._sida(1, "validated.json", [{"id": "e1",
+                                          "review_reasons": ["gammal", "x"]}])
+        self._sida(1, "final.json", [{"id": "e1", "review_reasons": ["ny"]}])
+        r = review_flag_counts(self.wd)
+        self.assertEqual(r["oppna"], 1)
+
+    def test_manifestets_needs_review_paverkar_inte_rakningen(self):
+        """Instrumentet ska mäta sidfilerna, inte manifestets föråldrade fält."""
+        self._bok(1)
+        m = Manifest.load(self.wd)
+        m.page(1)["needs_review"] = 99
+        m.save()
+        self._sida(1, "final.json", [{"id": "e1", "review_reasons": ["a"]}])
+        self.assertEqual(review_flag_counts(self.wd)["oppna"], 1)
+
+    def test_sida_utan_sidfil_hoppas_over(self):
+        self._bok(3)
+        self._sida(2, "final.json", [{"id": "e1", "review_reasons": ["a"]}])
+        r = review_flag_counts(self.wd)
+        self.assertEqual(r["oppna"], 1)
+        self.assertEqual(r["per_sida"], {2: 1})
+
+    def test_en_stangd_flagga_flyttar_sig_mellan_hinkarna(self):
+        """close_review_reason() ska synas i räkningen som -1 öppen, +1 avgjord."""
+        self._bok(1)
+        el = {"id": "e1", "needs_review": True, "review_reasons": ["a", "b"]}
+        self._sida(1, "final.json", [el])
+        self.assertEqual(review_flag_counts(self.wd)["oppna"], 2)
+        close_review_reason(el, "a", "avgjord mot PNG:n", "agent:advokat")
+        self._sida(1, "final.json", [el])
+        r = review_flag_counts(self.wd)
+        self.assertEqual((r["oppna"], r["avgjorda"]), (1, 1))

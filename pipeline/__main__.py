@@ -337,7 +337,21 @@ def main(argv=None):
         print("system:", (m.data.get("system") or {}).get("id", "ej valt"))
         print("dokumenttyp:", m.data.get("doc_type", {}).get("class_counts"))
         print("states:", s["states"])
-        print("needs_review:", s["needs_review"])
+        print("needs_review (manifest):", s["needs_review"])
+        # Manifestets siffra ovan sätts vid bokföringen och följer inte med när
+        # advokaten lägger till eller stänger en flagga. Den riktiga siffran
+        # står i sidfilerna.
+        from .corrections import review_flag_counts
+        flaggor = review_flag_counts(workdir)
+        print("granskningsflaggor: %d öppna på %d sidor, %d avgjorda"
+              % (flaggor["oppna"], flaggor["sidor_med_oppna"],
+                 flaggor["avgjorda"]))
+        if flaggor["oppna"]:
+            varst = sorted(flaggor["per_sida"].items(),
+                           key=lambda kv: (-kv[1], kv[0]))[:8]
+            print("   tyngst: %s%s"
+                  % (", ".join("s.%d (%d)" % kv for kv in varst),
+                     " …" if len(flaggor["per_sida"]) > 8 else ""))
         from .decisions import blocking_questions, tool_questions
         oppna = blocking_questions(workdir)
         if oppna:

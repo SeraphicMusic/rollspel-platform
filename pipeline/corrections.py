@@ -113,6 +113,44 @@ def close_review_reason(element, reason, resolution, closed_by):
     return True
 
 
+# `status` räknade länge granskningsflaggor via manifestets `needs_review`, en
+# per-sida-siffra som sätts när sidan bokförs och sedan aldrig följer med när
+# advokaten lägger till eller stänger en flagga. Skillnaden är inte marginell:
+# över de 33 böckerna sa manifestet 167 medan sidfilerna bar 1016 öppna. Att
+# mäta en kampanjs framsteg med ett instrument som visar en sjättedel av
+# backloggen är värre än att inte mäta alls, för siffran ser ut att stämma.
+#
+# Sanningen står i sidfilerna, och bara i den bästa versionen per sida —
+# `final.json` där den finns, annars `validated.json` osv. Räknas alla
+# versioner räknas samma flagga flera gånger.
+
+def review_flag_counts(workdir):
+    """Räkna öppna och avgjorda granskningsflaggor ur sidfilerna.
+
+    Returnerar `{"oppna", "avgjorda", "sidor_med_oppna", "per_sida"}`, där
+    `per_sida` bara har med de sidor som faktiskt har öppna flaggor.
+    """
+    from .manifest import Manifest, read_json
+    from .merge import best_page_file
+
+    m = Manifest.load(workdir)
+    oppna = avgjorda = 0
+    per_sida = {}
+    for no in m.page_numbers():
+        path, _stage = best_page_file(workdir, no)
+        if path is None:
+            continue
+        n = 0
+        for el in read_json(path).get("elements", []):
+            n += len(el.get("review_reasons") or [])
+            avgjorda += len(el.get("resolved_reasons") or [])
+        if n:
+            per_sida[no] = n
+            oppna += n
+    return {"oppna": oppna, "avgjorda": avgjorda,
+            "sidor_med_oppna": len(per_sida), "per_sida": per_sida}
+
+
 # ---------------------------------------------------------------------------
 # Tärningsnotation
 # ---------------------------------------------------------------------------
