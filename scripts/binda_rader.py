@@ -776,11 +776,19 @@ def binda_sida(els, rows, skala, max_spann=80, png=None, flerradiga=False,
     # aldrig `vänsterkolumn`, och hela bindningen uteblir.
     kolumner = measured_columns(radboxar or {})
     tryckta = column_count([_region(el) for el in els])
-    karta = {}
+    # Ett namn som inte gick att översätta faller tillbaka på sitt råa värde.
+    # Det matchar då ingen uppmätt region och elementet lämnas obundet, vilket
+    # är rätt — men det ska inte rapporteras som att regionen SAKNAS i
+    # mätningen. `mittkolumn` finns i mätningens vokabulär; det som hänt är att
+    # översättningen vägrade, och vägran har egna, kända skäl.
+    karta, ooversatt = {}, set()
     for el in els:
         rå = _region(el)
         if rå not in karta:
-            karta[rå] = normalize(rå, kolumner, tryckta) or rå
+            norm = normalize(rå, kolumner, tryckta)
+            if norm is None:
+                ooversatt.add(rå)
+            karta[rå] = norm or rå
     if tryckta and kolumner and tryckta != len(kolumner):
         anm.append("trycket har %d spalter, mätningen %d — spaltelementen "
                    "lämnas obundna (mätningen har slagit ihop spalter)"
@@ -798,8 +806,13 @@ def binda_sida(els, rows, skala, max_spann=80, png=None, flerradiga=False,
         if not eidx:
             continue
         if not ridx:
-            anm.append("region %r finns hos %d element men inte i mätningen — "
-                       "lämnad obunden" % (reg, len(eidx)))
+            if reg in ooversatt:
+                anm.append("region %r gick inte att översätta entydigt till "
+                           "mätningens vokabulär — %d element lämnade obundna"
+                           % (reg, len(eidx)))
+            else:
+                anm.append("region %r finns hos %d element men inte i "
+                           "mätningen — lämnad obunden" % (reg, len(eidx)))
             continue
         delels = [els[i] for i in eidx]
         delrows = [rows[j] for j in ridx]
