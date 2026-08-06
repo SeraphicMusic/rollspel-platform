@@ -12,41 +12,56 @@ Klistra in avsnittet »Prompt« i en ny session. Resten är underlaget.
 ## Prompt
 
 > Kör vidare på Etapp 4 i `docs/IKAPP-ALLA-BOCKER.md`. Underlaget står i
-> `docs/IKAPP-ETAPP4-PROMPT.md` — läs den först, och läs `AGENTER.md` SLAVISKT
-> innan du startar en enda agent.
+> `docs/IKAPP-ETAPP4-PROMPT.md` — läs den FÖRST, och läs `AGENTER.md` SLAVISKT
+> innan du startar en enda agent. Siffrorna där är mätta 2026-08-06 och går att
+> räkna fram igen med kommandona i §7; verifiera dem innan du planerar, för
+> förra överlämningens siffror höll inte och §3 förklarar varför.
 >
-> Tre arbetsströmmar:
+> **Börja med `MUT-AVE-terminal-state-fruncon-91`.** Den löser mest på en gång:
+> 32 av ström 1:s 48 sidor ligger där, den har flest screeningkandidater i hela
+> korpusen (274), och den bär korpusens BÅDA kvarvarande spår av den
+> oåterkalleliga tabellklassen — `tabellkandidat` på s.14 och `punktledare` på
+> s.27. Ta de två sidorna först. Boken är den enda `digital`-utgåvan och har
+> 98 % geometri, så sidorna är billigare än de inskannade.
 >
-> 1. **48 sidor utan `final.json`** i fyra böcker (§2). Terminal State ensam
->    står för 32 och är dessutom aldrig screenad förrän nu — den har 274
->    kandidater, flest i hela korpusen. Kör `python3 -m pipeline jobb --workdir
->    <wd> --typ korrektur` för triage och exakta sökvägar.
-> 2. **212 sidor med åtgärdbara screeningkandidater** (§3), tabellfrågorna
->    först — de är den oåterkalleliga klassen. Agenterna ska VERIFIERA listan,
->    inte leta upp mönstren igen (Regel 5).
-> 3. **1019 öppna granskningsflaggor** (§4). Fyra böcker bär 563 av dem, och
->    ingen av de fyra har en enda avgjord flagga.
+> Därefter, i den ordningen: `DOD-AVE-den-nedbrunna-fatburen` (6 sidor),
+> `DOD-AVE-den-stulna-elefanten` (5), `MUT-REG-hacking-…-netrunner` (5). Då är
+> ström 1 tom och varje bok i korpusen har alla sidor korrekturlästa.
 >
-> **Läs §5 innan du skriver en enda agentprompt.** Den innehåller de sex
-> instruktioner som gav samtliga fynd i första vågen. Den viktigaste: säg åt
-> specialisterna att fastställa vad som STÅR i trycket, inte att bedöma om
-> draftens svenska är korrekt. Sex av vågens fynd var tysta normaliseringar
-> som ingen jämförelse mot draften kan se.
+> Sedan ström 2 (212 sidor med åtgärdbar regel, §3) och ström 3 (1019 öppna
+> flaggor, §4 — fyra böcker bär 563 och ingen av dem har en enda avgjord
+> flagga, men läs flaggtexten innan du utreder om: flera bär utredningen i
+> prosa från tiden före `resolved_reasons`).
+>
+> **Läs §5 innan du skriver en enda agentprompt.** Där står de sex
+> instruktioner som gav samtliga fynd i första vågen. Den viktigaste kostar en
+> mening: säg åt specialisten att fastställa vad som STÅR i trycket, inte att
+> bedöma om draftens svenska är korrekt. Sex av vågens fynd var tysta
+> normaliseringar där draften gjort trycket MER korrekt än det är, och ingen
+> jämförelse mot draften kan se den klassen. Näst viktigast: låt någon RÄKNA
+> illustrationerna — tre av fyra böcker saknade en bild helt, alltid en som
+> delar inramning med ett textelement som redan var extraherat.
 >
 > Bindande ramar: max 3 agenter samtidigt TOTALT, aldrig per sida (Regel 2).
-> Ingen nästling (Regel 3). En sida per agentuppsättning (Regel 4).
-> Specialister på Sonnet, advokaten på Opus, modellen i agentens frontmatter
-> och aldrig i anropet (Regel 1). Bildforensik körs synkront, en i taget.
+> Ingen nästling (Regel 3). En sida per agentuppsättning, fas 1 → fas 2 i
+> strikt ordning (Regel 4). Specialister på Sonnet, advokaten på Opus, modellen
+> i agentens frontmatter och ALDRIG i anropet (Regel 1). Bildforensik körs
+> synkront, en agent per meddelande. Skript före LLM (Regel 5) — agenterna
+> verifierar kandidatlistan, de letar inte upp mönstren igen.
 >
 > Efter varje bok: `sammanfoga`, `exportera`, `rapport`, `diffa`, och sedan
 > **`python3 scripts/oforklarade_ord.py arbete/<slug>`** — den grinden är
-> mekanisk sedan i dag och attribuerar varje ordändring till den post som bär
-> den. Exitkod 0 krävs. Därefter `python3 scripts/uppdatera_bibliotek.py
-> --verkstall`. Alla 33 är gröna i dag, så varje avvikelse är din.
+> mekanisk sedan 2026-08-06 och attribuerar varje ordändring till den
+> korrektionspost som bär den. **Exitkod 0 krävs innan boken lämnas.** Därefter
+> `python3 scripts/uppdatera_bibliotek.py --verkstall`, och `arkivera` när kön
+> är tom. Alla 33 böcker är gröna i dag och alla exporter står på HEAD, så
+> varje avvikelse är den här sessionens egen.
 >
-> Rapportera per bok, och stanna bara om ordkonserveringen brister eller om du
-> stöter på en fråga som bara en människa kan svara på (då: `beslut.md` under
-> `## Öppen kö`, som `- [ ] BQ-NNN`, och gissa aldrig i frågans formulering).
+> Rapportera per bok. Stanna bara om ordkonserveringen brister eller om du
+> stöter på en fråga som BARA en människa kan svara på — går den att avgöra med
+> en beskärning ur skanningen är den ett mätjobb, inte ett köärende. Måste den
+> köas: `beslut.md` under `## Öppen kö`, som `- [ ] BQ-NNN`, märkt `[beslut]`
+> eller `[verktyg]`, och gissa aldrig i frågans formulering.
 
 ---
 
