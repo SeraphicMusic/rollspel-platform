@@ -5,7 +5,29 @@ varje siffra nedan går att räkna fram igen med kommandona i §7.*
 
 ---
 
-## LÄGE 2026-08-06 — Etapp 0, 1, 3 och 5 körda; Etapp 4 återstår
+## LÄGE 2026-08-06 (kväll) — Etapp 4 påbörjad, se IKAPP-ETAPP4-PROMPT.md
+
+Första agentvågen är körd: elva sidor i fyra böcker, två böcker helt klara och
+arkiverade, en feltypad tabell räddad i del II, och fem verktygslagningar.
+**Siffrorna i avsnitten nedan är föråldrade** — det aktuella underlaget står i
+[IKAPP-ETAPP4-PROMPT.md](IKAPP-ETAPP4-PROMPT.md), som också förklarar var de
+gamla siffrorna kom ifrån och varför de inte höll:
+
+- »63 sidor utan final.json« var 61 — två är `skipped: illustration_only`.
+  48 återstår.
+- »337 kandidater« var 337 *(sida, regel)-par*, inte poster, och räknade ur en
+  ofullständig screening: `MUT-AVE-terminal-state` hade aldrig screenats
+  (398 `heuristik.json` på 437 sidor). Omkörningen ger 443 par / 1965 poster
+  på 212 åtgärdbara sidor.
+- »`tabellkandidat` fyrar noll gånger« gäller inte längre, och regeln som
+  faktiskt hittar feltypade tabeller i styckeformade transkript visade sig
+  vara `punktledare`.
+
+Ordgrinden är dessutom mekanisk sedan i dag: `scripts/oforklarade_ord.py`
+attribuerar varje ordändring till den korrektionspost som bär den. Alla 33
+böcker är gröna, alla exporter står på HEAD, och läskopiorna är i takt.
+
+## LÄGE 2026-08-06 (morgon) — Etapp 0, 1, 3 och 5 körda; Etapp 4 återstår
 
 Etapp 0–3 och det deterministiska avslutet är genomförda. Etapp 4 är
 agentarbetet och har inte påbörjats — det är den enda etapp som kostar tokens
