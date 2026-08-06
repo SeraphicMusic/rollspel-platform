@@ -120,6 +120,28 @@ MIN_COLUMN_WIDTH = 0.12
 # och indrag ger också tomma stråk, men inte mitt på satsytan.
 GUTTER_CENTRE_LO = 0.30
 GUTTER_CENTRE_HI = 0.70
+
+# Hur djup en dal i bandets svärtningsprofil måste vara för att räknas som
+# ränna, som andel av profilens EGET omfång (`lo + andel * (hi - lo)`). Måttet
+# är relativt därför att en absolut tröskel blir blind på en skanning med grå
+# botten — se `_band_gutters`. Nivån är kalibrerad, inte gissad: svept mot 87
+# sidor vars spaltantal går att läsa ur transkriptets egna regionnamn, och
+# 0,45 tillsammans med rösttröskeln nedan ger 67 rätt mot den gamla mätningens
+# 22. På de genuint tvåspaltiga sidorna blir den något bättre, inte sämre.
+GUTTER_CONTRAST = 0.45
+
+# Hur stor andel av de RÖSTANDE banden som måste vara tomma på samma bildkolumn
+# för att den ska höra till en ränna (se `_columns`).
+#
+# Nivån är en AVVÄGNING mellan rännans antal och dess läge, och läget vinner.
+# En lägre tröskel hittar fler rännor — 0,50 gav 69 rätt mot 67 — men släpper
+# samtidigt fram BQ-013:s gamla fel: på en sida med korta rader börjar varje
+# bands egen tomma yta direkt efter radens sista ord, och med hälften av banden
+# korta röstas en ränna fram där texten slutar i stället för där satsytan tar
+# slut. Följden är att spaltens fönster klipper av dess egen text — det som på
+# del III s. 13 lade rännan vid x 0,332 i stället för 0,49. Två sidor färre med
+# rätt spaltantal är billigare än en spalt som kapar sin egen sats.
+COLUMN_VOTE_SHARE = 0.75
 # Hur stor andel av avsnittets radband som måste ha en egen ränna på samma
 # ställe för att spalterna ska räknas som verkliga. En illustration korsar
 # rännan och röstar nej; brödtexten röstar ja. Uppmätt på del II: friska
@@ -725,24 +747,41 @@ def _median_of(values):
     return (vals[mid - 1] + vals[mid]) / 2
 
 
-def _band_gutter(dark, a, b, width):
-    """Avsnittets ränna sedd från ETT radband, eller None.
+def _band_gutters(dark, a, b, width):
+    """ALLA rännor sedda från ETT radband, som [(x0, x1)].
 
-    Bandet mäts mot sin egen profil. En brödtextrad i två spalter har en tom
-    lucka mitt på satsytan; en illustrationsrad, en rubrik över båda spalterna
-    eller en fullbredds tabellrad har det inte.
+    Två saker skiljer den här mätningen från den ursprungliga, och båda är
+    mätta på de 29 äventyrsböckerna:
+
+    **Alla rännor, inte den första.** Sättningen i de svenska rollspelshäftena
+    är TRESPALTIG — 135 av 217 sidor i 25 av 29 böcker. Den gamla mätningen
+    letade en enda ränna innanför sidans mittersta 30–70 % och tog den första
+    den fann. På Kopparringen s. 3, där rännorna ligger på 0,32 och 0,62, gav
+    det en `vänsterkolumn` på 0,25 av bredden och en `högerkolumn` på 0,47 —
+    mitt- och högerspalten hopslagna i ett band per tryckt rad. Det är
+    kolumnsammanslagning producerad av mätningen själv, och ingenting nedströms
+    kan skilja den från en verklig fullbredds rad.
+
+    **Kontrast, inte absolut tröskel.** Tomheten mättes som `prof < andel *
+    prof.max()`, alltså mot profilens TOPP. En skanning med grå eller
+    rastrerad botten har ett golv långt över noll: i-drakens-klor s. 5 har
+    profilgolv 96 mot topp 136, och där hittades NOLL rännor trots tre tydliga
+    dalar — hela sidan mättes som fullbredd. Tröskeln går därför på profilens
+    eget dynamiska omfång, `lo + kontrast * (hi - lo)`, vilket gör måttet
+    oberoende av hur mörkt papperet är.
+
+    Marginalerna räknas inte som rännor; det avgörs av anroparen, som vet var
+    satsytan börjar.
     """
     prof = dark[a:b, :].mean(axis=0)
-    if not prof.max():
-        return None
-    empty = prof < GUTTER_DARKNESS_SHARE * prof.max()
-    for x0, x1 in _runs(empty):
-        if x1 - x0 < MIN_GUTTER_WIDTH * width:
-            continue
-        centre = (x0 + x1) / 2 / width
-        if GUTTER_CENTRE_LO < centre < GUTTER_CENTRE_HI:
-            return (x0, x1)
-    return None
+    if prof.size == 0:
+        return []
+    lo, hi = float(prof.min()), float(prof.max())
+    if hi - lo <= 0:
+        return []
+    empty = prof < lo + GUTTER_CONTRAST * (hi - lo)
+    return [(x0, x1) for x0, x1 in _runs(empty)
+            if x1 - x0 >= MIN_GUTTER_WIDTH * width]
 
 
 def _columns(dark, top, bottom, width, bands=None):
@@ -777,28 +816,33 @@ def _columns(dark, top, bottom, width, bands=None):
     illustrationsrad kan inte radera korridoren.
     """
     if bands:
-        röster = [(a, b, _band_gutter(dark, a, b, width)) for a, b in bands]
-        träffar = [(a, b) for a, b, g in röster if g]
+        röster = [_band_gutters(dark, a, b, width) for a, b in bands]
+        träffar = [g for g in röster if g]
         if len(träffar) >= GUTTER_VOTE_SHARE * len(bands):
-            korridor = None
-            for a, b in träffar:
-                prof = dark[a:b, :].mean(axis=0)
-                tom = prof < GUTTER_DARKNESS_SHARE * (prof.max() or 1)
-                korridor = tom if korridor is None else (korridor & tom)
+            # Korridoren mäts som en RÖSTRÄKNING per bildkolumn i stället för
+            # som ett snitt. Snittet krävde att varje röstande band var tomt på
+            # exakt samma punkt, vilket håller för två jämnt satta spalter men
+            # inte för tre: en enda rad vars ord råkar sträcka sig in i rännan
+            # raderade då hela korridoren. Räkningen tål det — en ränna är den
+            # yta som är tom i minst hälften av de band som alls har en ränna.
+            röstat = [0] * width
+            for gutters in träffar:
+                for x0, x1 in gutters:
+                    for x in range(x0, x1):
+                        röstat[x] += 1
+            gräns = COLUMN_VOTE_SHARE * len(träffar)
+            korridor = [n >= gräns for n in röstat]
             kandidater = [(x0, x1) for x0, x1 in _runs(korridor)
                           if x1 - x0 >= MIN_GUTTER_WIDTH * width
-                          and GUTTER_CENTRE_LO < (x0 + x1) / 2 / width
-                          < GUTTER_CENTRE_HI]
-            if kandidater:
-                lo, hi = max(kandidater, key=lambda r: r[1] - r[0])
-            else:
-                # Ingen genomgående korridor — fall tillbaka på medianen, som
-                # är bättre än ingen spaltindelning alls.
-                lo = int(_median_of([_band_gutter(dark, a, b, width)[0]
-                                     for a, b in träffar]))
-                hi = int(_median_of([_band_gutter(dark, a, b, width)[1]
-                                     for a, b in träffar]))
-            blocks = [(0, lo), (hi, width)]
+                          # Marginalerna är inte rännor: en ränna har sats på
+                          # BÅDA sidor. Utan villkoret röstar den tomma ytan
+                          # till höger om en smal spalt fram en falsk spalt.
+                          and x0 > 0 and x1 < width]
+            blocks, cursor = [], 0
+            for x0, x1 in kandidater:
+                blocks.append((cursor, x0))
+                cursor = x1
+            blocks.append((cursor, width))
             blocks = [(a, b) for a, b in blocks
                       if b - a >= MIN_COLUMN_WIDTH * width]
             if len(blocks) >= 2:
@@ -838,6 +882,26 @@ def _region_name(lo, hi, width):
     if centre > 0.55:
         return "högerkolumn"
     return "mittkolumn"
+
+
+def _region_names(blocks, width):
+    """Regionnamn för ett avsnitts SAMTLIGA spalter, i x-ordning.
+
+    Lägesnamnen räcker till tre spalter men kolliderar vid fyra: med jämnt
+    fördelade spalter ligger mittpunkterna på 0,14 / 0,38 / 0,62 / 0,86, och
+    `_region_name` döper då de två vänstra till `vänsterkolumn` och de två
+    högra till `högerkolumn`. Två skilda spalter med samma namn slås ihop av
+    varje konsument nedströms — `binda_rader` matchar element mot region på
+    namnet, och två spalter under ett namn ger samma hopslagning som mätfelet
+    var till för att förhindra. Fyra eller fler spalter namnges därför på
+    ordningstalet, som transkriptionerna redan gör (`kolumn 1`…`kolumn 4`).
+    """
+    if len(blocks) >= 4:
+        return ["kolumn %d" % (i + 1) for i in range(len(blocks))]
+    namn = [_region_name(lo, hi, width) for lo, hi in blocks]
+    if len(set(namn)) == len(namn):
+        return namn
+    return ["kolumn %d" % (i + 1) for i in range(len(blocks))]
 
 
 def _box(x0, x1, top, bottom, width, height):
@@ -905,8 +969,9 @@ def measure_dark(dark):
         # vänster- och högerspaltens rader till gemensamma band.
         seg_bands = [(a, b) for a, b, _ in body
                      if a >= ink_top and b <= ink_bottom]
-        for lo, hi in _columns(dark, ink_top, ink_bottom, width, seg_bands):
-            region = _region_name(lo, hi, width)
+        seg_blocks = _columns(dark, ink_top, ink_bottom, width, seg_bands)
+        seg_namn = _region_names(seg_blocks, width)
+        for (lo, hi), region in zip(seg_blocks, seg_namn):
             columns.append({"region": region,
                             "x": round(lo / width, 6),
                             "bredd": round((hi - lo) / width, 6),

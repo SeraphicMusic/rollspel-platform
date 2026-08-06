@@ -665,3 +665,73 @@ class TestFrameRuleExtent(unittest.TestCase):
         page[380:700, 60:280:4] = 30
         rows, _ = measure_dark(darkness(page))
         self.assertIn(KIND_GRAPHIC, [r["kind"] for r in rows])
+
+
+class TestTrespaltigSida(unittest.TestCase):
+    """Sättningen i de svenska rollspelshäftena är TRESPALTIG.
+
+    Mätt över ikappkörningens 29 böcker: 135 av 217 sidor i 25 av 29 böcker
+    har tre spalter. Den gamla mätningen letade EN ränna innanför sidans
+    mittersta 30–70 % och tog den första den fann, så mitt- och högerspalten
+    slogs ihop till ett band per tryckt rad — kolumnsammanslagning producerad
+    av mätningen själv, omöjlig att skilja från en verklig fullbredds rad.
+    """
+
+    def _spaltad(self, granser, rader=12, ink=40, botten=255):
+        """En sida med spalter enligt (lo, hi)-paren i `granser`."""
+        page = blank(botten)
+        for i in range(rader):
+            top = 100 + i * PITCH
+            for lo, hi in granser:
+                write_line(page, top, lo, hi, ink=ink)
+        return page
+
+    def _regioner(self, page):
+        rows, _ = measure_dark(darkness(page))
+        reg = {}
+        for r in rows:
+            if r["region"] in ("sidhuvud", "sidfot"):
+                continue
+            reg[r["region"]] = reg.get(r["region"], 0) + 1
+        return reg
+
+    def test_tre_spalter_ger_tre_regioner(self):
+        reg = self._regioner(self._spaltad([(40, 190), (225, 375), (410, 560)]))
+        self.assertEqual(reg.get("vänsterkolumn"), 12)
+        self.assertEqual(reg.get("mittkolumn"), 12)
+        self.assertEqual(reg.get("högerkolumn"), 12)
+
+    def test_tva_spalter_ar_fortfarande_tva(self):
+        """Motprovet: flerränningen får inte hitta på en tredje spalt."""
+        reg = self._regioner(self._spaltad([(60, 285), (315, 540)]))
+        self.assertEqual(reg.get("vänsterkolumn"), 12)
+        self.assertEqual(reg.get("högerkolumn"), 12)
+        self.assertNotIn("mittkolumn", reg)
+
+    def test_gra_botten_doljer_inte_rannorna(self):
+        """i-drakens-klor s. 5: profilgolv 96 mot topp 136, noll rännor.
+
+        Tomheten mättes mot profilens TOPP, alltså absolut. En skanning med grå
+        eller rastrerad botten har ett golv långt över noll, och då föll hela
+        sidan ut som fullbredd. Måttet går nu på profilens egna omfång.
+        """
+        page = self._spaltad([(40, 190), (225, 375), (410, 560)],
+                             ink=20, botten=150)
+        reg = self._regioner(page)
+        self.assertEqual(reg.get("vänsterkolumn"), 12)
+        self.assertEqual(reg.get("mittkolumn"), 12)
+        self.assertEqual(reg.get("högerkolumn"), 12)
+
+    def test_fyra_spalter_far_skilda_namn(self):
+        """Lägesnamnen kolliderar vid fyra spalter — då namnges de på ordningen.
+
+        Med jämnt fördelade spalter ligger mittpunkterna på 0,14/0,38/0,62/0,86,
+        och `_region_name` skulle döpa de två vänstra till `vänsterkolumn` och
+        de två högra till `högerkolumn`. Två skilda spalter under ETT namn slås
+        ihop av varje konsument nedströms.
+        """
+        reg = self._regioner(self._spaltad(
+            [(30, 140), (170, 280), (310, 420), (450, 560)]))
+        self.assertEqual(sorted(reg), ["kolumn 1", "kolumn 2",
+                                       "kolumn 3", "kolumn 4"])
+        self.assertEqual(set(reg.values()), {12})
