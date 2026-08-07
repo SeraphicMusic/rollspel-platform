@@ -321,7 +321,47 @@ def _bbox(el):
     return (el.get("source") or {}).get("bbox")
 
 
-def _join_text(prev, nxt):
+_ORDTECKEN = re.compile(r"[^0-9A-Za-zÅÄÖÉÜåäöéü\-]+")
+
+
+def _ordnyckel(ord_):
+    """Jämförbar form av ett ord: skiljetecken bort, skiftläge bort.
+
+    Skiftläget måste bort. Blanketterna i MUT-AVE-terminal-state är satta i ett
+    displaysnitt som ritar gemena kodpunkter som versaler, så samma ord står
+    `killer-kängor` på s. 20 och `KILLER-KÄNGOR` på s. 29 — samma tryck, två
+    skrivningar.
+    """
+    return _ORDTECKEN.sub("", ord_).casefold()
+
+
+def mid_line_words(book):
+    """Ord som står MITT PÅ en rad någonstans i boken.
+
+    Ett bindestreck vid radslutet är tvetydigt: det kan vara avstavningens
+    (faller bort) eller ett tryckt sammansättningsstreck (står kvar). Men
+    samma ord står ofta någon annanstans i boken utan att en radbrytning kan
+    ha skapat strecket, och DÅ är formen mätt i stället för gissad. Det är
+    `beslut.md`-metoden »leta serie innan du beskär«, i kod.
+
+    Bara ord som inte är sist på sin rad räknas — ett ord i radslutsposition
+    är just det som frågan gäller och kan inte vittna om sig självt.
+    """
+    ord_ = set()
+    for page in book.get("pages", []):
+        for el in page.get("elements", []):
+            if el.get("removed"):
+                continue
+            for rad in (el.get("text") or "").split("\n"):
+                delar = rad.split()
+                for token in delar[:-1]:
+                    nyckel = _ordnyckel(token)
+                    if nyckel:
+                        ord_.add(nyckel)
+    return ord_
+
+
+def _join_text(prev, nxt, mittpa=None):
     """Foga ihop två tryckta rader och läk radbrytningen vid radslutet.
 
     Två radslut binder ihop orden utan mellanslag: avstavningens bindestreck
@@ -344,6 +384,25 @@ def _join_text(prev, nxt):
         # och skriver ihop dem till `SMI-och`.
         if _HANGING_HYPHEN.match(nxt) or _HANGING_NEXT.match(nxt):
             return prev + " " + nxt
+        # BOKEN SJÄLV ÄR FACIT före varje regel. Står ordet någon annanstans i
+        # boken MITT PÅ en rad — alltså utan att en radbrytning kan ha skapat
+        # strecket — är den formen tryckets, och gissning behövs inte.
+        #
+        # Det var så MUT-AVE-terminal-states fem radslutsstreck avgjordes: alla
+        # fem visade sig vara tryckta sammansättningsstreck, för `SVOT-utbildning`
+        # står mitt på raden på s. 19 och `killer-kängor` mitt på raden på s. 20.
+        # Reglerna nedan hade läkt fyra av dem, och `40års` och `30års` stod
+        # live i `bok.md`. Det motsatta utfallet är lika bindande: hittas den
+        # HOPSKRIVNA formen mitt på en rad ska strecket falla.
+        if mittpa:
+            forled = prev.split()[-1]                    # bär strecket
+            efterled = nxt.split()[0] if nxt.split() else ""
+            med_streck = _ordnyckel(forled + efterled)
+            utan_streck = _ordnyckel(forled[:-1] + efterled)
+            if med_streck and med_streck in mittpa:
+                return prev + nxt
+            if utan_streck and utan_streck in mittpa:
+                return prev[:-1] + nxt
         if nxt[:1].islower():
             if _COMPOUND_ABBR.search(prev):
                 # Sammansättningsstreck: strecket står kvar, utan mellanrum.
@@ -357,7 +416,7 @@ def _join_text(prev, nxt):
     return prev + " " + nxt
 
 
-def _unwrap(text):
+def _unwrap(text, mittpa=None):
     """Foga ihop de tryckta radbrytningarna INUTI ett elements egen text.
 
     Transkriptionskontraktet ger ett element per tryckt rad — men inte
@@ -378,7 +437,7 @@ def _unwrap(text):
         hopfogad = ""
         for rad in stycke.split("\n"):
             if rad.strip():
-                hopfogad = _join_text(hopfogad, rad.strip())
+                hopfogad = _join_text(hopfogad, rad.strip(), mittpa)
         if hopfogad:
             stycken.append(hopfogad)
     return "\n\n".join(stycken)
@@ -504,7 +563,7 @@ def _starts_paragraph(el, prev, nxt, boxes, prev_boxes):
     return False
 
 
-def _reflow(run):
+def _reflow(run, mittpa=None):
     """Dela en rad-följd i stycken och foga ihop varje styckes rader.
 
     Returnerar (sida, text, första_elementet) per stycke. Det sista behövs för
@@ -545,7 +604,8 @@ def _reflow(run):
     for block in blocks:
         text = ""
         for _, el in block:
-            text = _join_text(text, _unwrap((el.get("text") or "").strip()))
+            text = _join_text(text, _unwrap((el.get("text") or "").strip(), mittpa),
+                              mittpa)
         # Anmärkningarna samlas från HELA blocket, inte bara ledarelementet.
         # Ett tryckfel sitter sällan på styckets första rad — s. 65:s
         # "baserade på färdigheten" står på dess sista — och hade noten
@@ -772,6 +832,8 @@ def export_markdown(workdir, include_artifacts=False):
     index = 0
     # Senaste rubrik, för att statblocket inte ska upprepa NPC-namnet.
     senaste_rubrik = None
+    # Bokens egna ord i mittradsposition — facit för radslutets bindestreck.
+    mittpa = mid_line_words(book)
     while index < len(items):
         page, el = items[index]
         etype = el.get("type")
@@ -794,7 +856,7 @@ def export_markdown(workdir, include_artifacts=False):
                     break
                 run.append((nxt_page, nxt))
                 index += 1
-            blocks = _reflow(run)
+            blocks = _reflow(run, mittpa)
             for blk_page, text, lead, notes in blocks:
                 if blk_page != last_page:
                     lines += ["<!-- sida %d -->" % blk_page, ""]

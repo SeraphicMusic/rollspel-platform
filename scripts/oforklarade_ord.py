@@ -53,6 +53,11 @@ def _las(path):
 # utskriften behåller tokenets fulla form, för det är den diffen visar.
 _SKILJE = "”“’‘\"'.,;:!?()[]{}<>«»…–—-*"
 
+# Elementtyper som `pipeline/export.py` inte skriver till `bok.md`. Sidhuvuden
+# och sidfötter är sidgrafik, inte boktext, och en rättning av dem ändrar
+# ingenting i den fil grinden mäter.
+_EJ_I_LASEXPORTEN = {"page_artifact"}
+
 
 def _karna(token):
     k = token.strip(_SKILJE)
@@ -161,7 +166,12 @@ def redovisad_andring(workdir):
             if el.get("type") == "heading" and not el.get("removed"):
                 senaste_rubrik = el.get("text")
             if el.get("type") == "illustration":
-                for c in el.get("corrections") or []:
+                # En post på ett element som LADES TILL efter frysningen kan
+                # aldrig förklara ett bortfall: dess `original` stod aldrig i
+                # den `bok.md` grinden jämför mot. `p027_e00` skrevs om efter
+                # att ha lagts till, och dess gamla beskrivnings ord krediterades
+                # som förluster — en överkredit som åt upp en riktig kvittning.
+                for c in (el.get("corrections") or []) if not el.get("added_by") else []:
                     if c.get("applied"):
                         for ord_, n in _pa_karna(words(c.get("original") or "")).items():
                             borta[ord_] += n
@@ -188,6 +198,14 @@ def redovisad_andring(workdir):
                                 - fanns).items():
                     nya[ord_] += n
                     kallor[ord_].append((sida, el.get("id"), "tillagt"))
+            # En post på ett element som ALDRIG NÅR läsexporten får inte
+            # krediteras. `page_artifact` renderas inte alls, och de nio tömda
+            # sidfötterna på MUT-AVE-terminal-state krediterade ordet
+            # `TERMINAL` nio gånger — en överkredit som tyst nollställde
+            # motparten till en riktig kvittning på en helt annan sida.
+            # Grinden mäter `bok.md`, och då ska bara det som hamnar där räknas.
+            if el.get("type") in _EJ_I_LASEXPORTEN:
+                continue
             for c in el.get("corrections") or []:
                 if not c.get("applied"):
                     continue

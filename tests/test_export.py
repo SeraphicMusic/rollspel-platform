@@ -284,6 +284,35 @@ class TestReflow(unittest.TestCase):
                           line("e02", "ter skriker förtvivlat.", w=0.42)])
         self.assertIn("Det är varmt och mina kamrater skriker förtvivlat.", md)
 
+    def test_boken_sjalv_avgor_radslutets_bindestreck(self):
+        """Står ordet MITT PÅ en rad någon annanstans är formen mätt, inte gissad.
+
+        MUT-AVE-terminal-state avstavar aldrig: alla fem radslutsstreck i boken
+        är tryckta sammansättningsstreck. Reglerna läkte fyra av dem, och
+        `40års`, `30års`, `SVOTUTBILDNING` och `KILLERKÄNGOR` stod LIVE i
+        `bok.md` — ord som inte finns. Beviset som avgör saken är bokens eget:
+        `killer-kängor` står mitt på raden på s. 20 och kan därför inte ha fått
+        sitt streck av en radbrytning.
+
+        Motprovet är lika bindande: hittas den HOPSKRIVNA formen mitt på en rad
+        ska strecket falla, precis som förut.
+        """
+        md = self.render([
+            line("e01", "Han bär svarta killer-", w=0.38),
+            line("e02", "kängor, och en jacka."),
+            line("e03", "Alla har killer-kängor i lagret."),
+        ])
+        self.assertIn("killer-kängor, och en jacka", md)
+        self.assertNotIn("killerkängor,", md)
+
+    def test_hopskriven_form_i_boken_faller_strecket(self):
+        md = self.render([
+            line("e01", "Det är varmt och mina kamra-", w=0.38),
+            line("e02", "ter skriker förtvivlat."),
+            line("e03", "Mina kamrater står kvar där ute."),
+        ])
+        self.assertIn("mina kamrater skriker", md)
+
     def test_utan_geometri_och_utan_streck_fogas_inget_ihop(self):
         """Motprovet: saknad geometri utan avstavning bryter som förut."""
         md = self.render([line("e01", "Ett helt stycke som slutar här."),
