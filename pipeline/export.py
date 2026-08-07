@@ -165,7 +165,19 @@ def _statblock_md(el, foregaende_rubrik=None):
                 continue
             lines.append("- **%s:** %s" % (k, _field_value(v)))
     skills = data.get("skills") or {}
-    if skills:
+    if data.get("skills_text"):
+        # Rutans färdighetsrad ORDAGRANT, när transkriptionen sparat den.
+        #
+        # Uppdelningen i `data.skills` är en dict, och en dict kan inte bära
+        # skiljetecknen MELLAN sina poster. Sammanfogningen skrev därför alltid
+        # `, `, och på MUT-AVE-terminal-state s. 19 sätter trycket en PUNKT
+        # efter `Markfordon 80%` — läsexporten emenderade alltså ett
+        # skiljetecken som Regel 8a förbjuder att emendera, och avvikelsen
+        # kunde bara redovisas, inte undvikas (BQ-009). Bokens övriga arton
+        # rutor har komma överallt och rörs inte av det här.
+        lines.append("- **%s:** %s" % (data.get("skills_label") or "Färdigheter",
+                                       data["skills_text"]))
+    elif skills:
         lines.append("- **Färdigheter:** " + ", ".join(
             "%s %s" % (k, v) for k, v in skills.items()))
     lines.extend(_weapons_md(data.get("weapons")))
