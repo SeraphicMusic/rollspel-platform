@@ -213,6 +213,32 @@ class TestSidval(Bokbadd):
         self.assertEqual(self.kvar(), 0)
 
 
+class TestOrordaIllustrationer(Bokbadd):
+    def test_orord_bildbeskrivning_krediterar_ingenting(self):
+        """Ett orört bildelement nettar redan till noll i `diffa` — en kredit
+        för dess text har ingen motpart i diffen och ligger och väntar på att
+        sluka en obesläktad ändring av samma ord. På elefanten s. 5 åt kart-
+        beskrivningens `stora` upp nya-sidan av citatbytet `"stora`→`”stora`,
+        och borta-sidan strandade som oförklarad. Samma överkreditklass som
+        `TERMINAL` ×9."""
+        self.bok('Palle antyder att "stora saker" väntar',
+                 'Palle antyder att ”stora saker” väntar')
+        self.sida([
+            {"id": "e1", "type": "illustration",
+             "text": "Karta över den stora staden.", "corrections": []},
+            {"id": "e2", "corrections": [self.post('"stora saker"',
+                                                   "”stora saker”")]},
+        ])
+        self.assertEqual(self.kvar(), 0)
+
+    def test_rattad_bildbeskrivning_redovisas_fortfarande_pa_bada_sidor(self):
+        self.bok("beskrivning: en gammal karta", "beskrivning: en ny plan")
+        self.sida([{"id": "e1", "type": "illustration", "text": "en ny plan",
+                    "corrections": [self.post("en gammal karta",
+                                              "en ny plan")]}])
+        self.assertEqual(self.kvar(), 0)
+
+
 class TestUtanFrysning(Bokbadd):
     def test_saknad_frysning_ger_filfel_inte_falskt_gront(self):
         (self.wd / "export" / "bok.md").write_text("text", encoding="utf-8")

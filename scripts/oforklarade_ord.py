@@ -171,6 +171,20 @@ def redovisad_andring(workdir):
                 # den `bok.md` grinden jämför mot. `p027_e00` skrevs om efter
                 # att ha lagts till, och dess gamla beskrivnings ord krediterades
                 # som förluster — en överkredit som åt upp en riktig kvittning.
+                #
+                # Och ett ORÖRT bildelement krediteras inte alls. Dess text
+                # står oförändrad på båda sidor av frysningen och nettar redan
+                # till noll i `diffa` — en kredit här har ingen motpart i
+                # diffen och ligger och väntar på att sluka en obesläktad
+                # ändring av samma ord. Det var så `"stora` → `”stora` på
+                # elefanten s. 5 strandade: kartbeskrivningen på samma sida
+                # innehöll ordet `stora`, krediten åt upp nya-sidan av en
+                # riktig kvittning, och citatbytets borta-sida stod kvar som
+                # oförklarad. Samma överkreditklass som `TERMINAL` ×9.
+                andrad = el.get("added_by") or any(
+                    c.get("applied") for c in el.get("corrections") or [])
+                if not andrad:
+                    continue
                 for c in (el.get("corrections") or []) if not el.get("added_by") else []:
                     if c.get("applied"):
                         for ord_, n in _pa_karna(words(c.get("original") or "")).items():
