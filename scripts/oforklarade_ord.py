@@ -34,6 +34,7 @@ import sys
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent))
 
+from pipeline.export import _samma_namn  # noqa: E402
 from pipeline.freeze import diff, words  # noqa: E402
 
 
@@ -58,7 +59,7 @@ def _karna(token):
     return k.casefold() or token.casefold()
 
 
-def _elementtext(el):
+def _elementtext(el, foregaende_rubrik=None):
     """Den text ett element bidrar med till läsexporten, grovt räknat.
 
     Grovt räcker: värdet används bara för att kvitta ord i ett TILLAGT element,
@@ -69,6 +70,17 @@ def _elementtext(el):
     delar = [el.get("text") or ""]
     data = el.get("data")
     if isinstance(data, dict):
+        # `export._statblock_md` skriver INTE ut `data.name` när rutans egen
+        # rubrik står omedelbart före och bär samma namn — trycket sätter
+        # NPC-namnet en gång. Räknas namnet ändå krediteras det som ett nytt
+        # ord, och rubrikens gamla skrivning (`Eldritch Mercy` mot
+        # `ELDRITCH MERCY`) blir en strandad förlust som ingen post kan bära.
+        #
+        # Villkoret ÄRVS ur exportören i stället för att skrivas av: två kopior
+        # av samma regel svarar förr eller senare olika på samma bok.
+        if el.get("type") == "statblock" and _samma_namn(data.get("name"),
+                                                         foregaende_rubrik):
+            data = {k: v for k, v in data.items() if k != "name"}
         stack = [data]
         while stack:
             nod = stack.pop()
@@ -111,6 +123,19 @@ def redovisad_andring(workdir):
         if not isinstance(data, dict):
             continue
         sida = f.name[5:8]
+        # Text som gått UPP i ett annat element. En montering (statblock,
+        # table) märks `added_by` av advokaten, men dess innehåll kommer ur
+        # draftens egna element — de ligger kvar med `removed: true` och
+        # `source.merged_into`. Räknas monteringen som ett rent tillägg
+        # krediteras samma ord två gånger på nya-sidan, och den BORTA-sida som
+        # hör ihop med dem blir strandad: `Eldritch`, `Mercy`, `GahMan` föll ut
+        # som oförklarade förluster fast namnen stod kvar i rutans rubrik.
+        uppgangen = collections.defaultdict(collections.Counter)
+        senaste_rubrik = None
+        for el in data.get("elements") or []:
+            mal = (el.get("source") or {}).get("merged_into")
+            if mal:
+                uppgangen[mal] += _pa_karna(words(_elementtext(el)))
         for el in data.get("elements") or []:
             # Ett element som advokaten LADE TILL bär inga korrektionsposter —
             # dess ord är nya i boken utan att någon post utger sig för att ha
@@ -121,8 +146,46 @@ def redovisad_andring(workdir):
             # det. (Advokaten på sieger-bauhaus-block s. 2 fann en hel
             # illustration som saknades i draften — ingen regel och ingen
             # textjämförelse ser den, bara att bilderna räknas.)
-            if el.get("added_by"):
+            # En BILDBESKRIVNING är aldrig boktext. Den är skriven av agenten
+            # för att säga vad som syns, och den skrivs om varje gång någon
+            # tittar närmare — s. 6:s och s. 12:s föll på fem respektive fyra
+            # punkter vid beskärning. Räknas dess ord som bokens ord blir
+            # grinden ett brus som larmar på varje förbättrad beskrivning, och
+            # ett instrument som alltid larmar slutar man läsa.
+            #
+            # Villkoret är elementTYPEN, inte `added_by`: en beskrivning som
+            # rättats med en korrektionspost är lika lite boktext som en som
+            # lagts till. Bägge sidorna redovisas — den gamla lydelsen ur
+            # posternas `original` lämnar boken, den nya kommer in — så en
+            # beskrivning som FÖRSVINNER syns fortfarande.
+            if el.get("type") == "heading" and not el.get("removed"):
+                senaste_rubrik = el.get("text")
+            if el.get("type") == "illustration":
+                for c in el.get("corrections") or []:
+                    if c.get("applied"):
+                        for ord_, n in _pa_karna(words(c.get("original") or "")).items():
+                            borta[ord_] += n
+                            kallor[ord_].append((sida, el.get("id"), "bildtext"))
                 for ord_, n in _pa_karna(words(_elementtext(el))).items():
+                    nya[ord_] += n
+                    kallor[ord_].append((sida, el.get("id"), "bildtext"))
+                continue
+            if el.get("added_by"):
+                # En UTBRYTNING är ingen tillägg. Advokaten bryter ut en rubrik
+                # som låg inbakad först i sitt stycke, ger den ett nytt id och
+                # märker den `added_by` — men orden fanns redan i boken, och de
+                # står kvar i postens `original`. Räknas hela elementtexten som
+                # ny konsumerar den nya-sidan av diffen, och den BORTA-sida som
+                # hör ihop med den blir strandad: `Biobunker` föll ut som två
+                # oförklarade förluster fast `BIOBUNKER` stod kvar i samma
+                # rubrik. Elementets egna posters `original` dras därför bort —
+                # det är precis den text som inte är ny.
+                fanns = collections.Counter(uppgangen.get(el.get("id")) or {})
+                for c in el.get("corrections") or []:
+                    if c.get("applied"):
+                        fanns += _pa_karna(words(c.get("original") or ""))
+                for ord_, n in (_pa_karna(words(_elementtext(el, senaste_rubrik)))
+                                - fanns).items():
                     nya[ord_] += n
                     kallor[ord_].append((sida, el.get("id"), "tillagt"))
             for c in el.get("corrections") or []:

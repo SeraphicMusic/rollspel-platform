@@ -118,12 +118,41 @@ def _field_value(value):
     return value
 
 
-def _statblock_md(el):
+def _samma_namn(a, b):
+    """Samma namn bortsett från skiftläge och skiljetecken?
+
+    Skiftläget MÅSTE bortses från: rubriken bär tryckets versaler
+    (`JIM BRONCO`) medan `data.name` bär korpusens kapitälform (`Jim Bronco`),
+    och det är två skrivningar av ett namn, inte två namn.
+    """
+    if not a or not b:
+        return False
+    rensa = str.maketrans("", "", " .,:;!?—–-")
+    return a.casefold().translate(rensa) == b.casefold().translate(rensa)
+
+
+def _statblock_md(el, foregaende_rubrik=None):
+    """Statblocket som markdown.
+
+    `foregaende_rubrik` är texten i elementet närmast före, när det är en
+    `heading`. Bär den samma namn som statblocket skrivs namnet INTE en gång
+    till: trycket sätter NPC-namnet en gång, i rutans displaygrad, och en
+    transkription som både typar det som `heading` (tryckets form) och lagrar
+    det i `data.name` (statblockets metadata) fick läsexporten att skriva
+
+        #### JIM BRONCO
+        **Jim Bronco**
+
+    Dubbleringen hittades av ordgrinden på MUT-AVE-terminal-state — nitton
+    statblock, nitton namn för mycket. Referensboken `MUT-AVE-harda-bud` har
+    ingen egen rubrik och märkte det aldrig.
+    """
     data = el.get("data") or {}
     lines = []
     name = data.get("name") or el.get("text") or "Statblock"
-    lines.append("**%s**" % name)
-    lines.append("")
+    if not _samma_namn(name, foregaende_rubrik):
+        lines.append("**%s**" % name)
+        lines.append("")
     stats = data.get("stats") or {}
     if stats:
         lines.append("| " + " | ".join(stats.keys()) + " |")
@@ -195,8 +224,17 @@ def _table_md(el):
         for row in rows:
             lines.append("| " + " | ".join(esc(c) for c in row) + " |")
     else:
+        # Cellavskiljaren är ett vanligt BINDESTRECK, inte ett tankstreck.
+        #
+        # Skillnaden ser kosmetisk ut och är det inte. `freeze.words` sållar
+        # bort ett ensamt `-` som markering men räknar ett ensamt `—` som ord,
+        # och det är rätt: korpusen har 723 tryckta tabellceller som INNEHÅLLER
+        # ett tankstreck och där betyder »inget värde«. En avskiljare av samma
+        # tecken går inte att skilja från dem. MUT-AVE-terminal-states
+        # rollformulär gav 56 sådana fantomord i ordgrinden — ord som aldrig
+        # stått i boken, i en export som annars var riktig.
         for row in rows:
-            lines.append("- " + " — ".join(esc(c) for c in row))
+            lines.append("- " + " - ".join(esc(c) for c in row))
     lines.append("")
     return lines
 
@@ -732,6 +770,8 @@ def export_markdown(workdir, include_artifacts=False):
                  len(arvda), ", ".join(str(i) for i in arvda))
     last_page = None
     index = 0
+    # Senaste rubrik, för att statblocket inte ska upprepa NPC-namnet.
+    senaste_rubrik = None
     while index < len(items):
         page, el = items[index]
         etype = el.get("type")
@@ -790,6 +830,7 @@ def export_markdown(workdir, include_artifacts=False):
         if etype == "heading":
             level = min(int(el.get("level", 2)) + 1, 6)
             lines += ["#" * level + " " + text, ""]
+            senaste_rubrik = text
         elif etype in ("toc_entry", "index_entry"):
             # Flödas ALDRIG om: en innehålls- eller registerpost är en rad,
             # och att foga ihop dem skulle förstöra uppställningen.
@@ -802,7 +843,8 @@ def export_markdown(workdir, include_artifacts=False):
         elif etype == "table":
             lines += _table_md(el)
         elif etype == "statblock":
-            lines += _statblock_md(el)
+            lines += _statblock_md(el, senaste_rubrik)
+            senaste_rubrik = None
         elif etype in _CAPTION_TYPES:
             # Bildtext/tabellnot är inte brödtext; kursiv skiljer den åt.
             lines += ["*%s*" % text, ""] if text else []
