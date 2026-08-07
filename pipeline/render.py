@@ -10,7 +10,7 @@ import fitz
 
 from .analyze import NEEDS_VISION
 from .log import setup_logging
-from .manifest import Manifest, page_file
+from .manifest import Manifest, now_iso, page_file
 
 DEFAULT_DPI = 150
 MAX_DIM = 1950  # Claudes bildgräns för multi-image-läsning
@@ -52,7 +52,17 @@ def render(pdf_path, workdir, pages=None, dpi=DEFAULT_DPI, all_pages=False,
                 w, h, used_dpi = render_page(doc[no - 1], out, dpi=dpi)
                 if grayscale:
                     _to_grayscale(out)
-                m.set_state(no, "rendered")
+                # NEDGRADERA ALDRIG. Skip-grenen ovan har spärren, den här
+                # hade den inte — och `rendera --alla` på en färdig bok satte
+                # 29 av MUT-AVE-terminal-states sidor tillbaka från `validated`
+                # till `rendered`. Ingenting varnade; felet syntes först när
+                # `arkivera` vägrade med 29 hinder, långt efter att sidorna var
+                # korrekturlästa. Att rendera en PNG säger ingenting om vad
+                # sidan redan gått igenom.
+                if not m.state_at_least(no, "rendered"):
+                    m.set_state(no, "rendered")
+                else:
+                    m.page(no)["steps"]["rendered"] = now_iso()
                 done += 1
                 log.debug("renderade sida %d (%dx%d @ %d DPI)", no, w, h, used_dpi)
             except Exception as e:  # felisolering per sida
