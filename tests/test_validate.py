@@ -79,6 +79,51 @@ class TestStatblockValidation(unittest.TestCase):
         validate_element(el, M2089)
         self.assertFalse(el.get("needs_review"), el.get("review_reasons"))
 
+    def test_varde_med_enhet_kontrolleras_anda(self):
+        """`29 m/SR` är ett tal med sin enhet, inte ett oläsbart värde.
+
+        `_as_int` gav `None` för allt som inte var ett rent heltal, och
+        `derived_checks` hoppade då över formeln TYST. KP fyrade (rent tal)
+        medan `Förflyttning = FYS + SMI` aldrig gjorde det — kontrollen gällde
+        halva sin lista och rapporten såg komplett ut. På
+        MUT-AVE-terminal-state räknade advokaterna formeln för hand på nitton
+        rutor och fann åtta avvikelser som ingen kod hade sett (BQ-001).
+        """
+        el = {"type": "statblock",
+              "data": {"name": "Eldritch", "stats": {"FYS": 18, "SMI": 11},
+                       "other": {"Förflyttning": "25 m/SR"}}}
+        validate_element(el, M2089)
+        self.assertTrue(any("Förflyttning" in r and "FYS + SMI" in r
+                            for r in el.get("review_reasons") or []),
+                        el.get("review_reasons"))
+
+    def test_ratt_varde_med_enhet_flaggas_inte(self):
+        el = {"type": "statblock",
+              "data": {"name": "Eldritch", "stats": {"FYS": 18, "SMI": 11},
+                       "other": {"Förflyttning": "29 m/SR"}}}
+        validate_element(el, M2089)
+        self.assertFalse(el.get("needs_review"), el.get("review_reasons"))
+
+    def test_olasbart_varde_ger_flagga_inte_tystnad(self):
+        """En ÖVERHOPPAD kontroll får aldrig se ut som en godkänd."""
+        el = {"type": "statblock",
+              "data": {"name": "Eldritch", "stats": {"FYS": 18, "SMI": 11},
+                       "other": {"Förflyttning": "snabb"}}}
+        validate_element(el, M2089)
+        self.assertTrue(any("hoppades över" in r
+                            for r in el.get("review_reasons") or []),
+                        el.get("review_reasons"))
+
+    def test_tarningsvarde_lases_inte_som_tal(self):
+        """`3T6+2` får inte bli 3 — spärren mot att en formel räknar på en tärning."""
+        el = {"type": "statblock",
+              "data": {"name": "Gil", "stats": {"STO": 16, "FYS": 17},
+                       "other": {"SB": "3T6+2", "KP": 33}}}
+        validate_element(el, M2089)
+        self.assertFalse(any("SB" in r and "hoppades över" in r
+                             for r in el.get("review_reasons") or []),
+                         el.get("review_reasons"))
+
     def test_kp_i_other_korsvalideras(self):
         """Samma fält kan hamna i `stats` hos en transkription och `other` hos
         nästa; skillnaden är inte en egenskap hos boken."""

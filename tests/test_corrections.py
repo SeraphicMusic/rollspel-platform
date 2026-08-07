@@ -19,6 +19,23 @@ M2089 = load("mutant2089")
 
 
 class TestDiceRepair(unittest.TestCase):
+    def test_notation_far_inte_hittas_pa_i_sin_helhet(self):
+        """`SIG+2` -> `5T6+2` byter ut HELA tärningsdelen.
+
+        Terminal-state s. 36 bar en applicerad post `SIG` -> `5T6` rakt in i
+        tryckets »DET HÄR ÄR INTE ETT SPEL I SIG« — ett spelvärde som aldrig
+        stått i boken. `dice_candidates` spärrar sedan dess den nakna formen,
+        men `SIG+2` bär en siffra och passerar den spärren.
+
+        Motprovet står i testerna nedan: `ITG` behåller sitt `T`, `2I6` sina
+        siffror, `3I6–Z` likaså. Där något av notationen FAKTISKT står i
+        trycket är rättningen en återställd felläsning; där ingenting gör det
+        är den en påhittad notation, och utfallet ska bli en flagga.
+        """
+        status, corr = repair_dice_token("SIG+2", DOD.dice)
+        self.assertEqual(status, "ambiguous")
+        self.assertIsNone(corr)
+
     def test_itg_blir_1t6(self):
         status, corr = repair_dice_token("ITG", DOD.dice)
         self.assertEqual(status, "fixed")

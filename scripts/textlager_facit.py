@@ -42,7 +42,7 @@ import fitz  # noqa: E402
 # Typsnitt vars gemena kodpunkter ritas som versaler. Listan är avsiktligt en
 # lista och inte en heuristik: att gissa fram klassen ur glyfhöjder är precis
 # den sortens bedömning som ska göras mot PNG:n, inte i ett skript.
-VERSALTYPSNITT = ("MachineFont",)
+VERSALTYPSNITT = ("MachineFont", "KomikaHand", "KomikaSlick")
 
 ORD = re.compile(r"\w+", re.UNICODE)
 

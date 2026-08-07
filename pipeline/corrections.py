@@ -233,6 +233,41 @@ def repair_dice_token(token, dice_cfg):
     notation, subs = top[0]
     if notation == token:
         return "ok", None
+    # NÅGOT AV NOTATIONEN MÅSTE FAKTISKT STÅ I TRYCKET.
+    #
+    # `SIG` blev `5T6` på terminal-state s. 36 — tre substitutioner på tre
+    # tecken, confidence 0,91, applicerad rakt in i tryckets `DET HÄR ÄR INTE
+    # ETT SPEL I SIG`. Ett spelvärde som aldrig stått i boken, tvärs Regel 8a:s
+    # högerkolumn, och ingenting varnade. Posten låg kvar i sidfilen tills en
+    # advokat läste den, långt efter att `dice_candidates` fått sin spärr mot
+    # sifferlösa tokens utan separator — en lagad regel rättar inte de poster
+    # den redan skrivit.
+    #
+    # Den spärren täcker bara den nakna formen. `SIG+2` bär en siffra och
+    # passerar den, och blir `5T6+2` med hela tärningsdelen hopfantiserad.
+    # Villkoret nedan stänger arten i stället för instansen.
+    #
+    # Två andra spärrar prövades och föll, båda på äkta lagningar i testsviten:
+    #   * ett tak på antalet substitutioner fäller `ITG` → `1T6` (två av tre),
+    #   * ett krav på bokstavlig separator fäller `2I6` → `2T6` och
+    #     `3I6–Z` → `3T6–2`, där just separatorn är den felästa.
+    # Skillnaden ligger alltså varken i hur MÅNGA tecken som byts eller i
+    # VILKET. Den ligger i att `ITG` behåller sitt `T`, `2I6` sina siffror och
+    # `1t10` tre av fyra tecken — medan `SIG` inte behåller ETT ENDA. Där
+    # ingenting av trycket överlever är utfallet ingen återställd felläsning
+    # utan en påhittad notation.
+    #
+    # Prövningen gäller notationens KÄRNA, inte dess modifierare. `SIG+2` →
+    # `5T6+2` bevarar `+2` och skulle annars gå igenom med hela tärningsdelen
+    # hopfantiserad — vilket är exakt samma fel som `SIG`, bara med ett
+    # tillägg efter sig.
+    kärna = re.split(r"[+\-–]", notation, 1)[0]
+    bevarat = [a for a, b in zip(token[:len(kärna)], kärna) if a == b]
+    if not any(c.isdigit() or c in "TtDd" for c in bevarat):
+        # FLAGGA, inte tystnad: en token som ser ut som notation men kräver
+        # att hela notationen hittas på ska en människa få se. Att hoppa över
+        # den vore samma tomhet som lästes som renhet i `±0`-garblet.
+        return "ambiguous", None
     confidence = max(0.85, 1.0 - 0.03 * subs)
     # Posten APPLICERAS när den är entydig, och det är rätt: en lagad
     # tärningstoken ÅTERSTÄLLER vad som står tryckt (`kind: "ocr"`), den

@@ -583,12 +583,27 @@ def _stitch_list(table, lst):
 
 
 def _stitch(items):
-    """Slå ihop tabeller som löper över en sidbrytning."""
+    """Slå ihop tabeller som löper över en SIDBRYTNING.
+
+    Sidbrytningen är villkoret, inte en omständighet. Sammanfogningen fanns
+    till för en tabell vars fortsättning hamnat på nästa sida, men prövade bara
+    att rubrikerna var lika — och två tryckta tabeller med samma rubriker är
+    inget ovanligt. MUT-AVE-terminal-state har NITTON vapentabeller med exakt
+    `Vapen | GCL | Skada`, en per NPC, och tre av dem står på s. 14 (BQ-002).
+    Där räddades de av att varje ruta inleds med sitt eget statblock, alltså av
+    en tillfällighet i elementströmmen — hade två rutor stått intill varandra
+    hade två olika personers vapen smält ihop till en tabell utan att något
+    varnade, och ingen orddiff hade sett det: samma ord, en rad färre.
+
+    Inom en och samma sida finns ingen sidbrytning att överbrygga, och då är
+    två tabeller två tabeller.
+    """
     out = []
     for page, el in items:
-        prev = out[-1][1] if out else None
+        prev_page, prev = out[-1] if out else (None, None)
         if prev is not None and prev.get("type") == "table":
-            if el.get("type") == "table" and _same_table(prev, el):
+            if (el.get("type") == "table" and _same_table(prev, el)
+                    and page != prev_page):
                 prev_data = prev.setdefault("data", {})
                 prev_data["rows"] = (prev_data.get("rows") or []) + \
                     ((el.get("data") or {}).get("rows") or [])

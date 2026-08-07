@@ -62,6 +62,31 @@ def _as_int(value):
     return None
 
 
+# Ett tal som bär sin ENHET: `29 m/SR`, `34 år`, `12 kg`. Trycket sätter
+# härledda värden så, och `_as_int` gav `None` för allihop — varvid
+# `derived_checks` hoppade över formeln TYST. `KP = STO + FYS` fyrade (KP står
+# som rent tal) medan `Förflyttning = FYS + SMI` aldrig gjorde det, så
+# kontrollen gällde halva sin lista och rapporten såg komplett ut. På
+# MUT-AVE-terminal-state räknade advokaterna formeln för hand på nitton rutor
+# och fann åtta avvikelser som ingen kod hade sett.
+#
+# Spärren mot tärningsnotation är villkoret att siffrorna inte får följas av
+# en till siffra eller av T/D: `3T6+2` ger inget värde, `29 m/SR` ger 29.
+_LEDANDE_TAL = re.compile(r"-?\d+(?![\dTtDd])")
+
+
+def _leading_int(value):
+    if isinstance(value, bool):
+        return None
+    if isinstance(value, int):
+        return value
+    if isinstance(value, str):
+        m = _LEDANDE_TAL.match(value.strip())
+        if m:
+            return int(m.group())
+    return None
+
+
 # ---------------------------------------------------------------------------
 # Statblock
 # ---------------------------------------------------------------------------
@@ -135,18 +160,30 @@ def validate_statblock(el, adapter, flags):
     # kan referera ett fält som råkat hamna i `other` hos en transkription och i
     # `stats` hos nästa, och skillnaden är inte en egenskap hos boken.
     other = data.get("other") or {}
-    values = {k: _as_int(v) for k, v in list(other.items()) + list(new_stats.items())}
+    values = {k: _leading_int(v)
+              for k, v in list(other.items()) + list(new_stats.items())}
     values = {k: v for k, v in values.items() if v is not None}
     for check in adapter.system.get("derived_checks", []):
         field, formula = check["field"], check["formula"]
-        stated = _as_int(new_stats.get(field))
+        stated = _leading_int(new_stats.get(field))
         if stated is None:
-            stated = _as_int(other.get(field))
+            stated = _leading_int(other.get(field))
         if stated is None:
+            # Fältet finns inte i rutan — kontrollen gäller inte, och det är
+            # inte ett fynd. Men står fältet där utan att gå att läsa som tal
+            # SKA det synas: en överhoppad kontroll får aldrig se ut som en
+            # godkänd (BQ-001).
+            if field in new_stats or field in other:
+                flags.append("statblock: %s=%r går inte att läsa som tal — "
+                             "kontrollen %s hoppades över"
+                             % (field, new_stats.get(field, other.get(field)),
+                                formula))
             continue
         try:
             expected = eval_formula(formula, values)
         except ValueError:
+            flags.append("statblock: formeln %s gick inte att räkna — "
+                         "kontrollen av %s hoppades över" % (formula, field))
             continue
         if expected is not None and int(expected) != stated:
             flags.append("statblock: %s=%d men %s = %d"

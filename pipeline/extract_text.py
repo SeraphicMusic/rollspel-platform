@@ -141,6 +141,32 @@ def _normalized_box(bbox, width, height):
             round((y1 - y0) / height, 6)]
 
 
+def _is_rotated(block):
+    """Bär blocket text som INTE löper vågrätt?
+
+    PyMuPDF:s bbox är osann för roterad text. MUT-AVE-terminal-state s. 18 bär
+    appendixtiteln `APPENDIX A1` lodrätt, och `get_text("dict")` gav den
+    x 152,76–464,97 på ett ark som är 430,87 pt brett — 34 pt UTANFÖR sidan.
+    Varken teckenboxarna i `rawdict` eller `get_texttrace()` hjälper: båda
+    redovisar glyfrutan i ett oroterat koordinatsystem, så ett enda `A` mäter
+    312 pt brett.
+
+    Att klippa boxen mot sidan vore värre än att sakna den — den skulle se ut
+    som en mätning. Pipelinen har redan svaret på den frågan (`jobs.py`:
+    *bbox utelämnas hellre än gissas*), och en advokat som mäter fram boxen ur
+    sidbilden sätter sin egen `bbox_source`.
+    """
+    for line in block.get("lines", []):
+        dx, dy = line.get("dir", (1.0, 0.0))
+        if abs(dx) < 0.999 or abs(dy) > 0.001:
+            return True
+    return False
+
+
+BBOX_ROTERAD = ("Blocket bär roterad text — PyMuPDF:s bbox gäller inte då, "
+                "och bbox utelämnas hellre än gissas.")
+
+
 def extract_page(page, page_no, boilerplate, artifacts, dominant_size):
     h = page.rect.height or 1.0
     w = page.rect.width or 1.0
@@ -165,8 +191,6 @@ def extract_page(page, page_no, boilerplate, artifacts, dominant_size):
                 "text": text,
                 "source": {
                     "page": page_no,
-                    "bbox": _normalized_box(b["bbox"], w, h),
-                    "bbox_source": "pipeline.extract_text",
                     "region": ("kolumn %d" % (ci + 1)) if n_cols > 1 else "huvudtext",
                     "method": "embedded",
                 },
@@ -174,6 +198,11 @@ def extract_page(page, page_no, boilerplate, artifacts, dominant_size):
                 "corrections": [],
                 "needs_review": False,
             }
+            if _is_rotated(b):
+                el["source"]["bbox_saknas"] = BBOX_ROTERAD
+            else:
+                el["source"]["bbox"] = _normalized_box(b["bbox"], w, h)
+                el["source"]["bbox_source"] = "pipeline.extract_text"
             y_rel = b["bbox"][1] / h
             is_edge = y_rel < EDGE_BAND or (b["bbox"][3] / h) > 1 - EDGE_BAND
             if text in boilerplate or (
