@@ -238,6 +238,23 @@ class TestOrordaIllustrationer(Bokbadd):
                                               "en ny plan")]}])
         self.assertEqual(self.kvar(), 0)
 
+    def test_andrad_bildbeskrivning_krediterar_inte_sin_oforandrade_del(self):
+        """Krugal s. 10: kartbeskrivningen (ändrad i EN detalj) innehöll orden
+        `Krugals komplex`, och fulltextkrediten åt upp kvittningen för
+        citatbytet `"Krugals komplex"` → `”…”` på s. 1. Bara postens egen
+        ordändring får krediteras — beskrivningens oförändrade del nettar
+        redan till noll i diffen."""
+        self.bok('vid "Krugals komplex" står vakter',
+                 'vid ”Krugals komplex” står vakter')
+        self.sida([
+            {"id": "e1", "type": "illustration",
+             "text": "Karta över Krugals komplex med fyra detaljrutor.",
+             "corrections": [self.post("tre detaljrutor", "fyra detaljrutor")]},
+            {"id": "e2", "corrections": [self.post('"Krugals komplex"',
+                                                   "”Krugals komplex”")]},
+        ])
+        self.assertEqual(self.kvar(), 0)
+
 
 class TestUtanFrysning(Bokbadd):
     def test_saknad_frysning_ger_filfel_inte_falskt_gront(self):

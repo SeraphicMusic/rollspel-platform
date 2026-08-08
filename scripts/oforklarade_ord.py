@@ -181,18 +181,29 @@ def redovisad_andring(workdir):
                 # innehöll ordet `stora`, krediten åt upp nya-sidan av en
                 # riktig kvittning, och citatbytets borta-sida stod kvar som
                 # oförklarad. Samma överkreditklass som `TERMINAL` ×9.
-                andrad = el.get("added_by") or any(
-                    c.get("applied") for c in el.get("corrections") or [])
-                if not andrad:
+                # Och ett ÄNDRAT bildelement krediterar bara postens egen
+                # ordändring — original mot corrected — aldrig hela sin text.
+                # Beskrivningens oförändrade del står på båda sidor av
+                # frysningen och nettar redan till noll i `diffa`; krediteras
+                # den ändå väntar den på att sluka en obesläktad ändring av
+                # samma ord. Krugals kartbeskrivning (s. 10) innehöll orden
+                # `Krugals komplex` och åt upp kvittningen för citatbytet
+                # `"Krugals komplex"` → `”…”` på s. 1. Full text krediteras
+                # bara för TILLAGDA element, vars ord faktiskt är nya.
+                if el.get("added_by"):
+                    for ord_, n in _pa_karna(words(_elementtext(el))).items():
+                        nya[ord_] += n
+                        kallor[ord_].append((sida, el.get("id"), "bildtext"))
                     continue
-                for c in (el.get("corrections") or []) if not el.get("added_by") else []:
-                    if c.get("applied"):
-                        for ord_, n in _pa_karna(words(c.get("original") or "")).items():
-                            borta[ord_] += n
-                            kallor[ord_].append((sida, el.get("id"), "bildtext"))
-                for ord_, n in _pa_karna(words(_elementtext(el))).items():
-                    nya[ord_] += n
-                    kallor[ord_].append((sida, el.get("id"), "bildtext"))
+                for c in el.get("corrections") or []:
+                    if not c.get("applied"):
+                        continue
+                    for ord_, n in _pa_karna(words(c.get("original") or "")).items():
+                        borta[ord_] += n
+                        kallor[ord_].append((sida, el.get("id"), "bildtext"))
+                    for ord_, n in _pa_karna(words(c.get("corrected") or "")).items():
+                        nya[ord_] += n
+                        kallor[ord_].append((sida, el.get("id"), "bildtext"))
                 continue
             if el.get("added_by"):
                 # En UTBRYTNING är ingen tillägg. Advokaten bryter ut en rubrik
