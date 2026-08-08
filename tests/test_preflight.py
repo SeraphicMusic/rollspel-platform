@@ -109,6 +109,24 @@ class TestStraightQuotes(unittest.TestCase):
     def test_text_utan_raka_tecken_ger_inget(self):
         self.assertEqual(rule_straight_quotes(el("e3", "slå ’6’ eller lägre")), [])
 
+    def test_regeln_ser_in_i_statblockfalten(self):
+        """`”gyllenkärlek”` i data.other överlevde varje screening när regeln
+        bara läste el["text"] — Krugal s. 3, funnen av en advokat för hand."""
+        e = el("e4", "")
+        e["type"] = "statblock"
+        e["data"] = {"other": {"Utseende": 'kallar sitt svärd "gyllenkärlek"'}}
+        corr = rule_straight_quotes(e)
+        self.assertEqual(len(corr), 1)
+        self.assertIn("”gyllenkärlek”", corr[0]["corrected"])
+
+    def test_regeln_ser_in_i_tabellceller(self):
+        e = el("e5", "")
+        e["type"] = "table"
+        e["data"] = {"headers": [], "rows": [['ropar "anfall!"', "5"]]}
+        corr = rule_straight_quotes(e)
+        self.assertEqual(len(corr), 1)
+        self.assertIn("”anfall!”", corr[0]["corrected"])
+
 
 class TestPlusMinus(unittest.TestCase):
     def test_kanda_garbel_ger_kandidat(self):

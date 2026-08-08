@@ -295,21 +295,31 @@ def rule_heading_dash(el):
 
 
 def rule_straight_quotes(el):
-    """Raka citattecken -> typografiska. Ojämnt antal flaggas i stället."""
-    text = el.get("text") or ""
-    present = [ch for ch in STRAIGHT_QUOTES if ch in text]
-    if not present:
-        return []
-    corrected = text
-    for ch, repl in STRAIGHT_QUOTES.items():
-        corrected = corrected.replace(ch, repl)
-    return [make_correction(
-        text, corrected, 0.6,
-        "Heuristik: raka citattecken/apostrofer. Trycket har genomgående "
-        "’…’ och ”…”, även runt siffror (`slå ’6’ eller lägre`). Ojämnt antal i "
-        "elementet betyder att paret bryts över en elementgräns — kontrollera "
-        "grannelementen innan du applicerar.",
-        "heuristik:raka-citattecken", applied=False, kind=KIND_OCR)]
+    """Raka citattecken -> typografiska. Ojämnt antal flaggas i stället.
+
+    Läser SAMTLIGA textbärare — elementets text, tabellcellerna och
+    statblockfälten — av samma skäl som `plusminus-varde`: reglerna måste
+    titta in i cellerna. Länge lästes bara `el["text"]`, och `”gyllenkärlek”`
+    i ett statblocks `data.other.Utseende` (Krugal s. 3) plus 14 raka tecken
+    i tre andra böckers celler passerade osedda genom varje screening.
+    """
+    ut = []
+    for etikett, text in _texts(el):
+        present = [ch for ch in STRAIGHT_QUOTES if ch in text]
+        if not present:
+            continue
+        corrected = text
+        for ch, repl in STRAIGHT_QUOTES.items():
+            corrected = corrected.replace(ch, repl)
+        ut.append(make_correction(
+            text, corrected, 0.6,
+            "Heuristik: raka citattecken/apostrofer i %s. Trycket har "
+            "genomgående ’…’ och ”…”, även runt siffror (`slå ’6’ eller "
+            "lägre`). Ojämnt antal i elementet betyder att paret bryts över "
+            "en elementgräns — kontrollera grannelementen innan du "
+            "applicerar." % etikett,
+            "heuristik:raka-citattecken", applied=False, kind=KIND_OCR))
+    return ut
 
 
 def rule_plusminus(el):
