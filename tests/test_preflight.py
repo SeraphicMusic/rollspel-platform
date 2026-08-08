@@ -119,6 +119,16 @@ class TestStraightQuotes(unittest.TestCase):
         self.assertEqual(len(corr), 1)
         self.assertIn("”gyllenkärlek”", corr[0]["corrected"])
 
+    def test_regeln_ser_in_i_listpunkter(self):
+        """Spindelkonungen s. 4: `"demoniska företeelser"` i data.items[0]
+        gav raka-citattecken: 0 — punktlistornas text var en blind fläck."""
+        e = el("e6", "")
+        e["type"] = "list"
+        e["data"] = {"items": ['studerat "demoniska företeelser" i åratal']}
+        corr = rule_straight_quotes(e)
+        self.assertEqual(len(corr), 1)
+        self.assertIn("”demoniska företeelser”", corr[0]["corrected"])
+
     def test_regeln_ser_in_i_tabellceller(self):
         e = el("e5", "")
         e["type"] = "table"

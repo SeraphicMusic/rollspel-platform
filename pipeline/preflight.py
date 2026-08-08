@@ -399,11 +399,28 @@ def _statblock_fields(el):
     return ut
 
 
+def _list_items(el):
+    """Alla punkter i ett `list`-element som (etikett, text).
+
+    Punktlistornas text bor i `data.items`, inte i `el["text"]` — samma
+    blinda fläck som tabellcellerna och statblockfälten en gång var.
+    Spindelkonungen s. 4 bar `"demoniska företeelser"` i `data.items[0]`
+    och `raka-citattecken` rapporterade 0 på sidan.
+    """
+    data = el.get("data")
+    if not isinstance(data, dict):
+        return []
+    return [("listpunkt %d" % (i + 1), str(punkt))
+            for i, punkt in enumerate(data.get("items") or [])
+            if not isinstance(punkt, (dict, list))]
+
+
 def _texts(el):
-    """Elementets egen text plus dess tabellceller och statblockfält."""
+    """Elementets egen text plus tabellceller, statblockfält och listpunkter."""
     ut = [("elementets text", (el.get("text") or ""))]
     ut.extend(_cells(el))
     ut.extend(_statblock_fields(el))
+    ut.extend(_list_items(el))
     return [(etikett, text) for etikett, text in ut if text]
 
 
