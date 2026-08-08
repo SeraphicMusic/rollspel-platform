@@ -507,6 +507,24 @@ class TestArvdaKolumnrubriker(unittest.TestCase):
             andra_rubriker=["Sköld", "BV", "Vikt", "Pris"]))
         self.assertIn("| Sköld | BV | Vikt | Pris |", md)
 
+    def test_titelrad_ar_ingen_forlaga(self):
+        """En titel över omärkta kolumner etiketterar ingenting och ärvs inte.
+
+        MUT-REG-hacking s. 4: prislistan `headers: ["MJUKVARA", ""]` följdes av
+        flödesschemat (tomma rubriker, samma kolumnform). Arvet satte `MJUKVARA`
+        över ett schema det inte hör till — ett tryckt ord på fel plats i
+        läsexporten, osynligt för orddiffen eftersom ordet redan finns i boken.
+        """
+        md = self.render([{"page": 1, "elements": [
+            {"id": "e01", "type": "table", "text": "",
+             "data": {"headers": ["MJUKVARA", ""],
+                      "rows": [["Crack", "5.000 ED"]]}},
+            {"id": "e02", "type": "table", "text": "",
+             "data": {"headers": ["", ""],
+                      "rows": [["Säkerhetsspärr 1 sv 12", "Ekonomi"]]}},
+        ]}])
+        self.assertEqual(md.count("MJUKVARA"), 1)
+
     def test_annan_kolumnform_arver_inte(self):
         """s. 25: `Rasmodifikationer` under förflyttningstabellen.
 

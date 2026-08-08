@@ -801,7 +801,18 @@ def _inherit_headers(items):
         headers = data.get("headers") or []
         rows = data.get("rows") or []
         if any(str(h).strip() for h in headers):
-            forlaga = (page, list(headers), _column_shapes(rows))
+            # En TITELRAD är ingen förlaga. Prislistorna i MUT-REG-hacking
+            # s. 4 bär `headers: ["MJUKVARA", ""]` — en spännande titel över
+            # två omärkta kolumner, inte kolumnrubriker. Ärvs den sätts ett
+            # tryckt ord över en tabell där det inte står (flödesschemat fick
+            # `MJUKVARA`), osynligt för orddiffen eftersom ordet redan finns i
+            # boken. Bara en rad som faktiskt etiketterar kolumner — minst två
+            # icke-tomma celler — får bli förlaga; rustningstabellens
+            # rubrikrad har fyra.
+            if sum(1 for h in headers if str(h).strip()) >= 2:
+                forlaga = (page, list(headers), _column_shapes(rows))
+            else:
+                forlaga = None
             continue
         if not (headers and rows and forlaga and forlaga[0] == page
                 and len(forlaga[1]) == len(headers)):
