@@ -35,7 +35,11 @@
       "Föremål/värde",
       "Beretta 92F Vikt/Mag",
       "Energipack / Regen vikt",
-      "Magasin (9 mm) vikt"
+      "Magasin (9 mm) vikt",
+      "FV",
+      "SV",
+      "ITF",
+      "PCN"
     ],
     "skills": [
       "Automatvapen",

@@ -54,10 +54,12 @@
     "CL": "Chansläge",
     "EP": "Erfarenhetspoäng",
     "EV": "Eldavbrott",
+    "FV": "Färdighetsvärde",
     "GCL": "Grundchansläge",
     "KP": "Kroppspoäng",
     "SB": "Skadebonus",
-    "SR": "Stridsrunda"
+    "SR": "Stridsrunda",
+    "SV": "Svårighetsgrad"
   },
   "editions": [
     {
