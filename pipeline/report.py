@@ -334,7 +334,14 @@ def build_report(workdir):
                     judged.append(c)
                 else:
                     open_props.append(c)
-            uncertain = el.get("confidence", 1.0) < 0.8
+            # Ett BORTTAGET element når aldrig läsexporten — låg confidence på
+            # det är ingen osäkerhet läsaren kan möta. Sypox s. 8:s strukna
+            # sidfot (p008_e10, confidence 0,3) listades i varje rapport som
+            # falsk lågkonfidenspost fast noll frågor var öppna. Öppna flaggor
+            # och odömda förslag lyfter fortfarande in det — en öppen fråga om
+            # själva borttagandet ska synas.
+            uncertain = (not el.get("removed")
+                         and el.get("confidence", 1.0) < 0.8)
             # Ett dömt förslag lyfter inte in elementet i listan på egen hand —
             # domen är redan fälld. Står elementet där av annat skäl visas den.
             if not (el.get("needs_review") or reasons or open_props
