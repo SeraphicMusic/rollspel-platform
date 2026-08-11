@@ -405,6 +405,19 @@ class TestForslagensTreLagen(unittest.TestCase):
         el["corrections"] = [post]
         self.assertEqual(_proposal_state(el, post), VERDICT_SUPERSEDED)
 
+    def test_null_original_kraschar_inte_rapporten(self):
+        """Tempokalkylatorns syntetiska TILLÄGG-rubriker skrevs med
+        `original: null`, och rapporten kraschade på `None not in str` —
+        vilket dolde hela bokens redovisning i stället för den ena raden.
+        En null-original behandlas som tom sträng och döms på sitt verdict."""
+        from pipeline.report import VERDICT_JUDGED, _proposal_state
+        el = {"type": "table", "text": ""}
+        post = self._post("gammal")
+        post["original"] = None
+        post["verdict"] = "avvisad"
+        el["corrections"] = [post]
+        self.assertEqual(_proposal_state(el, post), VERDICT_JUDGED)
+
     def test_posten_matchar_inte_sig_sjalv(self):
         """Utan undantaget för `corrections` blir inget någonsin överspelat."""
         from pipeline.report import VERDICT_SUPERSEDED, _proposal_state

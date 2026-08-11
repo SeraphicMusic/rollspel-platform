@@ -85,7 +85,11 @@ def _payload(el):
 
 
 def _proposal_state(el, correction):
-    if correction.get("original") not in _payload(el):
+    # Kontraktet säger att `original` är en sträng, men poster från tiden
+    # före fältsättningen har skrivits med null (tempokalkylatorns syntetiska
+    # TILLÄGG-rubriker) — och en rapport som kraschar på en trasig post döljer
+    # hela bokens redovisning i stället för den ena raden.
+    if (correction.get("original") or "") not in _payload(el):
         return VERDICT_SUPERSEDED
     if correction.get("verdict") or correction.get("adjudicated_by"):
         return VERDICT_JUDGED
