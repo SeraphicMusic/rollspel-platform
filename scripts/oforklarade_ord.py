@@ -115,6 +115,9 @@ def redovisad_andring(workdir):
     borta, nya = collections.Counter(), collections.Counter()
     berorda = set()
     kallor = collections.defaultdict(list)
+    from pipeline.freeze import freeze_path
+    _frys = freeze_path(workdir)
+    frys_text = _frys.read_text(encoding="utf-8") if _frys.is_file() else None
     pages = pathlib.Path(workdir) / "pages"
     for f in sorted(pages.glob("page_*.json")):
         # final.json är sidans slutversion; finns den är validated.json en
@@ -190,7 +193,17 @@ def redovisad_andring(workdir):
                 # `Krugals komplex` och åt upp kvittningen för citatbytet
                 # `"Krugals komplex"` → `”…”` på s. 1. Full text krediteras
                 # bara för TILLAGDA element, vars ord faktiskt är nya.
-                if el.get("added_by"):
+                # Ett TILLAGT bildelement vars beskrivning redan står ordagrant
+                # i frysningen är äldre än frysningen: orden står på båda sidor
+                # och nettar redan till noll i `diffa`. Krediteras de ändå är
+                # det samma överkredit som för orörda element — Gripeborgs två
+                # juli-tillägg åt upp nykvittningen för fyra obesläktade
+                # citatglyfbyten (`av.”`, `in”.`, `’Händer’`, `’Klor’`).
+                # Frysningen avgör, inte tilläggsdatumet: beskrivningen renderas
+                # oradbruten i bok.md, så substrängtestet är exakt.
+                if el.get("added_by") and not (
+                        frys_text and (el.get("text") or "").strip()
+                        and (el.get("text") or "").strip() in frys_text):
                     for ord_, n in _pa_karna(words(_elementtext(el))).items():
                         nya[ord_] += n
                         kallor[ord_].append((sida, el.get("id"), "bildtext"))

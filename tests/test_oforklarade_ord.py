@@ -238,6 +238,34 @@ class TestOrordaIllustrationer(Bokbadd):
                                               "en ny plan")]}])
         self.assertEqual(self.kvar(), 0)
 
+    def test_tillagd_bild_fore_frysningen_krediterar_inte_sin_text(self):
+        """Gripeborg: två bildelement tillagda i juli bar `added_by` när boken
+        omfrystes i augusti. Deras beskrivningar stod därmed på BÅDA sidor av
+        frysningen och nettade till noll i diffen — men fulltextkrediten låg
+        kvar och åt upp nykvittningen för fyra obesläktade citatglyfbyten
+        (`av.”`, `in”.`, `’Händer’`, `’Klor’`). Står beskrivningen ordagrant i
+        frysningen är elementet äldre än den, och tillägget krediteras inte."""
+        self.bok('En vandrare med stav i öknen. Han gav sig "av."',
+                 'En vandrare med stav i öknen. Han gav sig ”av.”')
+        self.sida([
+            {"id": "e1", "type": "illustration",
+             "text": "En vandrare med stav i öknen.",
+             "added_by": "agent:layoutverifierare", "corrections": []},
+            {"id": "e2", "corrections": [self.post('sig "av."',
+                                                   "sig ”av.”")]},
+        ])
+        self.assertEqual(self.kvar(), 0)
+
+    def test_tillagd_bild_efter_frysningen_krediteras_fortfarande(self):
+        """Motfallet: beskrivningen finns INTE i frysningen — elementet är ett
+        äkta tillägg och dess ord är nya (Mervyn Peak s. 5)."""
+        self.bok("bara brödtext här", "bara brödtext här\n\n*En ny målning.*")
+        self.sida([
+            {"id": "e1", "type": "illustration", "text": "En ny målning.",
+             "added_by": "agent:djavulens-advokat", "corrections": []},
+        ])
+        self.assertEqual(self.kvar(), 0)
+
     def test_andrad_bildbeskrivning_krediterar_inte_sin_oforandrade_del(self):
         """Krugal s. 10: kartbeskrivningen (ändrad i EN detalj) innehöll orden
         `Krugals komplex`, och fulltextkrediten åt upp kvittningen för
