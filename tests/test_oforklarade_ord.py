@@ -238,6 +238,24 @@ class TestOrordaIllustrationer(Bokbadd):
                                               "en ny plan")]}])
         self.assertEqual(self.kvar(), 0)
 
+    def test_forlegad_post_krediterar_ingenting(self):
+        """Skymningslandet: en juli-revert (`är inte`→`inte`) var redan inbakad
+        i augusti-frysningen, men postens borta-kredit för `är` låg kvar och
+        konsumerade motparten till s. 7:s färska `...är`→`... är` — vars
+        nya-sida då strandade som oförklarad. En post vars `corrected` står i
+        frysningen medan `original` inte gör det är äldre än frysningen och
+        krediteras inte."""
+        self.bok("bilfärder inte någon utflykt. Vi ...är klara",
+                 "bilfärder inte någon utflykt. Vi ... är klara")
+        self.sida([
+            {"id": "e1", "corrections": [self.post(
+                "bilfärder är inte någon utflykt",
+                "bilfärder inte någon utflykt")]},
+            {"id": "e2", "corrections": [self.post("Vi ...är klara",
+                                                   "Vi ... är klara")]},
+        ])
+        self.assertEqual(self.kvar(), 0)
+
     def test_tillagd_bild_fore_frysningen_krediterar_inte_sin_text(self):
         """Gripeborg: två bildelement tillagda i juli bar `added_by` när boken
         omfrystes i augusti. Deras beskrivningar stod därmed på BÅDA sidor av

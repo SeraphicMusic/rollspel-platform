@@ -105,6 +105,23 @@ def _pa_karna(counter):
     return ut
 
 
+def _forlegad(post, frys_text):
+    """Är postens ändring redan inbakad i frysningen?
+
+    Ja när `corrected` står ordagrant i den frysta läsexporten medan
+    `original` inte gör det — då gjordes ändringen före frysningen och dess
+    ordkredit har ingen motpart i diffen. Tomma strängar och strängar som
+    står på BÅDA sidor (korta ord som förekommer på andra ställen) räknas
+    aldrig som förlegade: hellre en synlig oförklarad rad än en tyst
+    felkvittning.
+    """
+    corrected = (post.get("corrected") or "").strip()
+    original = (post.get("original") or "").strip()
+    if not corrected or corrected not in frys_text:
+        return False
+    return bool(original) and original not in frys_text
+
+
 def redovisad_andring(workdir):
     """Ordändringen som bokens applicerade korrektionsposter tar ansvar för.
 
@@ -246,6 +263,17 @@ def redovisad_andring(workdir):
                 continue
             for c in el.get("corrections") or []:
                 if not c.get("applied"):
+                    continue
+                # En post vars ändring är ÄLDRE än frysningen krediterar
+                # ingenting: dess utfall står redan på båda sidor av diffen
+                # och nettar till noll. Krediten ligger annars kvar och äter
+                # motparten till en obesläktad färsk ändring av samma kärna —
+                # Skymningslandets juli-revert (`är inte`→`inte`) konsumerade
+                # borta-sidan av s. 7:s `...är`→`... är`. Åldern mäts, den
+                # gissas inte: en färsk posts `original` står i frysningen
+                # (det var texten före ändringen); en förlegad posts
+                # `corrected` står där medan dess `original` inte gör det.
+                if frys_text and _forlegad(c, frys_text):
                     continue
                 fore = _pa_karna(words(c.get("original") or ""))
                 efter = _pa_karna(words(c.get("corrected") or ""))
