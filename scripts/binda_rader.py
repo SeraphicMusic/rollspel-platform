@@ -74,9 +74,14 @@ Tre ändringar öppnar den styckeformade regimen, och alla tre är mätta:
 
 Regimen har ett eget facitprov, `--utvardera-stycken`, som bygger stycken av
 del I–III:s radformade transkript med pipelinens egen styckedefinition (se
-`_syntetiska_stycken`). Utfall: del II 71,3 % identiska / 7,6 % avvikande, del
-III 62,6 % / 4,8 %, och i båda vinner verktyget domen mot trycket (17 mot 13
-respektive 19 mot 7). Den radformade regimen är oförändrad, 85,5 % / 3,6 %.
+`_syntetiska_stycken`). Utfall med breddsignalvakten (RAGGED_MIN_ANDEL):
+del II 68,7 % identiska / 7,3 % avvikande, del III 62,1 % / 4,7 %, och i båda
+vinner verktyget domen mot trycket (15 mot 12 respektive 18 mot 7). Vakten
+kostar alltså ett par procentenheter träffar mot före (71,3/7,6 resp.
+62,6/4,8) men refuserar de regioner vars band bär spaltbredd i stället för
+bläckbredd — där band den tidigare hela kedjor ett steg ur led (mätt på
+MUT-REG-youre-just-a-program s. 2 mot trycket). Den radformade regimen är
+oförändrad, 85,5 % / 3,6 %.
 
 Torrkörning är default. Utvärdera alltid mot facit först:
 
@@ -382,6 +387,17 @@ RAGGED_STRAFF = 0.8
 # Typer som sätts som rak brödtext och därför bär raggedsignalen. Rubriker är
 # centrerade eller korta av andra skäl, behållarna har sin egen radstruktur.
 RAGGED_TYPER = {"paragraph", "boxed_text", "list_item"}
+
+# Så stor andel av en brödtextregions rader måste vara ragged för att
+# regionens bredder alls ska räknas som uppmätta. Rak sättning slutar varje
+# stycke på en kort rad — piloten ligger på 18–24 % — medan en mätning vars
+# band bär spaltbredd i stället för bläckbredd ger nära noll. På
+# MUT-REG-youre-just-a-program s. 2 var andelen 3 % (2 av 67, och styckeslutet
+# på band 125 mättes till full spaltbredd): styckegränserna gick inte att
+# mäta, förskjutningsprovet var blint, och kedjan band ett steg ur led som
+# "fastkilad". Gränsen 0,10 skiljer de två världarna med god marginal åt båda
+# håll.
+RAGGED_MIN_ANDEL = 0.10
 
 # Hur hårt toleransen skärps när elementet spänner FLERA rader.
 #
@@ -817,6 +833,30 @@ def binda_sida(els, rows, skala, max_spann=80, png=None, flerradiga=False,
         delels = [els[i] for i in eidx]
         delrows = [rows[j] for j in ridx]
         delsv = [svarta[j] for j in ridx]
+        # I den styckeformade regimen är raggedheten det enda som mäter var
+        # styckegränserna går — förskjutningsprovet är blint där (se
+        # RAGGED_STRAFF). Bär regionens band spaltbredd i stället för
+        # bläckbredd finns ingen kort rad alls, varje läge kostar lika mycket,
+        # och en kedja som går jämnt ut mot kanterna ser fastkilad ut fast
+        # inget läge är uppmätt: på MUT-REG-youre-just-a-program s. 2 band
+        # hela mittspaltskedjan ett steg ur led med rubriken PROGRAMVARA
+        # utanför mätningen, och trycket visade styckegränsen en rad upp.
+        # Rak sättning har alltid ragged styckeslut (18–24 % av raderna på
+        # piloten), så en brödtextregion med nära noll korta rader är inte
+        # slät — den är omätt, och då binds ingenting (RAGGED_MIN_ANDEL).
+        if flerradiga and any(el.get("type") in RAGGED_TYPER
+                              for el in delels):
+            full = _full_bredd(delrows)
+            gräns = RAGGED_SHARE * (full or 0.0)
+            ragged = sum(1 for r in delrows
+                         if len(r.get("bbox") or []) == 4
+                         and r["bbox"][2] < gräns)
+            if ragged < RAGGED_MIN_ANDEL * len(delrows):
+                anm.append("region %r: banden bär ingen breddsignal (%d av %d "
+                           "rader ragged) — styckegränser går inte att mäta, "
+                           "%d element lämnade obundna"
+                           % (reg, ragged, len(delrows), len(delels)))
+                continue
         _, lösn = _losning(delels, delrows, skala, max_spann, delsv,
                            flerradiga)
         if not lösn:
