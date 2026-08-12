@@ -114,12 +114,43 @@ def _forlegad(post, frys_text):
     står på BÅDA sidor (korta ord som förekommer på andra ställen) räknas
     aldrig som förlegade: hellre en synlig oförklarad rad än en tyst
     felkvittning.
+
+    Provet är avsiktligt smalt: en post vars `original` bara inte återfinns
+    ordagrant (flerradig vers, omflödat fragment) är INTE förlegad på den
+    grunden — det provet fällde tio friska böcker när det prövades.
     """
     corrected = (post.get("corrected") or "").strip()
     original = (post.get("original") or "").strip()
     if not corrected or corrected not in frys_text:
         return False
     return bool(original) and original not in frys_text
+
+
+def _strukturpost(post):
+    """Är posten en STRUKTURÄNDRING snarare än en textändring?
+
+    Tabellmontagens poster har `corrected` = tabellens JSON-form, och
+    omtypningarnas har `original`/`corrected` = `type: paragraph`-strängar.
+    Ingen av formerna är löptext som `bok.md` återger ordagrant, så deras
+    orddeltor har inga motparter i diffen — men kärnorna (siffrorna ur
+    JSON-raderna, ordet `paragraph`) ligger kvar som krediter och äter
+    obesläktade färska ändringar. Det var så del I:s montageposter slukade
+    borta-sidan av sex citatglyfbyten i tabellceller och `'23'`→`’23’`
+    strandade som OFÖRKLARAT NYA fast posten fanns. Ordflytten vid ett
+    montage redovisas redan av `added_by`/`merged_into`-maskineriet;
+    strukturposten själv ska aldrig kreditera ord.
+    """
+    for falt in ("original", "corrected"):
+        v = (post.get(falt) or "").strip()
+        if v.startswith("type: "):
+            return True
+        if v[:1] in "{[":
+            try:
+                json.loads(v)
+                return True
+            except (json.JSONDecodeError, ValueError):
+                pass
+    return False
 
 
 def redovisad_andring(workdir):
@@ -274,6 +305,10 @@ def redovisad_andring(workdir):
                 # (det var texten före ändringen); en förlegad posts
                 # `corrected` står där medan dess `original` inte gör det.
                 if frys_text and _forlegad(c, frys_text):
+                    continue
+                # En strukturpost (montage-JSON, `type: …`) krediterar aldrig
+                # ord — dess "text" är inte löptext, se _strukturpost.
+                if _strukturpost(c):
                     continue
                 fore = _pa_karna(words(c.get("original") or ""))
                 efter = _pa_karna(words(c.get("corrected") or ""))

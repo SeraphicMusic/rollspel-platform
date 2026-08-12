@@ -256,6 +256,39 @@ class TestOrordaIllustrationer(Bokbadd):
         ])
         self.assertEqual(self.kvar(), 0)
 
+    def test_strukturpost_krediterar_inga_ord(self):
+        """Del I: tabellmontagens poster har `corrected` = tabellens
+        JSON-form och omtypningarnas `original`/`corrected` = `type: …`.
+        Ingendera är löptext som `bok.md` återger, så deras orddeltor har
+        inga motparter i diffen — men kärnorna (siffrorna ur JSON-raderna)
+        låg kvar som krediter och åt borta-sidan av sex färska
+        citatglyfbyten i tabellceller: `'lyckat'`→`’lyckat’` strandade som
+        OFÖRKLARAT NYA fast posten fanns. En strukturpost krediterar aldrig
+        ord; en flerradig eller omflödad PROSA-post krediterar som förut."""
+        self.bok("resultat 'lyckat' i cellen", "resultat ’lyckat’ i cellen")
+        self.sida([
+            {"id": "e1", "corrections": [self.post(
+                "gammal lös cellrad med resultat 'lyckat' som inte längre finns",
+                '{"headers":["lyckat"],"rows":[["gammal","lös"]]}')]},
+            {"id": "e1b", "corrections": [self.post("type: paragraph",
+                                                    "type: table")]},
+            {"id": "e2", "corrections": [self.post("resultat 'lyckat' i cellen",
+                                                   "resultat ’lyckat’ i cellen")]},
+        ])
+        self.assertEqual(self.kvar(), 0)
+
+    def test_flerradig_prosapost_krediterar_som_forut(self):
+        """En färsk post vars `original` inte återges ordagrant i
+        frysningen (versen radbryts annorlunda i `bok.md`) ska INTE falla
+        på något åldersprov — Tanegashimas versapostrofer strandade när ett
+        sådant prövades."""
+        self.bok("here's the consequence of murder",
+                 "here’s the consequence of murder")
+        self.sida([{"id": "e1", "corrections": [self.post(
+            "1.\nhere's the consequence\nof murder",
+            "1.\nhere’s the consequence\nof murder")]}])
+        self.assertEqual(self.kvar(), 0)
+
     def test_tillagd_bild_fore_frysningen_krediterar_inte_sin_text(self):
         """Gripeborg: två bildelement tillagda i juli bar `added_by` när boken
         omfrystes i augusti. Deras beskrivningar stod därmed på BÅDA sidor av
