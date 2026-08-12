@@ -302,7 +302,15 @@ def rule_straight_quotes(el):
     titta in i cellerna. Länge lästes bara `el["text"]`, och `”gyllenkärlek”`
     i ett statblocks `data.other.Utseende` (Krugal s. 3) plus 14 raka tecken
     i tre andra böckers celler passerade osedda genom varje screening.
+
+    ILLUSTRATIONER undantas: deras text är agentens egen bildbeskrivning,
+    inte tryck, så ingen print-trohet finns att återställa — glyfvalet är
+    beskrivarens, inte sättarens. Utan undantaget bar korpusen ~60 eviga
+    falska kandidater (`Karta "Granes gård"`, `Signerat "JENS"`) som varje
+    screening flaggade om och ingen advokat kunde döma mot någon PNG.
     """
+    if el.get("type") == "illustration":
+        return []
     ut = []
     for etikett, text in _texts(el):
         present = [ch for ch in STRAIGHT_QUOTES if ch in text]

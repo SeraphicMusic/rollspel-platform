@@ -109,6 +109,15 @@ class TestStraightQuotes(unittest.TestCase):
     def test_text_utan_raka_tecken_ger_inget(self):
         self.assertEqual(rule_straight_quotes(el("e3", "slå ’6’ eller lägre")), [])
 
+    def test_illustrationer_undantas(self):
+        """En bildbeskrivning är agentens egen text, inte tryck — glyfvalet
+        är beskrivarens och ingen print-trohet finns att återställa. Utan
+        undantaget bar korpusen ~60 eviga falska kandidater (`Karta "Granes
+        gård"`, `Signerat "JENS"`) som ingen advokat kunde döma mot en PNG."""
+        e = el("e5", 'Karta "Granes gård": planritning över gårdens byggnader')
+        e["type"] = "illustration"
+        self.assertEqual(rule_straight_quotes(e), [])
+
     def test_regeln_ser_in_i_statblockfalten(self):
         """`”gyllenkärlek”` i data.other överlevde varje screening när regeln
         bara läste el["text"] — Krugal s. 3, funnen av en advokat för hand."""
