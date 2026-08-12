@@ -23,6 +23,13 @@ KIND_OCR = "ocr"
 KIND_EMENDATION = "emendering"
 CORRECTION_KINDS = (KIND_OCR, KIND_EMENDATION)
 
+# Prefix i `resolved_reasons[].resolution` som markerar ett dömt, bevarat
+# print-fynd (sättningsfel/räknefel/inkonsekvens i originaltrycket som står
+# ordagrant kvar i bastexten). Rapporten samlar dem i sektionen "Bevarade
+# print-fynd" — korpusbeslutet BQ-006(c) i Spindelkonungen, fastställt av
+# användaren 2026-08-12: texten märks aldrig, listan i rapporten är facit.
+PRINT_FYND_PREFIX = "PRINT-FYND:"
+
 # Advokatens dom över ett förslag den inte applicerar. Ett förslag utan dom är
 # oläst — det är den enda skillnad granskningsrapporten kan gå på.
 VERDICT_APPLIED = "applicerad"

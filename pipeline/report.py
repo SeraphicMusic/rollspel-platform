@@ -2,7 +2,7 @@
 import json
 from pathlib import Path
 
-from .corrections import KIND_EMENDATION, KIND_OCR
+from .corrections import KIND_EMENDATION, KIND_OCR, PRINT_FYND_PREFIX
 from .log import setup_logging
 from .manifest import Manifest, export_dir, page_file, pages_dir, read_json
 from .merge import best_page_file, merge
@@ -385,6 +385,7 @@ def build_report(workdir):
     lines.append("")
 
     applied_rows = []
+    print_fynd = []
     for no in m.page_numbers():
         path, _ = best_page_file(workdir, no)
         if path is None:
@@ -393,6 +394,11 @@ def build_report(workdir):
             for c in el.get("corrections", []):
                 if c.get("applied"):
                     applied_rows.append((no, el, c))
+            for r in el.get("resolved_reasons") or []:
+                res = (r.get("resolution") or "") if isinstance(r, dict) else ""
+                if res.startswith(PRINT_FYND_PREFIX):
+                    print_fynd.append(
+                        (no, el, res[len(PRINT_FYND_PREFIX):].strip()))
 
     emendations = [row for row in applied_rows
                    if _correction_kind(row[2]) == KIND_EMENDATION]
@@ -414,6 +420,25 @@ def build_report(workdir):
                         c["reason"].replace("|", "/")))
     if not emendations:
         lines.append("| — | — | — | — | — | — | — |")
+    lines.append("")
+
+    lines.append("## Bevarade print-fynd")
+    lines.append("")
+    lines.append("Verifierade sättningsfel, räknefel och inkonsekvenser i "
+                 "originaltrycket som bevaras ordagrant i bastexten "
+                 "(AGENTER.md Regel 8a högerkolumnen). Läsexporten märker dem "
+                 "inte — den här listan är facit, per korpusbeslutet "
+                 "BQ-006(c) i Spindelkonungen, fastställt av användaren "
+                 "2026-08-12. Beläggen står kvar i elementens "
+                 "`resolved_reasons`.")
+    lines.append("")
+    lines.append("| Sida | Element | Fynd |")
+    lines.append("| --- | --- | --- |")
+    for no, el, fynd in print_fynd:
+        lines.append("| %d | `%s` | %s |"
+                     % (no, el.get("id", "?"), fynd.replace("|", "/")))
+    if not print_fynd:
+        lines.append("| — | — | — |")
     lines.append("")
 
     lines.append("## Applicerade korrektioner (spårbarhet)")

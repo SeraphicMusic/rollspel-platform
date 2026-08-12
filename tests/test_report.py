@@ -31,6 +31,39 @@ class Rapportbadd(unittest.TestCase):
         return build_report(self.wd).read_text(encoding="utf-8")
 
 
+class TestBevaradePrintFynd(Rapportbadd):
+    def test_print_fynd_markering_ger_egen_sektion(self):
+        """BQ-006(c), fastställt 2026-08-12: bevarade sättningsfel märks
+        aldrig i läsexporten — granskningsrapportens sektion är facit. En
+        resolved_reason vars resolution bär PRINT-FYND-prefixet listas i
+        sektionen; en vanlig avgjord flagga gör det inte."""
+        md = self.rapport([
+            {"id": "e03", "type": "paragraph", "text": "har absorberar",
+             "confidence": 0.95,
+             "resolved_reasons": [{
+                 "reason": "dubbelt hjälpverb, pixelverifierat",
+                 "resolution": "PRINT-FYND: 'har absorberar' — dubbelt "
+                               "hjälpverb i trycket, bevaras ordagrant.",
+                 "closed_by": "session:test"}]},
+            {"id": "e04", "type": "paragraph", "text": "vanlig text",
+             "confidence": 0.95,
+             "resolved_reasons": [{
+                 "reason": "kollad", "resolution": "ingen åtgärd",
+                 "closed_by": "session:test"}]},
+        ])
+        self.assertIn("## Bevarade print-fynd", md)
+        self.assertIn("dubbelt \nhjälpverb i trycket".replace("\n", ""), md)
+        sektion = md.split("## Bevarade print-fynd")[1].split("## ")[0]
+        self.assertIn("e03", sektion)
+        self.assertNotIn("e04", sektion)
+
+    def test_utan_fynd_star_sektionen_tom(self):
+        md = self.rapport([{"id": "e01", "type": "paragraph",
+                            "text": "ren sida", "confidence": 0.95}])
+        sektion = md.split("## Bevarade print-fynd")[1].split("## ")[0]
+        self.assertIn("| — | — | — |", sektion)
+
+
 class TestBorttagnaElement(Rapportbadd):
     def test_borttaget_lagkonfidenselement_listas_inte(self):
         md = self.rapport([{"id": "e10", "type": "page_artifact",
