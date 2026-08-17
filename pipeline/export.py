@@ -333,6 +333,61 @@ def _bbox(el):
     return (el.get("source") or {}).get("bbox")
 
 
+# ---------------------------------------------------------------------------
+# Kursivspans (BQ-004): tryckets stilväxling INUTI ett element
+# ---------------------------------------------------------------------------
+
+def _stilmarkera(text, spans):
+    """Sätt markdown-asterisker runt de kursiva intervallen i `text`.
+
+    `spans` är [(start, end)] i teckenindex (end exklusiv), ordsnappade av
+    `scripts/kursivspans.py` — de börjar och slutar alltid vid ordgränser, så
+    markörerna hamnar aldrig mitt i ett ord. Ogiltiga intervall hoppas över i
+    stället för att gissas till rätta.
+    """
+    if not spans:
+        return text
+    ut, pos = [], 0
+    for a, b in sorted(spans):
+        if not (isinstance(a, int) and isinstance(b, int)
+                and pos <= a < b <= len(text)):
+            continue
+        ut.append(text[pos:a])
+        ut.append("*")
+        ut.append(text[a:b])
+        ut.append("*")
+        pos = b
+    ut.append(text[pos:])
+    return "".join(ut)
+
+
+def _el_spans(el):
+    """Elementets kursivintervall (utan liststyckenas `item`-poster)."""
+    return [(sp.get("start"), sp.get("end"))
+            for sp in ((el.get("data") or {}).get("style_spans") or [])
+            if sp.get("style") == "italic" and "item" not in sp]
+
+
+def _styled_text(el):
+    """Elementtexten med tryckets kursivspans som `*…*`."""
+    return _stilmarkera(el.get("text") or "", _el_spans(el))
+
+
+# När två markerade element flödas ihop uppstår skarvar som `…i* *hans…`
+# (kursivföljden fortsätter över element-/sidgränsen) och `…behö-* *va…`
+# (ett avstavat ord inuti kursivföljden bryts av gränsen). Båda är samma
+# tryckta kursivlöpning och läks till en: markörparet i skarven tas bort,
+# och avstavningen läks som i löptext. Mönstren kan bara uppstå ur
+# `_stilmarkera`s markörer — boken sätter aldrig `-* *` eller `* *` i sats.
+_MARKOR_AVSTAVNING = re.compile(r"-\*(\s+)\*(?=[a-zåäöé])")
+_MARKOR_SKARV = re.compile(r"\*(\s+)\*(?!\*)")
+
+
+def _laka_markorskarvar(text):
+    text = _MARKOR_AVSTAVNING.sub("", text)
+    return _MARKOR_SKARV.sub(r"\1", text)
+
+
 _ORDTECKEN = re.compile(r"[^0-9A-Za-zÅÄÖÉÜåäöéü\-]+")
 
 
@@ -689,8 +744,9 @@ def _reflow(run, mittpa=None, radrows=None):
     for block in blocks:
         text = ""
         for _, el in block:
-            text = _join_text(text, _unwrap((el.get("text") or "").strip(), mittpa),
+            text = _join_text(text, _unwrap(_styled_text(el).strip(), mittpa),
                               mittpa)
+        text = _laka_markorskarvar(text)
         # Anmärkningarna samlas från HELA blocket, inte bara ledarelementet.
         # Ett tryckfel sitter sällan på styckets första rad — s. 65:s
         # "baserade på färdigheten" står på dess sista — och hade noten
@@ -1159,7 +1215,14 @@ def export_markdown(workdir, include_artifacts=False):
             last_page = page
         if etype == "heading":
             level = min(int(el.get("level", 2)) + 1, 6)
-            lines += ["#" * level + " " + text, ""]
+            # Rubrikens kursivspans renderas — stilen kan växla inuti EN
+            # rubrik (SJÖSVALANS kursiv, ÅTERKOMST rak, s. 7). Ett helkursivt
+            # `style`-fält på rubriken hedras också; grenen läste det aldrig
+            # förrän BQ-004.
+            rubrik = _styled_text(el).strip()
+            if el.get("style") == "italic" and not _el_spans(el):
+                rubrik = "*%s*" % rubrik
+            lines += ["#" * level + " " + rubrik, ""]
             senaste_rubrik = text
         elif etype in ("toc_entry", "index_entry"):
             # Flödas ALDRIG om: en innehålls- eller registerpost är en rad,
@@ -1167,8 +1230,16 @@ def export_markdown(workdir, include_artifacts=False):
             lines += ["*%s*" % text, ""] if el.get("style") == "italic" \
                 else [text, ""]
         elif etype == "list":
-            lines += ["- %s" % i
-                      for i in ((el.get("data") or {}).get("items") or [])]
+            # Kursivspans per listpost (`item`-formen): kartlegendens post 5
+            # lutar i sin helhet i trycket (s. 10, BQ-004).
+            per_post = {}
+            for sp in (el.get("data") or {}).get("style_spans") or []:
+                if sp.get("style") == "italic" and "item" in sp:
+                    per_post.setdefault(sp["item"], []).append(
+                        (sp.get("start"), sp.get("end")))
+            lines += ["- %s" % _stilmarkera(item, per_post.get(i) or [])
+                      for i, item in
+                      enumerate((el.get("data") or {}).get("items") or [])]
             lines += [""]
         elif etype == "table":
             lines += _table_md(el)
