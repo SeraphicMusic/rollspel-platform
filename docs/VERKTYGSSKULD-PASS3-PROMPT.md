@@ -1,5 +1,38 @@
 # Överlämning: verktygsskuldens pass 3 — klass C
 
+> **UTFALL (2026-08-18): PASS 3 GENOMFÖRT — alla fyra §§ verkställda.**
+>
+> * **§1 BQ-001**: `scripts/dela_stycken.py` (facitprov 6/6; spaltgränser är
+>   inte styckefacit — s. 2 rad 55 fortsätter mitt i meningen). 10 element →
+>   33 stycken i Edsbrytarna, 7 refuserade med skäl (1:1-kravet). Exporten
+>   lärde sig läsa FÖRSTA/SISTA radens box för styckeformade element (bara
+>   vid 1:1-ren bindning — trasiga bindningar gav annars felbrott, s. 5).
+>   Lovligt bytes p003_e25-flagga dömd och stängd: REFUSERAT, 14 band mot 13
+>   tryckta rader är klass B. Commit cf0805c.
+> * **§2**: fem synkrona advokatpass. Tanegashima s. 4/5: alla larm falska
+>   eller klass B, men NIO felkopplade bindningar UTANFÖR larmlistan ombundna
+>   med Regel 9b-bevis; tömda p005_e27:s 28 kartband strukna. Lovligt byte
+>   s. 5/6/8: elva ombindningar, tre strukna (bl.a. p006_e30 vars band låg
+>   inuti illustrationens bläckblock), fem lediga band utpekade med mått för
+>   mekanisk bindning. BQ-posterna uppdaterade; kvar är enbart del (b),
+>   mätmotorärendena (klass B). Ingen kodändring — bara state.
+> * **§3 BQ-004**: `scripts/kursivspans.py` (facitprov 7/7; `På`-bruset och
+>   kartlegendens helpostregel pixeldömda). `data.style_spans`,
+>   SCHEMA_VERSION 1→2, exporten renderar `*…*` i löptext/rubriker/listor och
+>   läker markörskarvar vid fogarna; heading-grenen läser `el["style"]`.
+>   ALLTID spans, aldrig elementstil (stilbrutna följder klipper
+>   sidgränsläkningen — `behö-`/`va`-fallet). Ordgrind 0. Commit 1d8cbbc.
+> * **§4 BQ-010**: prosafälten enhetade (två rutor konsumerade efter
+>   tryckläsning), och BÅDA parafraserade vapenraderna (Jättebläckfisken +
+>   Megas — korpussvepet fann den senare) rekonstruerade som `data.weapons`
+>   med `gc`-kolumn och `weapons_label`; orddeltat bärs av applicerade
+>   poster. Ordgrind 90/90. Commit 451206f.
+>
+> Sviten 637 grön efter varje verktygsändring. Alla fyra böckernas exporter
+> ombyggda mot HEAD (0 proveniensvarningar), bibliotek uppdaterat. Kvar av
+> verktygsskulden: enbart klass B (mätmotorns bilddetektering + banden som
+> saknas/klipps), med facit i [VERKTYGSSKULD-PASS2.md](VERKTYGSSKULD-PASS2.md).
+
 Pass 1+2 (2026-08-17, se [VERKTYGSSKULD-PASS2.md](VERKTYGSSKULD-PASS2.md))
 stängde 15 av 22 `[verktyg]`-poster. Detta pass tar **klass C**: Edsbrytarnas
 styckedelare (BQ-001) och kursivspans (BQ-004), Krugal BQ-010, samt
