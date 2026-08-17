@@ -180,27 +180,35 @@ def _statblock_md(el, foregaende_rubrik=None):
     elif skills:
         lines.append("- **Färdigheter:** " + ", ".join(
             "%s %s" % (k, v) for k, v in skills.items()))
-    lines.extend(_weapons_md(data.get("weapons")))
+    lines.extend(_weapons_md(data.get("weapons"), data.get("weapons_label")))
     lines.append("")
     return lines
 
 
 # Kolumner i den ordning en spelare läser dem; nycklar som inte står här är
 # katalogmetadata (pris, vikt, vapengrupp) och hör inte hemma i statblocket.
-_WEAPON_COLUMNS = (("attack", "Attack"), ("damage", "Skada"),
+# `gc` (Grundchans) står FÖRE skadan — så sätter DoD-bestiariet sitt
+# vapenhuvud (`Naturliga vapen  GC  Skada`, Krugal s. 16, BQ-010).
+_WEAPON_COLUMNS = (("attack", "Attack"), ("gc", "GC"), ("damage", "Skada"),
                    ("bv", "BV"), ("range", "Räckvidd"),
                    ("rackvidd", "Räckvidd"), ("styKrav", "STY-krav"))
 
 
-def _weapons_md(weapons):
-    """Vapenrader — utan den här förlorade md-exporten hela vapenblocket."""
+def _weapons_md(weapons, label=None):
+    """Vapenrader — utan den här förlorade md-exporten hela vapenblocket.
+
+    `label` är tryckets eget kolumnhuvud för namnkolumnen när det avviker
+    från det generiska (`Naturliga vapen` i bestiariet, BQ-010) — det bärs i
+    `data.weapons_label` och faller tillbaka på `Vapen`.
+    """
     if not weapons:
         return []
     rows = [w if isinstance(w, dict) else {"name": str(w)} for w in weapons]
-    columns = [(key, label) for key, label in _WEAPON_COLUMNS
+    columns = [(key, label_) for key, label_ in _WEAPON_COLUMNS
                if any(row.get(key) not in (None, "") for row in rows)]
     esc = lambda cell: str(cell).replace("|", "\\|")
-    lines = ["", "| Vapen | " + " | ".join(label for _, label in columns) +
+    lines = ["", "| %s | " % esc(label or "Vapen")
+             + " | ".join(label_ for _, label_ in columns) +
              " |", "|---|" + "---|" * len(columns)]
     for row in rows:
         cells = [esc(row.get(key, "—") if row.get(key) not in (None, "")
