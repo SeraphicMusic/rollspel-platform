@@ -30,6 +30,7 @@ import argparse
 import collections
 import json
 import pathlib
+import re
 import sys
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent))
@@ -150,6 +151,14 @@ def _strukturpost(post):
                 return True
             except (json.JSONDecodeError, ValueError):
                 pass
+        # Ett JSON-FRAGMENT: `"other": {"Färdigheter": …}` — fältflyttarnas
+        # poster citerar nyckeln utan omslutande klamrar, så `json.loads`
+        # aldrig godtar dem och `{`-provet aldrig ser dem. Krugal p013_e26
+        # (2026-07-18, före frysningen) krediterade så `Färdigheter:` borta
+        # och åt upp skiljeteckenkvittningen för en färsk etikettändring.
+        # Ingen läsexport återger text på formen `"nyckel": värde`.
+        if re.match(r'^"[^"\n]+"\s*:', v):
+            return True
     return False
 
 
