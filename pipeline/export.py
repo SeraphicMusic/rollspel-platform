@@ -500,12 +500,23 @@ def _prose_width(boxes):
     return widths[min(len(widths) - 1, int(len(widths) * 0.75))]
 
 
-def _starts_paragraph(el, prev, nxt, boxes, prev_boxes):
+def _starts_paragraph(el, prev, nxt, boxes, prev_boxes,
+                      bb=None, pbb=None, nbb=None):
     """Inleder `el` ett nytt stycke, eller fortsätter det föregående raden?
 
     Raden och dess föregångare mäts mot SIN EGEN sidas rader — ett stycke som
     löper över en sidbrytning har en rad på var sida, och sidorna kan ha olika
     spaltgeometri.
+
+    `bb`/`pbb`/`nbb` är rad-precisa boxar för STYCKEFORMADE element (ett
+    element = flera tryckta rader): elementets union-bbox har spaltens
+    vänsterkant och fulla bredd oavsett hur styckena ser ut, så första radens
+    indrag och sista radens utslutna korta rad — de två signaler hela
+    omflödningen vilar på — är osynliga i den. Edsbrytarna i Erebos s. 6:s
+    fyra styckedelade repliker flödades ihop till ETT stycke av exakt det
+    skälet (BQ-001). Anroparen skickar första radens box för `el`/`nxt` och
+    SISTA radens för `prev`, uppslagna ur sidans radmätning; utan mätning
+    faller allt tillbaka på elementboxarna och ingenting ändras.
     """
     # 0. En fältrad inleder alltid sitt eget block. Örtposterna (s. 53–61) sätts
     #    `Etikett: värde` med en etikett per tryckt rad, och raderna fyller inte
@@ -541,7 +552,8 @@ def _starts_paragraph(el, prev, nxt, boxes, prev_boxes):
     prev_text = (prev.get("text") or "").rstrip()
     if prev_text.endswith("-") and not prev_text.endswith((" -", "--")):
         return False
-    bb, pbb = _bbox(el), _bbox(prev)
+    bb = bb if bb is not None else _bbox(el)
+    pbb = pbb if pbb is not None else _bbox(prev)
     if bb is None or pbb is None:
         # Utan geometri finns inget facit — då fogas ingenting ihop.
         return True
@@ -568,14 +580,69 @@ def _starts_paragraph(el, prev, nxt, boxes, prev_boxes):
     if col and bb[0] - col[0] >= _INDENT_MIN:
         if abs(bb[0] - pbb[0]) < _INDENT_MIN:
             return False
-        nbb = _bbox(nxt) if nxt is not None else None
+        if nbb is None:
+            nbb = _bbox(nxt) if nxt is not None else None
         if nbb is not None and abs(nbb[0] - bb[0]) < _INDENT_MIN:
             return False
         return True
     return False
 
 
-def _reflow(run, mittpa=None):
+def _radbox(el, page, radrows, forsta):
+    """Första eller sista tryckta radens box för ett element, ur radmätningen.
+
+    Ger `None` när elementet saknar `source.rader` eller sidan saknar mätning
+    — anroparen faller då tillbaka på elementets egen bbox. För ett enradigt
+    element är svaret per definition samma box som elementets, så de
+    radformade böckerna (del I–III) berörs inte av uppslaget.
+
+    Kravet att textraderna går 1:1 med banden är bärande: ett element vars
+    bindning inte går ihop (Edsbrytarna s. 5 `e05`: fem tryckta rader på tre
+    band) pekar inte ut sin verkliga första/sista rad, och dess "sista rad"
+    var där en kort bandstump som fick styckeregeln att läsa den som
+    tabellcell och bryta ett stycke mitt i meningen (»…skött sig otroligt« /
+    »klantigt så blir de…«). En trasig bindning ger union-boxen, aldrig en
+    gissad rad.
+    """
+    rows = (radrows or {}).get(page)
+    rader = (el.get("source") or {}).get("rader")
+    if not rows or not rader:
+        return None
+    if (len(rader) >= 2
+            and len((el.get("text") or "").split("\n")) != len(rader)):
+        return None
+    i = rader[0] if forsta else rader[-1]
+    if not (0 <= i < len(rows)):
+        return None
+    b = rows[i].get("bbox")
+    return b if b and len(b) == 4 else None
+
+
+def _nasta_tryckta_rad(el, page, nxt, npage, radrows):
+    """Boxen för den tryckta rad som FÖLJER elementets första.
+
+    Indragsregelns grannvakt ("ett hängande indrag delas av nästa rad") måste
+    jämföra med nästa TRYCKTA rad. För ett enradigt element är det nästa
+    elements första rad — det gamla beteendet — men för ett styckeformat
+    element är det elementets EGEN andra rad. Utan den skillnaden jämförs två
+    styckens förstarader med varandra: på Edsbrytarna s. 6 dödade vakten den
+    äkta gränsen mellan två indragna styckestarter tre tryckta rader isär, och
+    på s. 5 lästes ett hängande citatblocks förstarad som styckestart eftersom
+    "nästa rad" hämtades ur fel element och blocket bröts mitt i meningen.
+    """
+    rows = (radrows or {}).get(page)
+    rader = (el.get("source") or {}).get("rader")
+    if (rows and rader and len(rader) >= 2
+            and len((el.get("text") or "").split("\n")) == len(rader)):
+        i = rader[1]
+        if 0 <= i < len(rows):
+            b = rows[i].get("bbox")
+            return b if b and len(b) == 4 else None
+        return None
+    return _radbox(nxt, npage, radrows, True) if nxt is not None else None
+
+
+def _reflow(run, mittpa=None, radrows=None):
     """Dela en rad-följd i stycken och foga ihop varje styckes rader.
 
     Returnerar (sida, text, första_elementet) per stycke. Det sista behövs för
@@ -604,8 +671,14 @@ def _reflow(run, mittpa=None):
             ppage, pel = blocks[-1][-1]
             nxt = filled[position + 1][1] \
                 if position + 1 < len(filled) else None
+            npage = filled[position + 1][0] \
+                if position + 1 < len(filled) else None
             fresh = _starts_paragraph(el, pel, nxt, per_page.get(page) or [],
-                                      per_page.get(ppage) or [])
+                                      per_page.get(ppage) or [],
+                                      bb=_radbox(el, page, radrows, True),
+                                      pbb=_radbox(pel, ppage, radrows, False),
+                                      nbb=_nasta_tryckta_rad(
+                                          el, page, nxt, npage, radrows))
         else:
             fresh = True
         if fresh:
@@ -979,9 +1052,30 @@ def _stream(book, include_artifacts):
             yield page["page"], el
 
 
+def _load_radrows(workdir, book):
+    """Radmätningen per sida, för de styckeformade elementens omflödning.
+
+    Läses direkt ur `pages/page_NNN.radboxar.json` — bok.json bär elementens
+    `source.rader` men inte banden de pekar på. En sida utan mätfil ger bara
+    att omflödningen faller tillbaka på elementboxarna, aldrig ett fel.
+    """
+    ut = {}
+    for page in book.get("pages") or []:
+        n = page.get("page")
+        f = Path(workdir) / "pages" / ("page_%03d.radboxar.json" % n)
+        if not f.is_file():
+            continue
+        try:
+            ut[n] = read_json(f).get("rows") or []
+        except (ValueError, OSError):
+            continue
+    return ut
+
+
 def export_markdown(workdir, include_artifacts=False):
     log = setup_logging(workdir)
     book = _load_book(workdir)
+    radrows = _load_radrows(workdir, book)
     lines = []
     title = (book["source"].get("metadata") or {}).get("title") \
         or Path(book["source"]["path"]).stem
@@ -1030,7 +1124,7 @@ def export_markdown(workdir, include_artifacts=False):
                     break
                 run.append((nxt_page, nxt))
                 index += 1
-            blocks = _reflow(run, mittpa)
+            blocks = _reflow(run, mittpa, radrows)
             for blk_page, text, lead, notes in blocks:
                 if blk_page != last_page:
                     lines += ["<!-- sida %d -->" % blk_page, ""]
