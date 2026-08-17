@@ -9,7 +9,7 @@ import unittest
 from pathlib import Path
 
 from pipeline.manifest import Manifest, page_file, read_json
-from pipeline.preflight import (PAGE_FORM, PAGE_PROSE, PAGE_TABLE,
+from pipeline.preflight import (rule_orphan_bands,PAGE_FORM, PAGE_PROSE, PAGE_TABLE,
                                 classify_page, decisions_file,
                                 ensure_decisions_file, preflight,
                                 rule_column_interleaving, rule_column_merge,
@@ -488,6 +488,64 @@ class TestShiftedChain(unittest.TestCase):
         avvikande = el("e99", LANG_RAD, bbox=[0.067, 0.60, 0.070, 0.016])
         avvikande["source"]["method"] = "embedded"
         self.assertEqual(rule_shifted_chain(elements + [avvikande]), [])
+
+    def test_styckeformat_element_normaliseras_med_radantal(self):
+        """Ett stycke om N uppmätta rader får inte larma för att det är
+        längre eller kortare än sidans medianstycke (Spindelkonungen BQ-002:
+        e03/e10 på s. 2 larmade med faktor 2,25/2,57 trots exakt kedja).
+        Kvoten skalas med `len(source.rader)`."""
+        elements = self._sida()
+        # Samma spaltbredd, dubbel textmängd — och TVÅ uppmätta rader.
+        stycke = el("e99", LANG_RAD + " " + LANG_RAD,
+                    bbox=[0.067, 0.60, 0.435, 0.032])
+        stycke["source"]["rader"] = [30, 31]
+        self.assertEqual(rule_shifted_chain(elements + [stycke]), [])
+
+
+class TestOrphanBands(unittest.TestCase):
+    """`agarlost-band` — Spindelkonungen BQ-003:s två signaler."""
+
+    def _bunden(self, id_, rader):
+        e = el(id_, LANG_RAD, bbox=[0.07, 0.5, 0.43, 0.016])
+        e["source"]["rader"] = rader
+        return e
+
+    def test_agarlost_forsta_band_flaggas(self):
+        """s. 3-arten: band 0 ägs av ingen, kedjan börjar på band 1."""
+        elements = [self._bunden("e%d" % i, [i + 1]) for i in range(10)]
+        hits = rule_orphan_bands(elements, ["rad"] * 11)
+        self.assertEqual([e["id"] for e, _ in hits], ["e0"])
+        self.assertIn("FÖRE", hits[0][1])
+
+    def test_lucka_mitt_i_kedjan_flaggas(self):
+        elements = [self._bunden("e%d" % i, [i]) for i in range(5)] + \
+                   [self._bunden("e%d" % (5 + i), [7 + i]) for i in range(5)]
+        hits = rule_orphan_bands(elements, ["rad"] * 12)
+        self.assertEqual([e["id"] for e, _ in hits], ["e5"])
+        self.assertIn("MITT i kedjan", hits[0][1])
+
+    def test_obunden_sida_ar_tyst(self):
+        """Under täckningsgaten är ägarlösa band bindningens kända skuld."""
+        elements = [self._bunden("e0", [3])]
+        self.assertEqual(rule_orphan_bands(elements, ["rad"] * 12), [])
+
+    def test_overhoppat_element_flaggas(self):
+        """s. 11-arten: obundet element mellan grannar i obruten bandföljd."""
+        elements = [self._bunden("e0", [0, 1]),
+                    el("e1", LANG_RAD),
+                    self._bunden("e2", [2, 3])]
+        hits = rule_orphan_bands(elements, ["rad"] * 4)
+        self.assertEqual([e["id"] for e, _ in hits], ["e1"])
+        self.assertIn("överhoppat", hits[0][1])
+
+    def test_verklig_matlucka_flaggas_inte_som_hopp(self):
+        """Grannar med GLAPP i banden: elementets rader kan saknas i
+        mätningen — det är en mätlucka, inte ett kedjehopp."""
+        elements = [self._bunden("e0", [0, 1]),
+                    el("e1", LANG_RAD),
+                    self._bunden("e2", [4, 5])]
+        hits = rule_orphan_bands(elements, ["rad"] * 6)
+        self.assertNotIn("e1", [e["id"] for e, _ in hits])
 
 
 class TestRowMerge(unittest.TestCase):

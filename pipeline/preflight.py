@@ -186,13 +186,17 @@ PAGE_TABLE_SHARE = 0.30
 # Blankett: nästan bara korta element, utspridda över många x-lägen.
 PAGE_FORM_SHORT_SHARE = 0.60
 PAGE_FORM_MIN_CLUSTERS = 3
+# `agarlost-band`: kör bara ägarlöshetssignalerna på en i allt väsentligt
+# bunden sida — under den här andelen ägda textband är ett ägarlöst band
+# bindningens kända skuld, inte en kedja som glidit.
+ORPHAN_BAND_MIN_COVERAGE = 0.80
 
 RULES = ("linjeregel-prefix", "linjeregel-suffix", "raka-citattecken",
          "plusminus", "plusminus-varde", "punktledare", "kolumnkollaps",
          "kolumnsammanslagning", "lasordning", "radsammanslagning",
          "tabellkandidat", "tabellrad-i-element", "bbox-felkoppling",
          "tabell-svalt-titelband", "forskjuten-kedja", "tomt-radband",
-         "bandbredd")
+         "bandbredd", "agarlost-band")
 
 # En cell i en tryckt tabellrad som ligger radbruten i ett textlagerblock.
 # Taket är rundligare än TABLE_CELL_MAX_TEXT (som gäller ett HELT element) men
@@ -986,6 +990,87 @@ def rule_table_ate_caption(elements):
     return hits
 
 
+def rule_orphan_bands(elements, kinds):
+    """Ägarlösa textband och överhoppade element (Spindelkonungen BQ-003).
+
+    Två arter av samma felkoppling, båda med mätt facit:
+
+    (a) s. 3: band 0 (rubriken `SPELLEDARENS INFORMATION:` i sidhuvudet) ägdes
+    av inget element — `e01` pekade på band 1 och kedjan var förskjuten från
+    start. Ingen befintlig regel griper: `laga_radbas` inte (skiftet är
+    lokalt), `bbox-felkoppling` inte (elementet HAR box), `tomt-radband` inte
+    (bandet har bläck), `bandbredd` inte (utanför COLUMN_REGIONS).
+
+    (b) s. 11: tre element tappade sina `rader` och de följande sju tog deras
+    band. Ett OBUNDET textelement mellan två bundna grannar vars band går i
+    obruten följd är kedjans hopp, inte en mätlucka — banden fanns, men
+    grannarna åt upp dem.
+
+    Signalerna är rena indexjämförelser mot mätningen. Gaten är att sidan är
+    i allt väsentligt bunden (≥80 %% av mätningens textband ägda): på en
+    obunden eller halvbunden sida är ägarlösa band bara bindningens kända
+    skuld, inte en kedja som glidit.
+    """
+    if not kinds:
+        return []
+    text_bands = [i for i, k in enumerate(kinds) if k == "rad"]
+    if not text_bands:
+        return []
+    agare = {}
+    for el in elements:
+        if el.get("removed"):
+            continue
+        for i in (el.get("source") or {}).get("rader") or []:
+            if isinstance(i, int) and i not in agare:
+                agare[i] = el
+    if not agare:
+        return []
+    tackning = sum(1 for i in text_bands if i in agare) / len(text_bands)
+    hits = []
+    if tackning >= ORPHAN_BAND_MIN_COVERAGE:
+        forsta = min(agare)
+        fore = [i for i in text_bands if i < forsta and i not in agare]
+        if fore:
+            hits.append((agare[forsta],
+                         "Heuristik (ägarlöst band): mätningens textband %s "
+                         "ligger FÖRE sidans första ägda band %d. Kedjan kan "
+                         "vara förskjuten från start — sidans första tryckta "
+                         "rad ägs av ingen, och elementet som äger band %d "
+                         "bär då sannolikt fel rad. Döm mot PNG:n."
+                         % (fore, forsta, forsta)))
+        inre = [i for i in text_bands
+                if forsta < i < max(agare) and i not in agare]
+        if inre:
+            efter = min(i for i in agare if i > inre[0])
+            hits.append((agare[efter],
+                         "Heuristik (ägarlöst band): textbanden %s MITT i "
+                         "kedjan ägs av inget element. Antingen har kedjan "
+                         "glidit förbi dem, eller så saknar transkriptionen "
+                         "raderna. Döm mot PNG:n."
+                         % (inre,)))
+    # (b) Överhoppade element — oberoende av täckningsgaten: signalen är
+    # grannarnas OBRUTNA följd, som i sig bevisar att inget band blev över.
+    TEXTTYPER = {"paragraph", "heading", "list_item", "boxed_text"}
+    kedja = [el for el in elements
+             if el.get("type") in TEXTTYPER and not el.get("removed")
+             and (el.get("text") or "").strip()]
+    for j in range(1, len(kedja) - 1):
+        el = kedja[j]
+        if (el.get("source") or {}).get("rader"):
+            continue
+        prad = (kedja[j - 1].get("source") or {}).get("rader") or []
+        nrad = (kedja[j + 1].get("source") or {}).get("rader") or []
+        if prad and nrad and min(nrad) == max(prad) + 1:
+            hits.append((el,
+                         "Heuristik (ägarlöst band, överhoppat element): "
+                         "elementet saknar `source.rader` men grannarnas band "
+                         "går i obruten följd (%d → %d). Kedjan har hoppat "
+                         "över elementet — dess tryckta rader ägs av en "
+                         "granne. Döm mot PNG:n."
+                         % (max(prad), min(nrad))))
+    return hits
+
+
 def rule_shifted_chain(elements):
     """En `paragraph` vars bredd per tecken avviker grovt från sidans median.
 
@@ -1019,7 +1104,15 @@ def rule_shifted_chain(elements):
         text = (el.get("text") or "").strip()
         if not box or len(text) < 4:
             continue
-        kandidater.append((el, box[2] / len(text)))
+        # Ett styckeformat element bär FLERA tryckta rader i samma box:
+        # bredden är spaltens men teckenlängden är radernas summa, så kvoten
+        # måste normaliseras med radantalet (Spindelkonungen BQ-002 — e03/e10
+        # på s. 2 larmade med faktor 2,25/2,57 trots att kedjan gick ihop
+        # exakt). Radantalet är UPPMÄTT (`source.rader`), inte gissat;
+        # obundna element behåller kvoten oskalad som förut.
+        rader = (el.get("source") or {}).get("rader")
+        n_rader = len(rader) if isinstance(rader, list) and rader else 1
+        kandidater.append((el, box[2] * n_rader / len(text)))
     if len(kandidater) < MIN_CHAR_WIDTH_ELEMENTS:
         return []
     median = _median([kvot for _, kvot in kandidater])
@@ -1302,7 +1395,7 @@ def classify_page(elements):
 # Sida och körning
 # ---------------------------------------------------------------------------
 
-def scan_page(data, image=None, bands=None, regions=None):
+def scan_page(data, image=None, bands=None, regions=None, kinds=None):
     """Kör alla regler på en validerad sid-JSON.
 
     `image` (gråskale-array av sidbilden) och `bands` (mätningens bboxar) är
@@ -1369,6 +1462,9 @@ def scan_page(data, image=None, bands=None, regions=None):
                     ("bandbredd",
                      lambda els: scan_band_widths(els, image, bands,
                                                   regions)[0])]
+    if kinds:
+        sidnivå += [("agarlost-band",
+                     lambda els: rule_orphan_bands(els, kinds))]
     # Kolumnsammanslagningen mäter mot medianen av sidans elementbredder. På en
     # blankett är medianen de korta fältraderna ("Typ: Buske"), så satsytans
     # normalbreda rader ser ut att spänna över rännan. Uppmätt: del II s. 53,
@@ -1442,8 +1538,10 @@ def preflight(workdir, pages=None, force=False):
         matning = (read_json(matfil) or {}) if matfil.is_file() else {}
         bands = [r.get("bbox") for r in (matning.get("rows") or [])]
         regioner = [r.get("region") for r in (matning.get("rows") or [])]
+        kinds = [r.get("kind") for r in (matning.get("rows") or [])]
         out, counts = scan_page(data, _page_gray(workdir, no),
-                                bands if all(bands) else None, regioner)
+                                bands if all(bands) else None, regioner,
+                                kinds)
         # Provenienssträngen måste följa med: en heuristik.json kan nu vara
         # räknad antingen ur draften eller ur den färdiga sidan, och utan det
         # går de två inte att skilja åt i efterhand.
