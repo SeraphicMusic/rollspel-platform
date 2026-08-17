@@ -91,6 +91,75 @@ def _leading_int(value):
 # Statblock
 # ---------------------------------------------------------------------------
 
+# DoD-bestiariets tvåkolumnsform: `1T20+10 (21)` — formel + tryckt typvärde
+# (Krugal BQ-009). Typvärdet är formelns avrundade medelvärde, så de två
+# kolumnerna kan kontrolleras mot varandra: 1T6+6 -> 9,5 -> 10, 3T6 -> 10,5
+# -> 11, 1T20+10 -> 20,5 -> 21 (alla belagda i del II/Krugal). En avvikelse
+# är ett FYND (t.ex. Megas SMI `1T4+11 (4)`, Krugal s. 16), aldrig en
+# rättning.
+_BESTIARIE_FORM = re.compile(r"^(\d+)[Tt](\d+)\s*([+-]\s*\d+)?\s*\((\d+)\)$")
+
+
+def _bestiarie_typvarde(m):
+    n, sidor = int(m.group(1)), int(m.group(2))
+    mod = int(m.group(3).replace(" ", "")) if m.group(3) else 0
+    medel = n * (sidor + 1) / 2 + mod
+    return math.floor(medel + 0.5)
+
+
+def _sb_normal(value):
+    """Normalisera ett SB-värde för jämförelse mot sb_table.
+
+    Tryckets streck (`—`, `–`, `-`) och `0` betyder båda "ingen bonus";
+    ett ledande `+` är typografi, inte information."""
+    s = str(value).strip().replace(" ", "")
+    if s in ("—", "–", "-", "0", ""):
+        return "0"
+    return s.lstrip("+").upper()
+
+
+def _sb_forvantad(adapter, sty, sto):
+    """Slå upp STY+STO i sb_table. Returnerar (summa, bonus) eller None."""
+    sb_spec = adapter.system.get("sb_table")
+    if not sb_spec or sty is None or sto is None:
+        return None
+    total = sty + sto
+    for row in sb_spec.get("rows", []):
+        if row["min"] <= total <= row["max"]:
+            return total, row["bonus"]
+    return None
+
+
+def _tabellburna_stats(rows, adapter):
+    """Plocka attributvärden ur bestiarietabellens `data.rows`-bärare.
+
+    Samma tryckta form bärs av två modeller i korpusen (Krugal BQ-009):
+    `statblock` med värdena i `data.stats` och `table` med raderna
+    `[attribut, formel, typvärde]`. Kontrollerna måste läsa båda, annars är
+    hela bestiariet en blind fläck. Returnerar ({attr: typvärde}, {attr:
+    (formel, typvärde)})."""
+    schema = adapter.statblock
+    allowed = set(schema.get("stats_allowed", []))
+    labels = schema.get("field_labels", {})
+    stats, formler = {}, {}
+    for row in rows or []:
+        if not row or not isinstance(row[0], str):
+            continue
+        label = row[0].strip()
+        ckey = label if label in allowed else labels.get(label.lower())
+        if not ckey:
+            continue
+        varden = [c.strip() for c in row[1:]
+                  if isinstance(c, str) and c.strip()]
+        if not varden:
+            continue
+        if len(varden) >= 2 and _as_int(varden[-1]) is not None and \
+                re.fullmatch(r"\d+[Tt]\d+\s*([+-]\s*\d+)?", varden[0]):
+            formler[ckey] = (varden[0], int(varden[-1]))
+        stats[ckey] = varden[-1]
+    return stats, formler
+
+
 def _canonical_stat_key(key, adapter):
     """Normalisera en statblock-nyckel; reparera OCR-skadade attributnamn."""
     schema = adapter.statblock
@@ -117,7 +186,9 @@ def _canonical_stat_key(key, adapter):
     return key, "unknown"
 
 
-def validate_statblock(el, adapter, flags):
+def validate_statblock(el, adapter, flags, notes=None):
+    if notes is None:
+        notes = []
     schema = adapter.statblock
     data = el.get("data") or {}
     corrections = []
@@ -131,9 +202,39 @@ def validate_statblock(el, adapter, flags):
             flags.append("statblock: okänt fält %r" % key)
         new_stats[ckey] = value
         iv = _as_int(value)
+        # Tryckets tankstreck ÄR ett värde (Krugal BQ-008): "ej tillämpligt"
+        # (KAR på odöda/djur) eller "ingen bonus" (SB) — aldrig ett fel.
+        if isinstance(value, str) and value.strip() in schema.get(
+                "null_tokens", []):
+            continue
         if ckey in adapter.attribute_names:
             lo, hi = adapter.attr_range()
+            # Varelser/odöda har ett eget intervall (Krugal BQ-002):
+            # DRAKE STY 100, JÄTTEBLÄCKFISK STO 125, SPÖKE STY/FYS 0.
+            # Statblocket bär ingen varelseflagga, så kontrollen gäller
+            # unionen av intervallen — det snäva RP-intervallet kan bara
+            # dömas av en människa som vet vem rutan tillhör.
+            creature = adapter.system.get("attributes", {}).get(
+                "creature_range")
+            if creature:
+                lo = min(lo, creature.get("min", lo))
+                hi = max(hi, creature.get("max", hi))
             if iv is None:
+                # Bestiariets tvåkolumnsform `formel (typvärde)` är ett
+                # giltigt värde OCH en gratis kontroll (Krugal BQ-009):
+                # kolumnerna ska per konstruktion stämma överens.
+                m = _BESTIARIE_FORM.match(str(value).strip())
+                if m:
+                    # Avvikelsen är en UPPLYSNING, inte needs_review: det
+                    # tryckta värdet är alltid print-troget (boknivådomen
+                    # »Bestiariets tvåkolumnsform … är print-trogna«).
+                    typ = _bestiarie_typvarde(m)
+                    if typ != int(m.group(4)):
+                        notes.append(
+                            "statblock: %s=%r — formelns typvärde %d ≠ "
+                            "tryckt typvärde %s" % (ckey, value, typ,
+                                                    m.group(4)))
+                    continue
                 # tärningsvärde m.m. tillåtet för SB — men inte för grundattribut
                 status, dcorr = repair_dice_token(str(value), adapter.dice)
                 if status != "ok":
@@ -189,6 +290,23 @@ def validate_statblock(el, adapter, flags):
             flags.append("statblock: %s=%d men %s = %d"
                          % (field, stated, formula, int(expected)))
 
+    # Skadebonus är en TABELLUPPSLAGNING, inte en formel, så `derived_checks`
+    # kan inte uttrycka den — och utan detta block prövades `sb_table` aldrig
+    # av någon kod (Krugal BQ-004). 9 tryckta SB-avvikelser låg osedda i
+    # korpusen bakom den luckan. En avvikelse FLAGGAS, aldrig rättas: ett
+    # tryckt räknefel är ett fynd (AGENTER.md Regel 8a).
+    sb_stated = new_stats.get("SB", other.get("SB"))
+    if sb_stated is not None:
+        uppslag = _sb_forvantad(adapter, values.get("STY"),
+                                values.get("STO"))
+        if uppslag and _sb_normal(sb_stated) != _sb_normal(uppslag[1]):
+            # UPPLYSNING, inte needs_review: avvikelsen är författarens och
+            # det tryckta värdet alltid print-troget (boknivådomen »SB i
+            # bandet STY+STO 27–29«).
+            notes.append(
+                "statblock: SB=%r men STY + STO = %d ger %r enligt sb_table"
+                % (sb_stated, uppslag[0], uppslag[1]))
+
     # Färdighetsvärden
     skills = data.get("skills") or {}
     sk_lo, sk_hi = schema.get("skills_value_range", [0, 999])
@@ -217,6 +335,7 @@ def validate_statblock(el, adapter, flags):
 
 def validate_element(el, adapter):
     flags = []
+    notes = []
     corrections = []
     text = el.get("text") or ""
     if text:
@@ -228,16 +347,40 @@ def validate_element(el, adapter):
         el["text"] = apply_corrections_to_text(text, corrections)
 
     if el.get("type") == "statblock":
-        corrections.extend(validate_statblock(el, adapter, flags))
+        corrections.extend(validate_statblock(el, adapter, flags, notes))
 
     if el.get("type") == "table":
         data = el.get("data") or {}
         headers, rows = data.get("headers"), data.get("rows")
         if headers and rows:
-            for i, row in enumerate(rows):
-                if len(row) != len(headers):
-                    flags.append("tabell: rad %d har %d celler, huvudet %d"
-                                 % (i + 1, len(row), len(headers)))
+            # En orubricerad LEDARKOLUMN är tryckets egen form, inte ett
+            # cellantalsfel (Krugal BQ-009ii): bestiariet sätter tre
+            # datakolumner under två rubriker. Signalen är mätt, inte
+            # gissad: VARJE rad bär exakt en cell mer än huvudet.
+            if not all(len(r) == len(headers) + 1 for r in rows):
+                for i, row in enumerate(rows):
+                    if len(row) != len(headers):
+                        flags.append(
+                            "tabell: rad %d har %d celler, huvudet %d"
+                            % (i + 1, len(row), len(headers)))
+        # Bestiarievärden i `data.rows`-bäraren (Krugal BQ-004/BQ-009):
+        # samma kontroller som för statblock, samma upplysningskanal.
+        tstats, tformler = _tabellburna_stats(rows, adapter)
+        for ckey, (formel, typ_tryckt) in tformler.items():
+            m = _BESTIARIE_FORM.match("%s (%d)" % (formel, typ_tryckt))
+            if m:
+                typ = _bestiarie_typvarde(m)
+                if typ != typ_tryckt:
+                    notes.append(
+                        "tabell: %s=%r — formelns typvärde %d ≠ tryckt "
+                        "typvärde %d" % (ckey, formel, typ, typ_tryckt))
+        if "SB" in tstats:
+            uppslag = _sb_forvantad(adapter, _as_int(tstats.get("STY")),
+                                    _as_int(tstats.get("STO")))
+            if uppslag and _sb_normal(tstats["SB"]) != _sb_normal(uppslag[1]):
+                notes.append(
+                    "tabell: SB=%r men STY + STO = %d ger %r enligt sb_table"
+                    % (tstats["SB"], uppslag[0], uppslag[1]))
         # Tärningar/lexikon i celler
         for row in (rows or []):
             for ci, cell in enumerate(row):
@@ -262,6 +405,13 @@ def validate_element(el, adapter):
     if flags:
         el["needs_review"] = True
         el.setdefault("review_reasons", []).extend(flags)
+    # Upplysningar håller INTE elementet öppet (Krugal BQ-004/BQ-009):
+    # avvikelsen är författarens, det tryckta värdet är print-troget, och
+    # ingen människa behöver döma den per sida. Rapporten redovisar dem i
+    # en egen sektion.
+    if notes:
+        befintliga = el.setdefault("validation_notes", [])
+        befintliga.extend(n for n in notes if n not in befintliga)
     return len(corrections), len(flags)
 
 

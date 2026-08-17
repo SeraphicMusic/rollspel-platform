@@ -165,7 +165,8 @@
       "ä"
     ],
     "e": [
-      "é"
+      "é",
+      "ë"
     ],
     "o": [
       "ö"
@@ -193,6 +194,7 @@
     "INT": "Intelligens",
     "KP": "Kroppspoäng",
     "MST": "Mental Styrka",
+    "OSF": "OSF",
     "PER": "Personlighet",
     "RP": "Rollperson",
     "SB": "Skadebonus",
@@ -201,31 +203,39 @@
     "SMI": "Smidighet",
     "SR": "Stridsrunda",
     "STO": "Storlek",
-    "STY": "Styrka"
+    "STY": "Styrka",
+    "Tb": "Terabyte"
   },
   "words": [
-    "mutation",
-    "cybernetik",
-    "korporation",
-    "syndikat",
     "Berlin City",
+    "Cyberzonen",
+    "Färdigheter",
+    "Förflyttning",
     "Infokloss",
-    "rippare",
+    "Kroppspoäng",
+    "MetroPol",
+    "Svart is",
+    "automateld",
+    "avatar",
+    "blau",
+    "cyberjack",
+    "cyberkosmos",
+    "cybernetik",
+    "dänik",
+    "eldskur",
+    "flick",
+    "geier",
     "korp",
+    "korporation",
+    "mioplant",
+    "mutation",
+    "rasnik",
     "refugnik",
     "reglo",
-    "wohner",
-    "geier",
-    "dänik",
-    "rasnik",
-    "blau",
-    "flick",
-    "MetroPol",
-    "Kroppspoäng",
-    "Förflyttning",
-    "Färdigheter",
+    "rippare",
+    "spacer",
+    "syndikat",
     "träffområde",
-    "automateld",
-    "eldskur"
+    "wohner"
   ]
 }

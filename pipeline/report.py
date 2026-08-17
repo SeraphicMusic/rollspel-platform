@@ -386,6 +386,7 @@ def build_report(workdir):
 
     applied_rows = []
     print_fynd = []
+    upplysningar = []
     for no in m.page_numbers():
         path, _ = best_page_file(workdir, no)
         if path is None:
@@ -399,6 +400,8 @@ def build_report(workdir):
                 if res.startswith(PRINT_FYND_PREFIX):
                     print_fynd.append(
                         (no, el, res[len(PRINT_FYND_PREFIX):].strip()))
+            for n in el.get("validation_notes") or []:
+                upplysningar.append((no, el, n))
 
     emendations = [row for row in applied_rows
                    if _correction_kind(row[2]) == KIND_EMENDATION]
@@ -440,6 +443,22 @@ def build_report(workdir):
     if not print_fynd:
         lines.append("| — | — | — |")
     lines.append("")
+
+    if upplysningar:
+        lines.append("## Upplysningar från valideringen")
+        lines.append("")
+        lines.append("Tabelluppslagningar där tryckets värde inte går ihop "
+                     "med bokens egen tabell (sb_table, bestiariets "
+                     "typvärden). Avvikelsen är författarens och det tryckta "
+                     "värdet är print-troget — ingen flagga, inget att döma "
+                     "per sida (Krugal BQ-004/BQ-009).")
+        lines.append("")
+        lines.append("| Sida | Element | Upplysning |")
+        lines.append("| --- | --- | --- |")
+        for no, el, n in upplysningar:
+            lines.append("| %d | `%s` | %s |"
+                         % (no, el.get("id", "?"), n.replace("|", "/")))
+        lines.append("")
 
     lines.append("## Applicerade korrektioner (spårbarhet)")
     lines.append("")

@@ -162,6 +162,119 @@ class TestStatblockValidation(unittest.TestCase):
         self.assertEqual(el["data"]["rows"][0][1], "1T6+2")
 
 
+class TestStatblockAdapterluckor(unittest.TestCase):
+    """Krugal BQ-002/004/008/009: luckor som gav falska larm eller tysta hål.
+
+    Print-trogna värden (streck, bestiarieform, varelseintervall) får inte
+    larma; de kontroller som FAKTISKT hittar tryckfel (sb_table, typvärde)
+    måste finnas. En avvikelse flaggas alltid, rättas aldrig."""
+
+    def test_streckvarde_ar_giltigt(self):
+        """KAR — på odöda är tryckets "ej tillämpligt", inte ett läsfel."""
+        el = {"type": "statblock",
+              "data": {"name": "Skelett",
+                       "stats": {"STY": 12, "STO": 10, "KAR": "—"}}}
+        validate_element(el, DOD)
+        self.assertFalse(any("inte ett tal" in r
+                             for r in el.get("review_reasons", [])))
+
+    def test_varelsevarden_flaggas_inte(self):
+        """DRAKE STY 100 / JÄTTEBLÄCKFISK STO 125 / SPÖKE FYS 0 är tryckta."""
+        el = {"type": "statblock",
+              "data": {"name": "Drake",
+                       "stats": {"STY": 100, "STO": 125, "FYS": 0}}}
+        validate_element(el, DOD)
+        self.assertFalse(any("utanför intervall" in r
+                             for r in el.get("review_reasons", [])))
+
+    def test_varde_over_varelseintervall_flaggas_fortfarande(self):
+        el = {"type": "statblock",
+              "data": {"name": "Jätte", "stats": {"STY": 180}}}
+        validate_element(el, DOD)
+        self.assertTrue(any("utanför intervall" in r
+                            for r in el["review_reasons"]))
+
+    def test_bestiarieform_godkanns_nar_kolumnerna_stammer(self):
+        """`1T6+6 (10)`: medel 9,5 avrundas till 10 — formen är giltig."""
+        el = {"type": "statblock",
+              "data": {"name": "Vättar",
+                       "stats": {"STY": "1T6+6 (10)", "SMI": "3T6 (11)"}}}
+        validate_element(el, DOD)
+        self.assertFalse(el.get("review_reasons"))
+
+    def test_bestiarieform_avvikande_typvarde_ger_upplysning(self):
+        """Megas SMI `1T4+11 (4)` (Krugal s. 16): medel 13,5 mot tryckt 4.
+
+        UPPLYSNING, inte needs_review — trycket är print-troget."""
+        el = {"type": "statblock",
+              "data": {"name": "Megas", "stats": {"SMI": "1T4+11 (4)"}}}
+        validate_element(el, DOD)
+        self.assertTrue(any("typvärde" in n
+                            for n in el.get("validation_notes", [])))
+        self.assertFalse(el.get("needs_review"))
+
+    def test_sb_streck_stammer_mot_sb_table(self):
+        """STY+STO 22 ligger i raden 1–26 (bonus 0); tryckt `—` betyder 0."""
+        el = {"type": "statblock",
+              "data": {"name": "Zombie",
+                       "stats": {"STY": 12, "STO": 10, "SB": "—"}}}
+        validate_element(el, DOD)
+        self.assertFalse(any("sb_table" in n
+                             for n in el.get("validation_notes", [])))
+
+    def test_sb_avvikelse_ger_upplysning_inte_flagga(self):
+        """STY 15 + STO 13 = 28 ger +1 enligt tabellen; tryckt `—` avviker."""
+        el = {"type": "statblock",
+              "data": {"name": "Livsmästare",
+                       "stats": {"STY": 15, "STO": 13, "SB": "—"}}}
+        validate_element(el, DOD)
+        self.assertTrue(any("sb_table" in n
+                            for n in el["validation_notes"]))
+        self.assertFalse(el.get("needs_review"))
+
+    def test_sb_tarningsbonus_stammer_mot_sb_table(self):
+        """STY 20 + STO 15 = 35 ger +1T4; tryckt `1T4` utan plus är samma värde."""
+        el = {"type": "statblock",
+              "data": {"name": "Troll",
+                       "stats": {"STY": 20, "STO": 15, "SB": "1T4"}}}
+        validate_element(el, DOD)
+        self.assertFalse(any("sb_table" in n
+                             for n in el.get("validation_notes", [])))
+
+    def test_bestiarietabellens_ledarkolumn_flaggas_inte(self):
+        """Tre datakolumner under två rubriker är tryckets form (BQ-009ii)."""
+        el = {"type": "table",
+              "data": {"headers": ["Grundegenskaper", "Typvärde"],
+                       "rows": [["STY", "3T6+6", "17"],
+                                ["STO", "2T6+6", "13"]]}}
+        validate_element(el, DOD)
+        self.assertFalse(any("celler" in r
+                             for r in el.get("review_reasons", [])))
+
+    def test_tabellburen_typvardesavvikelse_ger_upplysning(self):
+        """Snaga STO `2T4+6` mot tryckt typvärde 8 (medel 11) — Krugal s. 17."""
+        el = {"type": "table",
+              "data": {"headers": ["Grundegenskaper", "Typvärde"],
+                       "rows": [["STY", "2T6+3", "10"],
+                                ["STO", "2T4+6", "8"]]}}
+        validate_element(el, DOD)
+        self.assertTrue(any("typvärde" in n
+                            for n in el["validation_notes"]))
+        self.assertFalse(el.get("needs_review"))
+
+    def test_tabellburen_sb_avvikelse_ger_upplysning(self):
+        """Uruk-hai (Krugal s. 17): STY 17 + STO 13 = 30 ger +1T2, tryckt 0."""
+        el = {"type": "table",
+              "data": {"headers": ["Grundegenskaper", "Typvärde"],
+                       "rows": [["STY", "3T6+6", "17"],
+                                ["STO", "2T6+6", "13"],
+                                ["SB", "", "0"]]}}
+        validate_element(el, DOD)
+        self.assertTrue(any("sb_table" in n
+                            for n in el["validation_notes"]))
+        self.assertFalse(el.get("needs_review"))
+
+
 class TestGeometrirapport(unittest.TestCase):
     """Sidor utan bbox måste synas — läsexporten tystnar annars om dem.
 

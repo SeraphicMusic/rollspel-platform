@@ -6,6 +6,11 @@
     "drakar och demoner"
   ],
   "attributes": {
+    "creature_range": {
+      "max": 125,
+      "min": 0,
+      "note": "Varelser/odöda spränger RP-intervallet: DRAKE STY/STO 100 (del II s.31), JÄTTEBLÄCKFISK STO 125 (s.27), SPÖKE STY/FYS/KP 0 (s.47), SKELETT/MUMIE/ZOMBIE/GAST FYS 0. `range` gäller bara rollpersoner. (Krugal BQ-002)"
+    },
     "labels": {
       "FYS": "Fysik",
       "INT": "Intelligens",
@@ -145,6 +150,22 @@
     ]
   },
   "skill_value": {
+    "b_scale": {
+      "fv_equivalents": {
+        "B3": 11,
+        "B4": 16,
+        "B5": 20
+      },
+      "note": "Kunskapsskalan Bn (Krugal BQ-001); attesterat FV 20 (B5), FV 16 (B4) i Rollpersonen, FV B5 i Spelarboken. Ett tryckt B-värde är aldrig ett fel.",
+      "tokens": [
+        "B0",
+        "B1",
+        "B2",
+        "B3",
+        "B4",
+        "B5"
+      ]
+    },
     "max": 25,
     "min": 1,
     "note": "FV 1-20+ (1991); 1984 använder T100-procent",

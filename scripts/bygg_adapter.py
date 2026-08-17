@@ -33,7 +33,8 @@ MISREAD_TO_CANONICAL = {
 
 # Svenska diakritiska förväxlingar för lexikonrättning: OCR-tecken -> alternativ.
 DIACRITIC_CONFUSIONS = {
-    "a": ["å", "ä"], "o": ["ö"], "e": ["é"], "u": ["ü"],
+    # "ë" belagd i tryck: Morëlvidyn (DOD-AVE-edsbrytarna s. 10, BQ-002).
+    "a": ["å", "ä"], "o": ["ö"], "e": ["é", "ë"], "u": ["ü"],
     "à": ["å", "ä"], "á": ["å", "ä"], "6": ["ö"],
 }
 
@@ -459,6 +460,12 @@ DOD_SEED = {
                 "STO": "Storlek",
             },
             "range": {"min": 1, "max": 40, "typical_min": 3, "typical_max": 18},
+            # Varelser och odöda spränger rollpersonsintervallet åt båda håll
+            # (Krugal BQ-002). Belagt i del II: DRAKE STY/STO 100 (s. 31),
+            # JÄTTEBLÄCKFISK STO 125 (s. 27), JÄTTE STY/STO 60 (s. 41),
+            # SKELETT/MUMIE/ZOMBIE/GAST FYS 0, SPÖKE STY/FYS/KP 0 (s. 47),
+            # SKORPION STO 0 (s. 28). `range` gäller bara rollpersoner.
+            "creature_range": {"min": 0, "max": 125},
         },
         "derived_labels": {
             "KP": "Kroppspoäng", "SB": "Skadebonus", "SV": "Skyddsvärde",
@@ -470,7 +477,18 @@ DOD_SEED = {
              "editions": ["1991"]},
         ],
         "skill_value": {"style": "fv", "min": 1, "max": 25,
-                        "note": "FV 1-20+ (1991); 1984 använder T100-procent"},
+                        "note": "FV 1-20+ (1991); 1984 använder T100-procent",
+                        # Kunskapsfärdigheternas B-skala (Krugal BQ-001).
+                        # Attesterad i DoD 1991: "FV B5 i Smide" (Spelarboken),
+                        # "FV 20 (B5)" och "FV 16 (B4)" (Rollpersonen s. 30).
+                        # B-graden är ett intervall över FV, inte ett eget tal.
+                        "b_scale": {
+                            "tokens": ["B0", "B1", "B2", "B3", "B4", "B5"],
+                            "fv_equivalents": {"B3": 11, "B4": 16, "B5": 20},
+                            "note": "Bn attesteras med FV-ekvivalens B3=11, "
+                                    "B4=16, B5=20; ett tryckt B-värde är "
+                                    "aldrig ett fel.",
+                        }},
     },
     "dice": {
         "notation": "^(\\d+)[Tt](\\d+)([+-]\\d+)?$",
@@ -483,6 +501,10 @@ DOD_SEED = {
         "stats_allowed": ["STY", "FYS", "SMI", "INT", "PSY", "KAR", "STO",
                           "KP", "SB", "SV", "Farlighet"],
         "skills_value_range": [1, 150],
+        # Tryckets tankstreck ÄR ett värde (Krugal BQ-008): "ej tillämpligt"
+        # för KAR på odöda/djur/demoner, "ingen bonus" för SB under
+        # sb_table:s första rad. 79 print-trogna streckvärden i korpusen.
+        "null_tokens": ["—", "–"],
         "field_labels": {
             "sty": "STY", "styrka": "STY", "fys": "FYS", "fysik": "FYS",
             "smi": "SMI", "smidighet": "SMI", "int": "INT",
@@ -517,7 +539,16 @@ DOD_SEED = {
         "besvärjelse", "rustning", "sköld", "vapen", "magiker", "trollkarl",
         "dvärg", "alv", "halvling", "människa", "svartfolk", "vättar",
         "Grundegenskap", "Baschans", "Hemvist", "Vanlighet", "Naturligt skydd",
+        # Svårighetsgraderna på färdighetsslag (Edsbrytarna BQ-002), belagda
+        # i korpusen: "medelsvårt INT-slag", "medelsvår INT-kontroll",
+        # "mycket lätt" (Edsbrytarna s. 7, Spelarboken).
+        "Mycket lätt", "Medelsvår", "Medelsvårt", "Mycket svår",
+        "Mycket svårt",
     ],
+    # Färdigheter som är belagda i tryck men saknas i dod91-referensdatan
+    # (Edsbrytarna BQ-002): Förhöra är en EDD-färdighet, Läsa/Skriva är
+    # språkfärdigheternas tryckta grundform ("Läsa/Skriva Zorakiska").
+    "extra_skills": ["Förhöra", "Läsa/Skriva"],
     # Ritualmodifierare — skrivs i versaler i äventyrstext ("FÖRTROLLA VAPEN
     # E1 s15, SIGILL med PERMANENS"). Finns inte i dod91-datan i referensrepot,
     # därför frödata här så de överlever en regenerering.
@@ -568,6 +599,10 @@ def build_dod(ref):
     system = dict(seed["system"])
     if sb_table:
         system["sb_table"] = {"input": "STY + STO", "rows": sb_table}
+
+    # Frödata-färdigheter överlever regenerering, med eller utan --ref
+    # (Edsbrytarna BQ-002).
+    cats["skills"] = sorted(set(cats["skills"]) | set(seed["extra_skills"]))
 
     lexicon = {
         "terms": seed["core_terms"],
@@ -668,6 +703,9 @@ M2089_SEED = {
         "BGP": "Bakgrundspoäng", "SR": "Stridsrunda", "EV": "Eldavbrott",
         "SL": "Spelledare", "RP": "Rollperson", "SLP": "Spelledarperson",
         "ED": "EuroDollar",
+        # Cyberzonens enheter (YJAP BQ-001): Tb är bokens genomgående
+        # minnesenhet (~90 förekomster), OSF kolumnrubrik i TABELL 8.
+        "Tb": "Terabyte", "OSF": "OSF",
     },
     "core_words": [
         "mutation", "cybernetik", "korporation", "syndikat", "Berlin City",
@@ -675,6 +713,11 @@ M2089_SEED = {
         "geier", "dänik", "rasnik", "blau", "flick", "MetroPol",
         "Kroppspoäng", "Förflyttning", "Färdigheter", "träffområde",
         "automateld", "eldskur",
+        # Cyberzonens terminologi (MUT-REG-youre-just-a-program BQ-001),
+        # belagd i den boken s. 1 och i Cyberzonen-modulen. Stavningarna är
+        # tryckets egna: gemener i mioplant/spacer/cyberjack/cyberkosmos.
+        "mioplant", "spacer", "cyberjack", "cyberkosmos", "avatar",
+        "Cyberzonen", "Svart is",
     ],
     "aliases": {
         # OBS: inget "sypox"-alias. Referensrepots LATHUND §10 normaliserar

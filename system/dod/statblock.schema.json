@@ -26,6 +26,10 @@
     "styrka": "STY",
     "sv": "SV"
   },
+  "null_tokens": [
+    "—",
+    "–"
+  ],
   "required_fields": [
     "name",
     "stats"
