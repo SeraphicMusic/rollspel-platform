@@ -825,6 +825,148 @@ def _inherit_headers(items):
     return items
 
 
+def _falt_etiketter(book):
+    """Fältetiketter som bokens statblock faktiskt använder.
+
+    Fogning B (nedan) matchar inget annat: etiketten ska vara tryckets egen,
+    belagd i bokens andra rutor, inte en gissning. Färdighetsfamiljen läggs
+    till uttryckligen — transkriptionen lagrar färdigheterna i `skills` och
+    tappar då tryckets egen rubrikvariant (`Färdigheter & Förmågor`,
+    DoD-bestiariet), så den syns inte bland `other`-nycklarna.
+    """
+    etiketter = set()
+    for page in book["pages"]:
+        for el in page["elements"]:
+            if el.get("type") != "statblock":
+                continue
+            data = el.get("data") or {}
+            etiketter.update((data.get("other") or {}).keys())
+            if data.get("skills_label"):
+                etiketter.add(data["skills_label"])
+    etiketter.update({"Färdigheter", "Färdigheter & Förmågor"})
+    return etiketter
+
+
+_FORTS_RAD = re.compile(r"^([^:\n]{2,40}):\s*(.+)$")
+
+
+def _stitch_fortsattningar(items, book):
+    """Foga statblock som trycket bryter över en sidgräns (Krugal BQ-005).
+
+    Sidfilerna ändras ALDRIG — var sida innehåller det som är tryckt på den.
+    Fogningen sker här i läsexporten, och redovisas i `export/fogningar.json`
+    så att ordgrinden kan attribuera den. Två mätta signaturer:
+
+    A) Ett statblock med TOMMA `stats` sist på sidan + ett statblock med
+       fyllda `stats` och samma (eller inget) namn först på nästa — samma
+       tryckta ruta, satt över uppslaget. Utan fogningen skrev `bok.md`
+       namnet två gånger (»5 livsmästare«, s. 7–8: först rubrik med två
+       fält, sedan fet namnrad med tabellen). Fortsättningens fält renderas
+       i huvudets block och namnraden faller bort — det ordborttaget är
+       fogningens enda frekvensändring.
+
+    B) Ett statblock sist på sidan + löptextrader först på nästa som börjar
+       med en fältetikett bokens statblock använder (`Förflyttning: L4/F10`,
+       `Färdigheter & Förmågor: …` — Megas, s. 16→17). Fälten hör till rutan
+       och absorberas som fältrader; inga ordfrekvenser ändras.
+
+    Returnerar (items, fogningar).
+    """
+    etiketter = _falt_etiketter(book)
+    ut = []
+    fogningar = []
+    i, n = 0, len(items)
+    while i < n:
+        page, el = items[i]
+        ut.append(items[i])
+        i += 1
+        if el.get("type") != "statblock":
+            continue
+        if i >= n or items[i][0] == page or items[i][0] != page + 1:
+            continue  # inte sist på sidan, eller ingen direkt följande sida
+        data = el.get("data") or {}
+        cont_page, cont = items[i]
+        # --- Signatur A ---------------------------------------------------
+        cdata = cont.get("data") or {}
+        if cont.get("type") == "statblock" and not (data.get("stats") or {}) \
+                and (cdata.get("stats") or {}):
+            cnamn = cdata.get("name") or ""
+            if not cnamn or _samma_namn(cnamn, data.get("name")):
+                for falt in ("stats", "extraStats", "skills", "weapons"):
+                    if cdata.get(falt) and not data.get(falt):
+                        data[falt] = cdata[falt]
+                for falt in ("skills_text", "skills_label"):
+                    if cdata.get(falt) and not data.get(falt):
+                        data[falt] = cdata[falt]
+                other = data.setdefault("other", {})
+                for k, v in (cdata.get("other") or {}).items():
+                    if k not in other:
+                        other[k] = v
+                el["data"] = data
+                fogningar.append({
+                    "typ": "statblock-fortsattning",
+                    "sida_fran": page, "sida_till": cont_page,
+                    "huvud": el.get("id"), "fortsattning": cont.get("id"),
+                    "namn": data.get("name") or cnamn,
+                    # Namnraden som inte längre renderas — ordgrindens kredit.
+                    "ord_borta": [cnamn] if cnamn else [],
+                    "belagg": "Krugal BQ-005: rutan är satt över sidgränsen; "
+                              "sidfilerna oförändrade, fogning i läsexporten.",
+                })
+                i += 1
+                continue
+        # --- Signatur B ---------------------------------------------------
+        # Fortsättningselementet kan bära FLERA fält som radbrutna
+        # `Etikett: värde`-rader (mervyn-peak s. 5→6: Förflyttning +
+        # Cybernetik + Färdigheter i samma paragraph), och ett värde kan
+        # fortsätta på nästa tryckta rad utan egen etikett. Parsningen går
+        # därför rad för rad: känd etikett öppnar ett fält, en etikettlös
+        # rad hör till det öppna fältet, och allt annat refuserar HELA
+        # elementet — hellre en orörd brödtextrad än en gissad absorption.
+        while i < n and items[i][0] == page + 1:
+            kand = items[i][1]
+            text = (kand.get("text") or "").strip()
+            if kand.get("type") != "paragraph" or not text:
+                break
+            other = data.setdefault("other", {})
+            nya_falt, oppet, ok = [], None, True
+            for rad in text.split("\n"):
+                rad = rad.strip()
+                if not rad:
+                    continue
+                m = _FORTS_RAD.match(rad)
+                if m and m.group(1).strip() in etiketter:
+                    falt = m.group(1).strip()
+                    if falt in other or any(f[0] == falt for f in nya_falt):
+                        ok = False  # fältet finns redan — inte rutans rad
+                        break
+                    nya_falt.append([falt, m.group(2).strip()])
+                    oppet = falt
+                elif oppet:
+                    nya_falt[-1][1] += " " + rad
+                else:
+                    ok = False
+                    break
+            if not ok or not nya_falt:
+                break
+            for falt, varde in nya_falt:
+                other[falt] = varde
+            el["data"] = data
+            fogningar.append({
+                "typ": "faltrad-fortsattning",
+                "sida_fran": page, "sida_till": items[i][0],
+                "huvud": el.get("id"), "fortsattning": kand.get("id"),
+                "namn": data.get("name"),
+                "ord_borta": [],
+                "belagg": "Krugal BQ-005: fältetiketterna %s är belagda i "
+                          "bokens statblock; raderna hör till rutan. Inga "
+                          "ordfrekvenser ändras."
+                          % ", ".join(repr(f) for f, _ in nya_falt),
+            })
+            i += 1
+    return ut, fogningar
+
+
 def _stream(book, include_artifacts):
     """(sida, element) för hela boken, med cellblock monterade."""
     for page in book["pages"]:
@@ -845,6 +987,15 @@ def export_markdown(workdir, include_artifacts=False):
         or Path(book["source"]["path"]).stem
     lines += ["# %s" % title, ""]
     items = _inherit_headers(_stitch(list(_stream(book, include_artifacts))))
+    items, fogningar = _stitch_fortsattningar(items, book)
+    fogfil = export_dir(workdir) / "fogningar.json"
+    if fogningar:
+        log.info("sidgränsfogningar: %d (se export/fogningar.json)",
+                 len(fogningar))
+        fogfil.write_text(json.dumps(fogningar, ensure_ascii=False, indent=2),
+                          encoding="utf-8")
+    elif fogfil.is_file():
+        fogfil.unlink()  # idempotens: inga fogningar -> ingen kvarglömd fil
     arvda = [el.get("id") for _, el in items if el.get("headers_inherited")]
     if arvda:
         # Ingen tyst ändring: rubrikraden står inte i trycket över just den

@@ -859,3 +859,109 @@ class TestAnmarkning(unittest.TestCase):
     def test_element_utan_anmarkning_far_ingen_rad(self):
         md = self.render([{"id": "e01", "type": "paragraph", "text": "Vanlig text."}])
         self.assertNotIn("Anmärkning", md)
+
+
+class TestSidgransfogning(unittest.TestCase):
+    """Krugal BQ-005: statblock brutna över sidgränsen fogas i läsexporten.
+
+    Sidfilerna röres aldrig; fogningen redovisas i export/fogningar.json så
+    att ordgrinden kan attribuera ordändringen (namnraden som inte längre
+    dubbleras)."""
+
+    def bok2(self, sida1, sida2):
+        return {
+            "source": {"path": "/tmp/test.pdf",
+                       "metadata": {"title": "Testbok"}, "pages": 2},
+            "system": {"id": "dod"},
+            "stats": {"missing_pages": [], "needs_review": 0},
+            "pages": [{"page": 1, "elements": sida1},
+                      {"page": 2, "elements": sida2}],
+        }
+
+    def render(self, sida1, sida2):
+        self.tmp = tempfile.TemporaryDirectory()
+        workdir = Path(self.tmp.name)
+        (workdir / "export").mkdir()
+        (workdir / "export" / "bok.json").write_text(
+            json.dumps(self.bok2(sida1, sida2), ensure_ascii=False),
+            encoding="utf-8")
+        md = export_markdown(workdir).read_text(encoding="utf-8")
+        fog = workdir / "export" / "fogningar.json"
+        fogningar = json.loads(fog.read_text(encoding="utf-8")) \
+            if fog.is_file() else []
+        return md, fogningar
+
+    def test_statblock_over_sidgrans_fogas(self):
+        """Signatur A: tomma stats sist + fyllda stats med samma namn först."""
+        md, fog = self.render(
+            [{"id": "e1", "type": "heading", "level": 3,
+              "text": "5 livsmästare"},
+             {"id": "e2", "type": "statblock",
+              "data": {"name": "5 livsmästare",
+                       "other": {"Utseende": "Långa kappor."}}}],
+            [{"id": "e3", "type": "statblock",
+              "data": {"name": "5 livsmästare",
+                       "stats": {"STY": 8, "KP": 14},
+                       "skills": {"Botanik": 17}}}])
+        self.assertEqual(md.count("5 livsmästare"), 1)
+        self.assertIn("| STY | KP |", md)
+        self.assertIn("**Utseende:** Långa kappor.", md)
+        self.assertIn("Botanik 17", md)
+        self.assertEqual(fog[0]["typ"], "statblock-fortsattning")
+        self.assertEqual(fog[0]["ord_borta"], ["5 livsmästare"])
+
+    def test_faltrad_pa_nasta_sida_absorberas(self):
+        """Signatur B: fältetikett bokens statblock använder hör till rutan."""
+        md, fog = self.render(
+            [{"id": "e0", "type": "statblock",
+              "data": {"name": "Annan ruta",
+                       "other": {"Förflyttning": "L10"}}},
+             {"id": "e1", "type": "statblock",
+              "data": {"name": "Megas", "stats": {"KP": 5},
+                       "other": {"Hemvist": "Skog."}}}],
+            [{"id": "e2", "type": "paragraph",
+              "text": "Förflyttning: L4/F10"},
+             {"id": "e3", "type": "paragraph",
+              "text": "Färdigheter & Förmågor: Flyga 14, Spåra 20."},
+             {"id": "e4", "type": "paragraph",
+              "text": "Vanlig brödtext som inte är ett fält."}])
+        self.assertIn("**Förflyttning:** L4/F10", md)
+        self.assertIn("**Färdigheter & Förmågor:** Flyga 14, Spåra 20.", md)
+        self.assertIn("Vanlig brödtext som inte är ett fält.", md)
+        self.assertEqual([f["typ"] for f in fog],
+                         ["faltrad-fortsattning", "faltrad-fortsattning"])
+
+    def test_okand_etikett_absorberas_inte(self):
+        """En rad med okänd etikett är brödtext, inte ett statblockfält."""
+        md, fog = self.render(
+            [{"id": "e1", "type": "statblock",
+              "data": {"name": "Megas", "stats": {"KP": 5}}}],
+            [{"id": "e2", "type": "paragraph",
+              "text": "Anmärkning: detta är löptext."}])
+        self.assertIn("Anmärkning: detta är löptext.", md)
+        self.assertEqual(fog, [])
+
+    def test_olika_namn_fogas_inte(self):
+        """Två rutor med olika namn är två rutor — aldrig en fogning."""
+        md, fog = self.render(
+            [{"id": "e1", "type": "statblock",
+              "data": {"name": "Pelonia", "other": {"Yrke": "Värdshusvärd"}}}],
+            [{"id": "e2", "type": "statblock",
+              "data": {"name": "Glormelion", "stats": {"KP": 12}}}])
+        self.assertIn("Pelonia", md)
+        self.assertIn("Glormelion", md)
+        self.assertEqual(fog, [])
+
+    def test_idempotens_fogfil_stadas(self):
+        """En omexport utan fogningar lämnar ingen kvarglömd fogfil."""
+        self.tmp = tempfile.TemporaryDirectory()
+        workdir = Path(self.tmp.name)
+        (workdir / "export").mkdir()
+        fogfil = workdir / "export" / "fogningar.json"
+        fogfil.write_text("[]", encoding="utf-8")
+        (workdir / "export" / "bok.json").write_text(
+            json.dumps(book([{"id": "e1", "type": "paragraph",
+                              "text": "Bara text."}]), ensure_ascii=False),
+            encoding="utf-8")
+        export_markdown(workdir)
+        self.assertFalse(fogfil.is_file())

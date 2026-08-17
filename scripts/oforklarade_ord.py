@@ -327,6 +327,22 @@ def redovisad_andring(workdir):
                 for ord_, n in (efter - fore).items():
                     nya[ord_] += n
                     kallor[ord_].append((sida, el.get("id"), c.get("kind")))
+
+    # Läsexportens SIDGRÄNSFOGNINGAR (Krugal BQ-005): ett statblock brutet
+    # över en sidgräns fogas i exporten — sidfilerna röres aldrig, så ingen
+    # korrektionspost kan bära ordändringen. Exporten redovisar den i
+    # `export/fogningar.json` (typiskt: fortsättningsrutans namnrad som inte
+    # längre dubbleras), och grinden krediterar därifrån.
+    fogfil = pathlib.Path(workdir) / "export" / "fogningar.json"
+    if fogfil.is_file():
+        for fog in _las(fogfil) or []:
+            for falt, malet in (("ord_borta", borta), ("ord_nya", nya)):
+                delta = _pa_karna(words(" ".join(fog.get(falt) or [])))
+                for ord_, n in delta.items():
+                    malet[ord_] += n
+                    berorda.add(ord_)
+                    kallor[ord_].append((str(fog.get("sida_till")),
+                                         fog.get("fortsattning"), "fogning"))
     return borta, nya, berorda, kallor
 
 
