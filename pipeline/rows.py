@@ -661,6 +661,157 @@ def _drop_overlaps(rows, extra):
     return kept
 
 
+def _heal_split_rows(dark, rows, boundaries, width, height,
+                     page_median=None):
+    """Foga en tryckt rad som en mätgräns har delat i två band (BQ-021 a).
+
+    Blockindelningen är sidgemensam, så en zon- eller avsnittsgräns kan gå
+    rakt genom en rad i den ena spalten därför att samma höjd är vitrymd i
+    den andra: raden mäts då som två band vars kanter SAMMANFALLER exakt på
+    gränsen (del III s. 32 `Beröring`, delad vid y 0,504286; s. 40
+    `DRAKFJÄLL`, delad mot sidhuvudszonen). Grannband ur SAMMA profil ligger
+    alltid minst en pixel isär, så ett exakt möte förekommer bara vid en
+    mätgräns — och bara sådana par läks, mot listan över zon- och
+    avsnittsgränser.
+
+    Utbredningen mäts OM över det fogade spannet: när den ena halvan är en
+    zonmätning över hela sidbredden bär den grannspaltens bläck (s. 40:
+    linjeregeln i högerspalten), och en ren union av boxarna skulle ärva
+    felet. Är breddskillnaden stor (≥2×) begränsas fönstret till den smala
+    halvans — det är radens egen spalt.
+    """
+    if not rows:
+        return rows
+    tol = 1.5
+
+    def px(r):
+        x, y, w, h = r["bbox"]
+        top = (1.0 - (y + h)) * height
+        bottom = (1.0 - y) * height
+        return top, bottom, x * width, (x + w) * width
+
+    def vid_grans(axel):
+        return any(abs(axel - g) <= 2.0 for g in boundaries)
+
+    ändrat = True
+    while ändrat:
+        ändrat = False
+        for i, a in enumerate(rows):
+            if a.get("kind") != KIND_ROW:
+                continue
+            a_top, a_bot, a_x0, a_x1 = px(a)
+            for j, b in enumerate(rows):
+                if i == j or b.get("kind") != KIND_ROW:
+                    continue
+                b_top, b_bot, b_x0, b_x1 = px(b)
+                if abs(a_bot - b_top) > tol or not vid_grans(b_top):
+                    continue
+                # Överlappet mäts mot den SMALARE halvan: två olika rader i
+                # olika spalter kan mötas på samma gränsaxel (s. 32 band
+                # 57/67) och får aldrig fogas.
+                overlap = min(a_x1, b_x1) - max(a_x0, b_x0)
+                if overlap < 0.5 * min(a_x1 - a_x0, b_x1 - b_x0):
+                    continue
+                # Och bläcket måste hänga ihop GENOM kanten i det gemensamma
+                # fönstret: en linjeregel och en textrad kan mötas exakt på
+                # gränsen därför att zonsnittet klipper mitt i luckan mellan
+                # dem — det är två tryckta objekt, inte en delad rad.
+                v0 = max(0, int(max(a_x0, b_x0)))
+                v1 = min(width, int(min(a_x1, b_x1)))
+                kant = int(round(b_top))
+                if v1 <= v0 or kant - 1 < 0 or kant >= height:
+                    continue
+                ref = dark[int(a_top):int(b_bot), v0:v1].max()
+                niva = MIN_DARKNESS_SHARE * ref if ref else 0
+                if not ref or dark[kant - 1, v0:v1].max() < niva \
+                        or dark[kant, v0:v1].max() < niva:
+                    continue
+                bred, smal = ((a_x0, a_x1), (b_x0, b_x1)) \
+                    if (a_x1 - a_x0) >= (b_x1 - b_x0) \
+                    else ((b_x0, b_x1), (a_x0, a_x1))
+                if (bred[1] - bred[0]) >= 2 * (smal[1] - smal[0]):
+                    lo, hi = int(smal[0]) - 2, int(smal[1]) + 2
+                else:
+                    lo, hi = int(min(a_x0, b_x0)), int(max(a_x1, b_x1))
+                top, bottom = int(round(min(a_top, b_top))), \
+                    int(round(max(a_bot, b_bot)))
+                extent = _extent(dark, top, bottom, max(0, lo),
+                                 min(width, hi))
+                if not extent:
+                    continue
+                # Kroppshalvan äger region och position: spänner paret
+                # zon/kropp hör raden till SPALTEN (DRAKFJÄLL är
+                # vänsterspaltens rubrik, inte sidhuvud), annars vinner den
+                # högre halvan.
+                zoner = ("sidhuvud", "sidfot")
+                if a["region"] in zoner and b["region"] not in zoner:
+                    kropp = b
+                elif b["region"] in zoner and a["region"] not in zoner:
+                    kropp = a
+                else:
+                    kropp = a if (a_bot - a_top) >= (b_bot - b_top) else b
+                lakt = {"region": kropp["region"], "kind": KIND_ROW,
+                        "läkt": True,
+                        "bbox": _box(extent[0], extent[1], top, bottom,
+                                     width, height)}
+                if kropp.get("svep"):
+                    lakt["svep"] = kropp["svep"]
+                pos = rows.index(kropp)
+                rows[pos] = lakt
+                rows.remove(a if kropp is b else b)
+                ändrat = True
+                break
+            if ändrat:
+                break
+    # Fas B EFTER parfogningen: en kapad rad UTAN motpart (s. 32 `Beröring` — övre
+    # skivan mättes aldrig, bandet är 11 px mot syskonens 15) förlängs över
+    # gränsen så länge bläcket hänger ihop. En verklig grannrad stoppar
+    # naturligt: raderna skiljs alltid av minst en blank profilrad, och
+    # förlängningen är dessutom takad till en radhöjd.
+    tak = max(4, int(page_median or 8))
+    for idx, r in enumerate(rows):
+        if r.get("kind") != KIND_ROW or r.get("läkt"):
+            continue
+        top, bottom, x0, x1 = px(r)
+        top, bottom = int(round(top)), int(round(bottom))
+        # Bara ONORMALT korta band förlängs. Gränsen genom en rad klipper i
+        # två grader: skär den av halva radkroppen är bandet tydligt kortare
+        # än sidans radmedian (s. 32 `Beröring`, 11 px mot 15) — det är
+        # felet. Nafsar den bara uppstaplarnas toppar är bandet normalhögt,
+        # och en förlängning skulle bara göra det omaka mot sina syskon
+        # (uppmätt: 81 sådana krypningar på Lovligt byte utan gaten).
+        if page_median and (bottom - top) >= 0.75 * page_median:
+            continue
+        lo, hi = max(0, int(x0) - 2), min(width, int(x1) + 2)
+        ref = dark[top:bottom, lo:hi].max() if bottom > top else 0
+        if not ref:
+            continue
+        grans_niva = MIN_DARKNESS_SHARE * ref
+        ny_top, ny_bot = top, bottom
+        if vid_grans(top):
+            steg = 0
+            while ny_top - 1 >= 0 and steg < tak and \
+                    dark[ny_top - 1, lo:hi].max() >= grans_niva:
+                ny_top -= 1
+                steg += 1
+        if vid_grans(bottom):
+            steg = 0
+            while ny_bot < height and steg < tak and \
+                    dark[ny_bot, lo:hi].max() >= grans_niva:
+                ny_bot += 1
+                steg += 1
+        if (ny_top, ny_bot) != (top, bottom):
+            extent = _extent(dark, ny_top, ny_bot, lo, hi)
+            if extent:
+                lakt = dict(r)
+                lakt["läkt"] = True
+                lakt["bbox"] = _box(extent[0], extent[1], ny_top, ny_bot,
+                                    width, height)
+                rows[idx] = lakt
+
+    return rows
+
+
 def _edge_block(bands, height):
     """(antal sidhuvudsband, antal sidfotsband) — mätt på LUCKAN, inte läget.
 
@@ -962,11 +1113,20 @@ def measure_dark(dark):
     zon(0, body_top, "sidhuvud")
 
     columns = []
+    # Zon- och avsnittsgränserna samlas åt radläkningen: bara ett bandpar
+    # vars möteskant ligger PÅ en mätgräns är en delad rad (BQ-021 a).
+    granser = [body_top, body_bottom]
     for seg_top, seg_bottom, ink_top, ink_bottom in _segments(body):
         # Spaltindelningen mäts PER AVSNITT. På s. 61 är övre halvan tvåspaltig
         # löptext och nedre halvan en fullbredds tabell som fyller rännan — en
         # enda mätning för hela sidan ger då noll spalter och slår ihop
         # vänster- och högerspaltens rader till gemensamma band.
+        # BARA fönsterkanterna är skärande gränser. `ink_top`/`ink_bottom` är
+        # per definition bandkanter — räknas de som gränser "ligger" varje
+        # segments första och sista rad på en gräns, och läkaren kryper då
+        # in i friska rader över hela korpusen (uppmätt: 963 ändrade boxar
+        # på Lovligt byte innan spärren).
+        granser += [seg_top, seg_bottom]
         seg_bands = [(a, b) for a, b, _ in body
                      if a >= ink_top and b <= ink_bottom]
         seg_blocks = _columns(dark, ink_top, ink_bottom, width, seg_bands)
@@ -1024,6 +1184,8 @@ def measure_dark(dark):
         r.pop("_span", None)
 
     zon(body_bottom, height, "sidfot")
+
+    rows = _heal_split_rows(dark, rows, granser, width, height, page_median)
 
     # Ingen sortering: avsnitt uppifrån och ned, spalter vänster till höger och
     # rader uppifrån och ned emitteras redan i läsordning — hela vänsterspalten

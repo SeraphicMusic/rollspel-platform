@@ -735,3 +735,106 @@ class TestTrespaltigSida(unittest.TestCase):
         self.assertEqual(sorted(reg), ["kolumn 1", "kolumn 2",
                                        "kolumn 3", "kolumn 4"])
         self.assertEqual(set(reg.values()), {12})
+
+
+class TestHealSplitRows(unittest.TestCase):
+    """`_heal_split_rows` — BQ-021 (a): en mätgräns genom en tryckt rad.
+
+    Blockindelningen är sidgemensam, så en zon- eller avsnittsgräns kan
+    klippa en rad i den ena spalten där den andra är vitrymd (del III s. 32
+    `Beröring`, s. 40 `DRAKFJÄLL`). Läkaren fogar bara band vars kanter möts
+    EXAKT på en känd gräns med sammanhängande bläck — allt annat är två
+    tryckta objekt."""
+
+    def _dark(self):
+        page = blank()
+        write_line(page, 200, 60, 280)   # en rad i "vänsterspalten"
+        return darkness(page)
+
+    def test_kapad_rad_fogas_over_gransen(self):
+        from pipeline.rows import _heal_split_rows
+        dark = self._dark()
+        # Raden 200–210 delad vid py 205 av en låtsasgräns.
+        def frac(top, bottom, x0, x1):
+            return [x0 / WIDTH, (HEIGHT - bottom) / HEIGHT,
+                    (x1 - x0) / WIDTH, (bottom - top) / HEIGHT]
+        rows = [{"region": "vänsterkolumn", "kind": "rad",
+                 "bbox": frac(195, 205, 60, 280)},
+                {"region": "vänsterkolumn", "kind": "rad",
+                 "bbox": frac(205, 212, 60, 280)}]
+        ut = _heal_split_rows(dark, rows, [205], WIDTH, HEIGHT, 10)
+        self.assertEqual(len(ut), 1)
+        self.assertTrue(ut[0].get("läkt"))
+        y0 = ut[0]["bbox"][1]
+        self.assertLess(y0, (HEIGHT - 211) / HEIGHT + 0.01)
+
+    def test_olika_spalter_fogas_aldrig(self):
+        from pipeline.rows import _heal_split_rows
+        page = blank()
+        write_line(page, 195, 60, 200)
+        write_line(page, 205, 320, 500)
+        dark = darkness(page)
+        def frac(top, bottom, x0, x1):
+            return [x0 / WIDTH, (HEIGHT - bottom) / HEIGHT,
+                    (x1 - x0) / WIDTH, (bottom - top) / HEIGHT]
+        rows = [{"region": "kolumn 2", "kind": "rad",
+                 "bbox": frac(195, 205, 60, 200)},
+                {"region": "högerkolumn", "kind": "rad",
+                 "bbox": frac(205, 215, 320, 500)}]
+        ut = _heal_split_rows(dark, rows, [205], WIDTH, HEIGHT, 10)
+        self.assertEqual(len(ut), 2)
+
+    def test_atskilda_objekt_utan_blackkontinuitet_fogas_inte(self):
+        """En linjeregel och en rad som möts på gränsen p.g.a. klippning:
+        bläcket hänger inte ihop genom kanten — två objekt."""
+        from pipeline.rows import _heal_split_rows
+        page = blank()
+        page[196:198, 60:540] = 40       # linjeregel, slutar py 198
+        write_line(page, 208, 60, 280)   # raden börjar py 208
+        dark = darkness(page)
+        def frac(top, bottom, x0, x1):
+            return [x0 / WIDTH, (HEIGHT - bottom) / HEIGHT,
+                    (x1 - x0) / WIDTH, (bottom - top) / HEIGHT]
+        rows = [{"region": "sidhuvud", "kind": "rad",
+                 "bbox": frac(190, 203, 60, 540)},
+                {"region": "vänsterkolumn", "kind": "rad",
+                 "bbox": frac(203, 218, 60, 280)}]
+        ut = _heal_split_rows(dark, rows, [203], WIDTH, HEIGHT, 10)
+        self.assertEqual(len(ut), 2)
+
+    def test_zonhalva_ger_kroppens_region(self):
+        """DRAKFJÄLL-arten: rubrikens topp i sidhuvudszonen, kroppen i
+        spalten — det läkta bandet hör till SPALTEN, med spaltens bredd."""
+        from pipeline.rows import _heal_split_rows
+        page = blank()
+        page[196:198, 320:540] = 40      # andra spaltens linjeregel
+        write_line(page, 193, 60, 170)   # rubriken, delad vid 205
+        write_line(page, 205, 60, 170)
+        page[203:205, 60:170] = 40       # bläcket hänger ihop genom kanten
+        dark = darkness(page)
+        def frac(top, bottom, x0, x1):
+            return [x0 / WIDTH, (HEIGHT - bottom) / HEIGHT,
+                    (x1 - x0) / WIDTH, (bottom - top) / HEIGHT]
+        rows = [{"region": "sidhuvud", "kind": "rad",
+                 "bbox": frac(193, 205, 60, 540)},
+                {"region": "vänsterkolumn", "kind": "rad",
+                 "bbox": frac(205, 215, 60, 170)}]
+        ut = _heal_split_rows(dark, rows, [205], WIDTH, HEIGHT, 10)
+        self.assertEqual(len(ut), 1)
+        self.assertEqual(ut[0]["region"], "vänsterkolumn")
+        # Utsträckningen mäts i den SMALA halvans fönster: linjeregeln i
+        # andra spalten följer inte med.
+        self.assertLess(ut[0]["bbox"][0] + ut[0]["bbox"][2], 0.5)
+
+    def test_normalhogt_band_forlangs_inte(self):
+        """Gränsen som bara nafsar uppstaplarna lämnas: bandet är
+        normalhögt, och en förlängning gjorde det omaka mot syskonen."""
+        from pipeline.rows import _heal_split_rows
+        dark = self._dark()
+        def frac(top, bottom, x0, x1):
+            return [x0 / WIDTH, (HEIGHT - bottom) / HEIGHT,
+                    (x1 - x0) / WIDTH, (bottom - top) / HEIGHT]
+        rows = [{"region": "vänsterkolumn", "kind": "rad",
+                 "bbox": frac(201, 211, 60, 280)}]
+        ut = _heal_split_rows(dark, rows, [201], WIDTH, HEIGHT, 10)
+        self.assertIsNone(ut[0].get("läkt"))
