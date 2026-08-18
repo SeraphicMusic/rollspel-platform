@@ -58,6 +58,37 @@ Sviten 637 gröna. Kvar: **7 poster i två klasser.**
 >   Posterna står kvar SMALARE som bindningspass; dömda sidor mäts aldrig
 >   om. Lovligt s. 1 (helt obunden) ommätt med rätt geometri.
 >
+> **UTFALL BINDNINGSPASSET (2026-08-18, senare samma dag): BÅDA POSTERNA
+> STÄNGDA — korpusens öppna köer är därmed TOMMA.**
+>
+> * **§1 Kostnadsmåttet**: `scripts/binda_rader.py` fick pass 3-advokatens
+>   tre diskriminanter (styckeindrag inkl. gemen fortsättningsstart,
+>   rubrikbandshöjd, radrännsprov mot illustrationsskivor), breddförtroende
+>   för kolumnklippta band, regionöversättning av suffixade regionnamn +
+>   ordningshållare för tvåspaltselement, radvokabulärens
+>   ordinalnormalisering, tre skrivfilter (obetrodd union / dyrare än lucka /
+>   bandkrock) och en regimmedveten domare med skiljetröskel. Grinden på
+>   Lovligt byte vände UNDERKÄND→GODKÄND (facit 2–1 → verktyget 1–0, vinsten
+>   pixelverifierad); omkalibrerat: Tanegashima 3–0→5–0, del2 18–16→12–6,
+>   del3 18–5→12–1. Mätvärdena står i skriptets docstrings. Sviten 637 grön
+>   (45 tester i test_binda_rader, +19 nya).
+> * **§2 Lovligt byte**: 20 skarpa förslag pixelverifierade — 12 skrivna,
+>   8 REFUSERADE (7 felskjutna, 1 trunkerad); advokatens utpekade band
+>   verkställda (e17/e27/e29/s8-e07; e20 [110,111] refuserad enligt
+>   advokatens egen klippningsvarning). 86 → 102 av 189 bundna (54 %).
+>   Ordgrind 6764→6764, 0 oförklarade.
+> * **§3 Tanegashima**: en djävulens-advokat per sida (s. 1–5, synkront) —
+>   32 nya bindningar, 3 verktygsförslag avvisade på s. 2, och på s. 3
+>   avslöjades de GAMLA transkriptionsbindningarna som felkopplade: 9
+>   ombindningar, 8 borttagna. De fem utpekade mekaniska (s. 4 e16/e23/e29,
+>   s. 5 e20/e23) verkställda mot resolved_reasons. Tömda p005_e27 aldrig
+>   bunden. 85 → 115 av 141 bundna (82 %). Ordgrind 3745→3745,
+>   0 oförklarade.
+> * Kvarvarande obundet i båda böckerna är KVANTIFIERADE mätluckor
+>   (fullbreda sidhuvudband som slukar topprader, spalter utan band,
+>   klippta enda-kandidatband) — accepterade i posterna; en box som fattas
+>   är alltid tillåten.
+>
 > Regression: sex böcker i kastbara kataloger, läkarens metod. Dåligt
 > vatten 2 ändrade sidor (kartbrus). Sviten 637 grön. Detaljerna står i
 > respektive beslut.md-post.
