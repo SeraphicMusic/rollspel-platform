@@ -148,6 +148,58 @@ COLUMN_VOTE_SHARE = 0.75
 # tvåspaltssidor 89–94 %, sidor med helsidesbred illustration 61–74 %, och
 # titelsidan (verkligt enspaltig) 0 %. Hälften skiljer arterna med marginal.
 GUTTER_VOTE_SHARE = 0.5
+
+# Golvet för korridorens HYSTERES (se `_columns`): en 75 %-kärna utvidgas åt
+# båda hållen så länge rösterna når hit. Nivån ligger i en uppmätt lucka.
+# En VERKLIG rännas flanker hyvlas till 0,69–0,73 av nästan-fulla rader —
+# radresten efter dem är smalare än MIN_GUTTER_WIDTH i det egna bandet och
+# röstar då på ingenting (Skymningslandet s. 1: kärnan 23 px av rännans
+# fysiska 42). En FALSK ränna vid korta raders slut (BQ-013) samlar högst
+# ~0,58 där texten fortfarande står. 0,65 skiljer arterna åt med marginal
+# åt båda hållen.
+GUTTER_EDGE_VOTE_SHARE = 0.65
+
+# --- Illustrationsblock -----------------------------------------------------
+#
+# Ett spaltblock kan vara en BILD, inte en textspalt: Skymningslandets svarta
+# ZONEN-balk mättes som en del av högerkolumnen, och Tempokalkylatorns
+# helsidesillustration blev en egen `vänsterkolumn` vars tonband bands till
+# textelement (BQ-001 i båda böckerna). Två mätta signaler skiljer arterna, och
+# ingen gråstatistik gör det (mellantonandelen överlappar: illustration 0,09–
+# 0,40, text 0,09–0,26 — uppmätt över sex böcker):
+#
+#   1. BLÄCKANDELEN i blocket. Textspalter ligger på 0,05–0,25 (rastrerad tät
+#      sats som mest 0,25, och med marginalgrafik inräknad som mest 0,374);
+#      rena bildytor på 0,42–1,0. Tvetydiga block i 0,25–0,40 finns (text med
+#      marginalgrafik, mörka rubriker) och får ALDRIG stämplas — sats som
+#      klassas som bild förlorar sin geometri, och det felet är dyrare än
+#      varje bildband som slinker igenom.
+#   2. Y-KONTINUITETEN. Ingen textrad kan bo i en segmentlucka, och ingen sats
+#      löper 16 radhöjder utan en blank profilrad (radmellanrummen är binärt
+#      tomma; en tonplatta binariseras vit — uppmätt svärta 85–90 av 255 mot
+#      binärgränsen 127). En illustration gör båda: Tempokalkylatorns bildyta
+#      har bläck i 100 % av segmentluckans rader där texten har 0–2 %, och
+#      ZONEN-balken löper obruten över hela satshöjden. Ramlinjer fejkar inte
+#      kontinuitet: en linje är 1–3 px av blockbredden (minst ~235 px) och
+#      når aldrig radandelen 0,05.
+#
+# Kriterierna nedan är prövade mot samtliga block i sex böcker (930 block):
+# varje flaggat block var en verifierad bildyta (avdelarsidor, helsides-
+# illustrationer, ZONEN-balken, ornamentspalter) och inte ett enda innehöll
+# sats. En bildyta kan dessutom skifta karaktär mellan segmenten — samma
+# målning i Tempokalkylatorn mäter 0,74 / 0,13 / 0,89 i bläckandel uppifrån
+# och ned — därför PROPAGERAR flaggan i `measure_dark` till grannblock som
+# hänger ihop med ett flaggat block tvärs igenom segmentgränsen.
+ILLUSTRATION_INK_SHARE = 0.40
+# Över den här bläckandelen är blocket en bildyta på andelen ENSAM: korpusens
+# mörkaste textblock (rastrerad tät sats) når 0,25 och med marginalgrafik
+# 0,374; rena bildytor utan radstruktur (Tempokalkylatorns täta bildtopp)
+# ligger 0,55–1,0. Marginalen åt textsidan är 0,18.
+ILLUSTRATION_SOLID_SHARE = 0.55
+# Andel binärt bläck i en profilrad som gör raden BLÄCKFÖRANDE i
+# kontinuitetsmätningen. En ramlinje (1–3 px + halo av ~600) når ~0,02; en
+# tonyta eller balk 0,3–1,0.
+ILLUSTRATION_ROW_INK = 0.05
 # Lucka (i radhöjder) som bryter kroppen i ett nytt lodrätt avsnitt med egen
 # spaltindelning. Uppmätt på s. 61: luckan mellan den tvåspaltiga löptexten
 # och fullbreddstabellen är ~8 radhöjder, luckan mellan två stycken ~1.
@@ -254,6 +306,47 @@ SPARSE_HEIGHT_FACTOR = 0.45
 # bokens mätta fall (rubrik + ramlinje + rad i samma lucka); djupare svep
 # hittade inget nytt på facitsidorna.
 SPARSE_DEPTH = 3
+
+# --- Klungdelning: band som korsar grafiska streck (BQ-021 c) ---------------
+#
+# På en måttavla (del III s. 49, sju stångvapen ritade lodrätt) korsar varje
+# vågrät textrad — måttetiketten `250 cm`, de lodräta vapennamnen — samtliga
+# skaft, och bandet mäts från etiketten till sista skaftet: 1426 px brett med
+# 232 px bläck. Kvoten bandbredd/bläckbredd skiljer arterna utan överlapp,
+# uppmätt på sidans egna band: friska textrader 1,00–1,90 (per-glyf-luckorna
+# försvinner när bläckrunsen klustras med en radhöjds fogavstånd), sjuka band
+# 4,5–10,8. Svärtningsandel duger INTE som vakt (uppmätt i BQ-posten).
+#
+# Vakten mot att dela en GLES TABELLRAD i sina celler är korsningskravet:
+# bandet delas bara när minst två run är streck som LÖPER IGENOM bandet
+# och fortsätter på båda sidor (ett skaft går genom hela mätavlan; en
+# tabellcells siffror slutar vid radens kant). Strecken är också klungornas
+# GRÄNSER: en klunga fogas aldrig ÖVER ett korsande streck, och det är så
+# `Bredsvärd`-etiketten skiljs från sin streckade måttlinje trots att gapet
+# (30 px) är mindre än radhöjden (42) — ett gapmått klarade inte det utan
+# att samtidigt dela friska raders ordmellanrum (uppmätt: 86 felaktigt
+# delade band på en frisk tvåspaltssida vid fogfaktor 0,6).
+SPLIT_RATIO = 2.5
+# Minsta antal genomkorsande streck för delning.
+SPLIT_CROSSINGS = 2
+# Ett korsande STRECK är smalt: skaften på måttavlan mäter 10–25 px och de
+# streckade måttlinjerna 3–4 px (0,002–0,013 av sidbredden), medan en
+# ordklunga är 40+ px. Utan taket räknades ordet `Bälte` (73 px) som ett
+# korsande streck — i tät sättning ligger grannradernas staplar inom tre
+# pixlar ovanför och nedanför varje ord, och varje tabellrad delades.
+SPLIT_MAX_CROSS_WIDTH = 0.018
+# ... och största antal, per pixel bandbredd. En måttavlas skaft är GLESA
+# (uppmätt: 7 skaft på 1426 px = 0,005/px; Bredsvärds två måttlinjer på
+# 900 px = 0,002/px), medan en skrafferad illustrations streck korsar vart
+# tionde px (uppmätt: 10 på 383 px = 0,026/px). Ett band inne i konst ska
+# inte delas — dess "klungor" är skrafferingens luckor, inte innehåll.
+SPLIT_MAX_CROSS_DENSITY = 0.01
+# Minsta bläckandel genom bandet i en kolumn för att ett run ska räknas som
+# GENOMLÖPANDE. Uppmätt: heldragna skaft 1,0; STRECKADE måttlinjer (del III
+# s. 48, kring `Bredsvärd`) 0,44–0,48; en vågrät punktlinjes kolumner ~0,1.
+# En bokstavsstapel når också högt, men sållas av kravet på bläck omedelbart
+# OVANFÖR och NEDANFÖR bandet — det har inga glyfer, bara genomlöpande streck.
+SPLIT_CROSS_RUN = 0.35
 
 # Bandets bakgrundsnivå i `_extent` tas som den här percentilen av svärtan
 # längs bandet — låg nog att träffa pappret på en vanlig rad, hög nog att inte
@@ -554,7 +647,17 @@ def _scan_window(dark, a, b, lo, hi, median, page_median, ink_ref, depth=0):
     out = []
     for r0, r1 in runs:
         top, bottom = a + int(r0), a + int(r1)
-        if bottom - top < median * SPARSE_HEIGHT_FACTOR:
+        # Höjdvakten mäter mot det MINDRE av spaltens och sidans radmått. Ett
+        # segment med ett par band har ingen egen radhöjd att tala om — dess
+        # "median" är rubrikens grad eller en ensam lucka. Spindelkonungen
+        # s. 11 (BQ-007) föll exakt så: segmentet ovanför `säga).` har två
+        # band, måttet blev 49 px mot sidans 30, och den 22 px höga raden
+        # föll på 0,45 x 49 = 22,05 med fem hundradels pixel. Fönster- och
+        # marginalmåtten behåller spaltens median — att sänka DEM öppnar
+        # grafikblockens luckor för fragmentjakt (uppmätt: 404 svepband på
+        # en omslagssida när hela måttet byttes mot sidans).
+        rad_matt = min(median, page_median) if page_median else median
+        if bottom - top < rad_matt * SPARSE_HEIGHT_FACTOR:
             continue  # flisa, inte rad
         if min(top - a, b - bottom) < median * MERGE_GAP_FACTOR:
             continue  # sitter ihop med grannraden: dess understycken
@@ -983,12 +1086,49 @@ def _columns(dark, top, bottom, width, bands=None):
                         röstat[x] += 1
             gräns = COLUMN_VOTE_SHARE * len(träffar)
             korridor = [n >= gräns for n in röstat]
-            kandidater = [(x0, x1) for x0, x1 in _runs(korridor)
+            # Kärnan kräver 75 % av rösterna, men BREDDEN mäts med hysteres:
+            # kärnrunnen utvidgas åt båda hållen så länge minst hälften av de
+            # röstande banden är tomma där. Skälet är mätt (Skymningslandet
+            # s. 1): rännan mellan satsen och ZONEN-balken är 42 px i varje
+            # enskilt band, men textkantens ojämnhet och balkens halo hyvlar
+            # rösterna vid kanterna, så 75 %-kärnan blev 23 px — under
+            # MIN_GUTTER_WIDTH — och hela balken slogs ihop med spalten.
+            # Hysteresen kan inte återinföra BQ-013:s falska rännor: en sådan
+            # nådde aldrig 75 % någonstans, och utan kärna utvidgas inget —
+            # och golvet 0,65 ligger över de falska rännornas ~0,58.
+            mjuk = GUTTER_EDGE_VOTE_SHARE * len(träffar)
+            # Utvidgningen är KANTÅTERVINNING och får därför ett längdtak på
+            # en halv rännbredd per sida: hyvlingen som ska återvinnas är
+            # några pixlar (Skymningslandet: 9 px vänster, 1 px höger). Utan
+            # taket kedjar utvidgningen ihop rännfragment tvärs över GLES
+            # LINJEKONST — ett skelett i streckteknik är "tomt" i två
+            # tredjedelar av banden, och rännan på var sida om illustrationen
+            # smälte ihop till en jätterun som svalde spaltdelningen
+            # (Spindelkonungen s. 12).
+            tak = int(MIN_GUTTER_WIDTH * width / 2)
+            utvidgade = []
+            for x0, x1 in _runs(np.array(korridor)):
+                a, b = int(x0), int(x1)
+                while a > 0 and int(x0) - a < tak and röstat[a - 1] >= mjuk:
+                    a -= 1
+                while b < width and b - int(x1) < tak and röstat[b] >= mjuk:
+                    b += 1
+                if utvidgade and a <= utvidgade[-1][1]:
+                    förra = utvidgade[-1]
+                    utvidgade[-1] = (förra[0], max(förra[1], b),
+                                     förra[2], max(förra[3], int(x1)))
+                else:
+                    utvidgade.append((a, b, int(x0), int(x1)))
+            # Marginalvillkoret döms på KÄRNAN, inte på utvidgningen: inne i
+            # en ramad ruta är marginalen tom i nästan alla band, utvidgningen
+            # vandrar då ända till kanten, och rännan mellan statblocket och
+            # illustrationen förkastades som "marginal" fast dess kärna står
+            # mitt på ytan (Spindelkonungen s. 12). Bredden mäts däremot på
+            # utvidgningen — det är hela hysteresens poäng. Marginalerna är
+            # inte rännor: en ränna har sats på BÅDA sidor om sin kärna.
+            kandidater = [(x0, x1) for x0, x1, k0, k1 in utvidgade
                           if x1 - x0 >= MIN_GUTTER_WIDTH * width
-                          # Marginalerna är inte rännor: en ränna har sats på
-                          # BÅDA sidor. Utan villkoret röstar den tomma ytan
-                          # till höger om en smal spalt fram en falsk spalt.
-                          and x0 > 0 and x1 < width]
+                          and k0 > 0 and k1 < width]
             blocks, cursor = [], 0
             for x0, x1 in kandidater:
                 blocks.append((cursor, x0))
@@ -1014,6 +1154,191 @@ def _columns(dark, top, bottom, width, bands=None):
         blocks.append((cursor, width))
     blocks = [(a, b) for a, b in blocks if b - a >= MIN_COLUMN_WIDTH * width]
     return blocks or [(0, width)]
+
+
+def _cover_ink_span(dark, ink_top, ink_bottom, blocks, width):
+    """Omätta strimlor när spaltfönstren inte täcker satsytan (BQ-021 c).
+
+    På en sida där illustrationer styr rännröstningen kan blocken följa
+    BILDENS klungor i stället för satsytan: del III s. 37 fick bara
+    `mittkolumn` och `högerkolumn`, och de fyra bildtexterna till vänster och
+    mellan dem mättes aldrig; s. 49 tappade fem av sju lodräta vapennamn.
+    Signalen är BQ-postens egen och rent geometrisk: täcker spaltfönstren
+    under 0,8 av bläckspannet finns en omätt strimla. Varje lucka bredare än
+    en ränna blir då ett eget mätfönster. Strimlorna är mätfönster, inte
+    semantiska spalter — de klassas aldrig som illustrationsblock, för de
+    finns just därför att det kan stå TEXT i dem som ingen annan mäter.
+
+    Ramens lodräta linjer räknas inte in i bläckspannet — annars blir en
+    inramad sidas marginal en "omätt strimla" och ramlinjen ett högt band
+    (samma felklass som BQ-013). Definitionen är `_rule_mask`s: bläck genom
+    minst `RULE_RUN_SHARE` av höjden i en klunga smalare än `MAX_RULE_WIDTH`.
+    """
+    ink2d = dark[ink_top:ink_bottom, :] > 127
+    if not ink2d.size:
+        return []
+    rule = ink2d.mean(axis=0) >= RULE_RUN_SHARE
+    limit_w = max(2, int(MAX_RULE_WIDTH * width))
+    mask = np.zeros(width, dtype=bool)
+    for a, b in _runs(rule):
+        if b - a <= limit_w:
+            mask[max(0, a - 1):b + 1] = True
+    ink = (ink2d.sum(axis=0) >= 2) & ~mask
+    cols = np.flatnonzero(ink)
+    if not len(cols):
+        return []
+    span_lo, span_hi = int(cols[0]), int(cols[-1]) + 1
+    if span_hi - span_lo <= 0:
+        return []
+    covered = sum(hi - lo for lo, hi in blocks)
+    # Tröskeln är uppmätt mot båda arterna: friska tvåspaltssidor täcker
+    # 0,66 av bläckspannet (resten är rännan och satskanterna), trespaltiga
+    # 0,82 — de sjuka sidorna 0,37–0,45 (s. 37, s. 49). 0,55 ligger i luckan.
+    if covered >= 0.55 * (span_hi - span_lo):
+        return []
+    limit = MIN_GUTTER_WIDTH * width
+    strips, cursor = [], span_lo
+    for lo, hi in sorted(blocks):
+        if lo - cursor >= limit:
+            strips.append((cursor, lo))
+        cursor = max(cursor, hi)
+    if span_hi - cursor >= limit:
+        strips.append((cursor, span_hi))
+    # En strimla utan eget bläck är ingen omätt strimla utan en RÄNNA — den
+    # mäts inte (uppmätt: namnremsan på s. 49 har bläck i 24 % av sina
+    # bildkolumner, en spaltränna 0–4 %).
+    return [(a, b) for a, b in strips if b - a and ink[a:b].mean() >= 0.1]
+
+
+def _cluster_split(dark, top, bottom, lo, hi, page_median, ignore=None):
+    """Klungorna i ett band som korsar grafiska streck, eller None.
+
+    Se konstantblocket vid `SPLIT_RATIO`. Returnerar [(x0, x1)] i sidpixlar
+    för varje klunga när bandet ska delas; annars None. Ramlinjer maskas med
+    samma mask som `_extent` använder — de är inte bandets bläck.
+    """
+    if not page_median or bottom <= top:
+        return None
+    block = dark[top:bottom, lo:hi] > 127
+    if not block.size:
+        return None
+    if ignore is not None and len(ignore) == block.shape[1] \
+            and not ignore.all():
+        block = block & ~ignore[np.newaxis, :]
+    kol = block.any(axis=0)
+    runs = _runs(kol)
+    if len(runs) < 3:
+        return None
+    # Korsningskravet per run: ett GENOMLÖPANDE streck har en bildkolumn med
+    # bläck genom bandet OCH bläck omedelbart ovanför och nedanför. En
+    # tabellcells stapel gör det första men aldrig det andra — cellens bläck
+    # slutar vid radens kant. En VÅGRÄT linje räknas inte som fortsättning:
+    # i en linjerad tabell ligger cellinjer 1–3 px över och under varje rad,
+    # och utan undantaget blev varje ordstapel ett "korsande streck" och
+    # varje tabellrad delades i sina celler (uppmätt: 187 falska delningar
+    # på en pristabellsida). Linjen känns igen på att den fyller bandets
+    # hela fönster i sidled; ett skaft eller en streckad måttlinje gör inte
+    # det.
+    height = dark.shape[0]
+
+    def _fortsatter(rad0, rad1, a, b):
+        fönster = dark[rad0:rad1, lo:hi] > 127
+        klunga = dark[rad0:rad1, lo + a:lo + b] > 127
+        for i in range(fönster.shape[0]):
+            if fönster[i].mean() >= 0.8:
+                continue  # vågrät linje, inte strecket självt
+            if klunga[i].any():
+                return True
+        return False
+
+    def korsar(a, b):
+        if b - a > max(3, int(SPLIT_MAX_CROSS_WIDTH * dark.shape[1])):
+            return False  # bredare än ett streck: innehåll, inte korsning
+        genom = block[:, a:b].mean(axis=0) >= SPLIT_CROSS_RUN
+        if not genom.any():
+            return False
+        return _fortsatter(max(0, top - 3), top, a, b) and \
+            _fortsatter(bottom, min(height, bottom + 3), a, b)
+
+    kors = [korsar(int(a), int(b)) for a, b in runs]
+    spann = int(runs[-1][1]) - int(runs[0][0])
+    if sum(kors) < SPLIT_CROSSINGS or not spann \
+            or sum(kors) / spann > SPLIT_MAX_CROSS_DENSITY:
+        return None
+    # Klustringen: korsande streck är egna klungor och fogar ALDRIG — de är
+    # gränserna. Övriga run fogas med en radhöjds avstånd, som i löptext.
+    kluster = []
+    for (a, b), k in zip(runs, kors):
+        a, b = int(a), int(b)
+        if not k and kluster and not kluster[-1][2] \
+                and a - kluster[-1][1] < page_median:
+            kluster[-1][1] = b
+        else:
+            kluster.append([a, b, k])
+    if len(kluster) < 2:
+        return None
+    bredd = kluster[-1][1] - kluster[0][0]
+    black = sum(b - a for a, b, _ in kluster)
+    if not black or bredd / black < SPLIT_RATIO:
+        return None
+    return [(lo + a, lo + b) for a, b, _ in kluster]
+
+
+def _edge_continuous(dark, lo, hi, edge, page_median):
+    """Bläck i VARJE profilrad i fönstret ±radhöjd kring en segmentgräns.
+
+    Gränsen mellan två avsnitt är per definition en lucka i SATSEN, så bläck
+    rakt igenom den är inte text. En rubrik ovanför en inramad illustration
+    skiljs alltid av minst en blank profilrad (uppmätt: del III s. 14,
+    `BESVÄRJELSER` ovanför pelarillustrationen) och smittar därför inte.
+    """
+    height = dark.shape[0]
+    a = max(0, edge - page_median)
+    b = min(height, edge + page_median)
+    if a >= b:
+        return False
+    win = (dark[a:b, lo:hi] > 127).mean(axis=1) > ILLUSTRATION_ROW_INK
+    return bool(len(win)) and bool(win.all())
+
+
+def _illustration_block(dark, seg_top, seg_bottom, lo, hi, inner_edges,
+                        page_median):
+    """Är blocket en bildyta och inte en textspalt? Se konstantblocket.
+
+    Tre vägar, alla med uppmätt marginal mot sats: en obruten bläckkörning på
+    minst `GRAPHIC_HEIGHT_FACTOR` radhöjder (ZONEN-balken: 2486 px utan en
+    enda blank profilrad; Tempokalkylatorns ljusa bildmitt: 41 radhöjder),
+    en bläckandel som ingen sats når (`ILLUSTRATION_SOLID_SHARE`), eller
+    måttlig bläckandel MED kontinuitet tvärs igenom en angränsande
+    segmentgräns. Prövat mot 930 block i sex böcker utan ett enda textoffer.
+    """
+    if not page_median:
+        return False
+    blk = dark[seg_top:seg_bottom, lo:hi]
+    if blk.size < 5000:
+        return False
+    ink = blk > 127
+    share = float(ink.mean())
+    if share >= ILLUSTRATION_SOLID_SHARE:
+        return True
+    if share < ILLUSTRATION_INK_SHARE:
+        # Bläckgrinden är inte förhandlingsbar: TÄT sats med knappt radavstånd
+        # kan hålla en obruten körning på 21,6 radhöjder (Skymningslandet
+        # s. 1, högerspalten — dalarna mellan raderna snittar 0,017 men en
+        # sträcka håller sig över radtröskeln), och utan grinden stämplades
+        # hela spalten som bild. Inget textblock i korpusen når 0,40.
+        return False
+    inky = ink.mean(axis=1) > ILLUSTRATION_ROW_INK
+    run = best = 0
+    for v in inky:
+        run = run + 1 if v else 0
+        best = max(best, run)
+    if best >= GRAPHIC_HEIGHT_FACTOR * page_median:
+        return True
+    for edge in inner_edges:
+        if _edge_continuous(dark, lo, hi, edge, page_median):
+            return True
+    return False
 
 
 def _region_name(lo, hi, width):
@@ -1116,7 +1441,10 @@ def measure_dark(dark):
     # Zon- och avsnittsgränserna samlas åt radläkningen: bara ett bandpar
     # vars möteskant ligger PÅ en mätgräns är en delad rad (BQ-021 a).
     granser = [body_top, body_bottom]
-    for seg_top, seg_bottom, ink_top, ink_bottom in _segments(body):
+    segments = _segments(body)
+    seg_info = []
+    for seg_idx, (seg_top, seg_bottom, ink_top, ink_bottom) in \
+            enumerate(segments):
         # Spaltindelningen mäts PER AVSNITT. På s. 61 är övre halvan tvåspaltig
         # löptext och nedre halvan en fullbredds tabell som fyller rännan — en
         # enda mätning för hela sidan ger då noll spalter och slår ihop
@@ -1130,13 +1458,98 @@ def measure_dark(dark):
         seg_bands = [(a, b) for a, b, _ in body
                      if a >= ink_top and b <= ink_bottom]
         seg_blocks = _columns(dark, ink_top, ink_bottom, width, seg_bands)
-        seg_namn = _region_names(seg_blocks, width)
-        for (lo, hi), region in zip(seg_blocks, seg_namn):
-            columns.append({"region": region,
-                            "x": round(lo / width, 6),
-                            "bredd": round((hi - lo) / width, 6),
-                            "y": round((height - seg_bottom) / height, 6),
-                            "höjd": round((seg_bottom - seg_top) / height, 6)})
+        strips = _cover_ink_span(dark, ink_top, ink_bottom, seg_blocks, width)
+        # Kontinuitet genom en INRE segmentgräns är en illustrationssignal;
+        # kroppens över- och underkant har ingen granne att fortsätta in i.
+        inner_edges = ([seg_top] if seg_idx > 0 else []) + \
+            ([seg_bottom] if seg_idx + 1 < len(segments) else [])
+        bild = {(lo, hi): _illustration_block(dark, seg_top, seg_bottom,
+                                              lo, hi, inner_edges,
+                                              page_median)
+                for lo, hi in seg_blocks}
+        # Strimlorna finns för att det kan stå omätt TEXT i dem — de
+        # illustrationsklassas aldrig (se `_cover_ink_span`); korsande
+        # grafik hanteras av klungdelningen i stället.
+        seg_blocks = sorted(seg_blocks + strips)
+        seg_info.append((seg_top, seg_bottom, seg_blocks,
+                         [bild.get((lo, hi), False)
+                          for lo, hi in seg_blocks],
+                         set(strips)))
+
+    # En bildyta skiftar karaktär mellan segmenten — Tempokalkylatorns målning
+    # mäter 0,74 / 0,13 / 0,89 i bläckandel uppifrån och ned, och den ljusa
+    # mitten når inget kriterium på egen hand. Men den hänger ihop med de
+    # flaggade delarna tvärs igenom segmentgränsen, och det gör ingen sats:
+    # flaggan propagerar därför till grannblock som x-överlappar ett flaggat
+    # block och är bläckkontinuerliga genom den gemensamma gränsen, tills
+    # ingenting mer ändras.
+    if page_median:
+        ändrat = True
+        while ändrat:
+            ändrat = False
+            for si, (st, sb, blocks, bild, strips) in enumerate(seg_info):
+                for bi, (lo, hi) in enumerate(blocks):
+                    if bild[bi] or (lo, hi) in strips:
+                        continue
+                    for sj, edge in ((si - 1, st), (si + 1, sb)):
+                        if not 0 <= sj < len(seg_info):
+                            continue
+                        nblocks, nbild = seg_info[sj][2], seg_info[sj][3]
+                        # Kontinuiteten mäts i ÖVERLAPPSFÖNSTRET, inte över
+                        # kandidatens fulla bredd: ett block som sträcker
+                        # sig in i pappersmarginalen (Tempokalkylatorn,
+                        # kolumn 1 med x från 0) har alltid blanka
+                        # bildkolumner ytterst, men bildytan hänger ihop där
+                        # blocken faktiskt möts.
+                        träff = False
+                        for bj, (nlo, nhi) in enumerate(nblocks):
+                            över = min(hi, nhi) - max(lo, nlo)
+                            if not nbild[bj] or \
+                                    över < 0.5 * min(hi - lo, nhi - nlo):
+                                continue
+                            if _edge_continuous(dark, max(lo, nlo),
+                                                min(hi, nhi), edge,
+                                                page_median):
+                                träff = True
+                                break
+                        if träff:
+                            bild[bi] = True
+                            ändrat = True
+                            break
+
+    for (seg_top, seg_bottom, ink_top, ink_bottom), \
+            (_, _, seg_blocks, bild, strips) in zip(segments, seg_info):
+        # Spalterna namnges bland TEXTSPALTERNA. Det är transkriptets
+        # konvention: på en sida där en illustration tar vänstra tredjedelen
+        # kallar transkriberaren de två textspalterna `vänsterkolumn` och
+        # `högerkolumn` — lägesnamn mätta mot satsytan, inte mot papperet.
+        # Utan bildblock är namngivningen exakt densamma som förut.
+        if any(bild):
+            text_ix = [i for i, b in enumerate(bild) if not b]
+            seg_namn = ["illustration"] * len(seg_blocks)
+            ordning = {1: None,
+                       2: ["vänsterkolumn", "högerkolumn"],
+                       3: ["vänsterkolumn", "mittkolumn", "högerkolumn"]}
+            if len(text_ix) == 1:
+                lo, hi = seg_blocks[text_ix[0]]
+                seg_namn[text_ix[0]] = _region_name(lo, hi, width)
+            elif len(text_ix) in ordning:
+                for i, n in zip(text_ix, ordning[len(text_ix)]):
+                    seg_namn[i] = n
+            else:
+                for pos, i in enumerate(text_ix):
+                    seg_namn[i] = "kolumn %d" % (pos + 1)
+        else:
+            seg_namn = _region_names(seg_blocks, width)
+        for (lo, hi), region, är_bild in zip(seg_blocks, seg_namn, bild):
+            kolumn = {"region": region,
+                      "x": round(lo / width, 6),
+                      "bredd": round((hi - lo) / width, 6),
+                      "y": round((height - seg_bottom) / height, 6),
+                      "höjd": round((seg_bottom - seg_top) / height, 6)}
+            if (lo, hi) in strips:
+                kolumn["strimla"] = True
+            columns.append(kolumn)
             # Profilen tas över SPALTEN, inte sidan: en rad i vänsterspalten
             # syns inte i en profil som medelvärdesbildas över båda.
             prof = row_profile(dark[seg_top:seg_bottom, lo:hi])
@@ -1172,6 +1585,13 @@ def measure_dark(dark):
                                   "bbox": _box(extent[0], extent[1], top,
                                                bottom, width, height)})
             found += _drop_overlaps(found, extra)
+            if är_bild:
+                # Bildytans band är toner, inte rader — utan stämpeln binds
+                # textelement till dem (Tempokalkylatorn BQ-001, band 3 =
+                # blå bildyta). Banden behålls: transkriberaren ska se att
+                # ytan finns, men ingenting nedströms får ta dem för sats.
+                for r in found:
+                    r["kind"] = KIND_GRAPHIC
             found.sort(key=lambda r: r["_span"])
             rows.extend(found)
 
@@ -1186,6 +1606,67 @@ def measure_dark(dark):
     zon(body_bottom, height, "sidfot")
 
     rows = _heal_split_rows(dark, rows, granser, width, height, page_median)
+
+    # En läkt rad och ett andrasvepsband kan vara SAMMA tryckta rad: svepet
+    # hittar raden i luckan vid mätgränsen, och läkaren bygger den samtidigt
+    # ur sliverbandet på andra sidan gränsen (s. 48, `Bredsvärd`-etiketten).
+    # Samma ägarprincip som `_covered_elsewhere`: första svepets och läkarens
+    # band äger, dubblettsvepet stryks.
+    def _lakt_dubblett(r):
+        if r.get("svep") != 2:
+            return False
+        x, y, w, h = r["bbox"]
+        for q in rows:
+            if q is r or not q.get("läkt"):
+                continue
+            qx, qy, qw, qh = q["bbox"]
+            if min(x + w, qx + qw) - max(x, qx) > 0 \
+                    and min(y + h, qy + qh) - max(y, qy) > 0.5 * h:
+                return True
+        return False
+    rows = [r for r in rows if not _lakt_dubblett(r)]
+
+    # Klungdelningen körs EFTER läkningen (BQ-021 c och d): `Bredsvärd`-
+    # etikettens band finns inte förrän läkaren har fogat halvorna över
+    # segmentgränsen (s. 48), och ett rått måttlinjeband (s. 49) delas lika
+    # gärna här. Fönstret är bandets egen uppmätta utsträckning, så ramar
+    # utanför bandet kan inte störa. Andrasvepsband och kantzonernas band
+    # prövas inte — de är redan snäva respektive korsas aldrig av streck.
+    delade = []
+    for r in rows:
+        if r.get("kind") == KIND_ROW and not r.get("svep") \
+                and r["region"] not in ("sidhuvud", "sidfot"):
+            x, y, w, h = r["bbox"]
+            top = int(round((1.0 - y - h) * height))
+            bottom = int(round((1.0 - y) * height))
+            lo = int(x * width)
+            hi = int(round((x + w) * width))
+            # Ett band lägre än en halv radhöjd är ett FRAGMENT (skraffering,
+            # understycken), inte en rad med klungor — uppmätt: 100 falska
+            # delningar ur sex fragmentband i en illustration utan vakten.
+            # Och ramlinjemasken är obligatorisk: en tabells cellinjaler
+            # löper genom varje rad och skulle annars dela raderna i celler
+            # (uppmätt: 274 falska delningar på en tabellsida).
+            if page_median and bottom - top < 0.5 * page_median:
+                delade.append(r)
+                continue
+            pad = max(4, int(RULE_CONTEXT_FACTOR * (page_median or 1)))
+            mask = _rule_mask(dark[max(0, top - pad):min(height, bottom + pad),
+                                   lo:hi])
+            split = _cluster_split(dark, top, bottom, lo, hi, page_median,
+                                   mask)
+            if split:
+                for klo, khi in split:
+                    extent = _extent(dark, top, bottom, klo, khi)
+                    if extent:
+                        ny = dict(r)
+                        ny["delad"] = True
+                        ny["bbox"] = _box(extent[0], extent[1], top, bottom,
+                                          width, height)
+                        delade.append(ny)
+                continue
+        delade.append(r)
+    rows = delade
 
     # Ingen sortering: avsnitt uppifrån och ned, spalter vänster till höger och
     # rader uppifrån och ned emitteras redan i läsordning — hela vänsterspalten
