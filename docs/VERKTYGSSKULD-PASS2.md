@@ -24,6 +24,44 @@ Sviten 637 gröna. Kvar: **7 poster i två klasser.**
 
 ## Klass B-rest — mätmotorns bilddetektering (ETT samordnat pass)
 
+> **UTFALL (2026-08-18): KLASS B GENOMFÖRD — verktygsskulden är därmed
+> stängd i alla klasser.** Ett samordnat pass i `pipeline/rows.py`
+> (commit 71a033b) + `pipeline/regions.py` (190572b):
+>
+> * **Skymningslandet BQ-001**: rännkorridoren fick HYSTERES (75 %-kärna,
+>   utvidgning till 65 %-kolumner, tak en halv rännbredd/sida, marginal döms
+>   på kärnan) och block utan radstruktur klassas som `illustration`
+>   (bläckandel ≥0,55, eller ≥0,40 + obruten y-kontinuitet; propagation
+>   genom segmentgränser i överlappsfönstret; 930 block falsifierade utan
+>   textoffer). s. 1 ommätt i arbetet: facitkolumnerna exakt. Smala
+>   marginalremsor under MIN_GUTTER/MIN_COLUMN (s. 2/4/7) bokförda som
+>   kvantifierad restbegränsning i posten. STÄNGD.
+> * **Tempokalkylatorn BQ-001**: illustrationen `illustration`-flaggad i
+>   alla fem segment, textspalterna heter vänster/höger som transkriptet;
+>   s. 1 ommätt, de tre felbindningarna rensade; ombindning REFUSERAD efter
+>   pixelkontroll (0 facitbindningar i boken; 2 av 4 förslag felskjutna).
+>   STÄNGD.
+> * **del3 BQ-021 (c)+(d)**: klungdelning efter läkningen (kvot ≥2,5,
+>   ≥2 genomkorsande streck ≤0,018 breda, ≤0,01/px, vågräta cellinjer
+>   undantagna, ramlinjemask, fragmentvakt) + täckningsstrimlor vid
+>   spaltfönstertäckning <0,55. Facit i kastbar katalog: s. 49 delas per
+>   skaft och mittremsans fem namn mäts; `Bredsvärd` ensam x 634–808
+>   (facit 630–812); Pavise på femte decimalen. Boken orörd. STÄNGD.
+> * **Spindelkonungen BQ-007**: svepets höjdvakt mot min(spaltens, sidans)
+>   radmått — `säga).` föll med 0,05 px på ett tvåbandssegments uppblåsta
+>   median. Facit: svep-2-band [0,0803, 0,2954, 0,0505, 0,0079]. Boken
+>   orörd. STÄNGD.
+> * **Lovligt byte BQ-001 / Tanegashima BQ-003 (bindningsresterna)**:
+>   INTE motorarbete längre — Lovligt spärras av bindarens egen
+>   utvärderingsgrind (facit vinner 2–1), Tanegashima passerar grinden men
+>   mekaniken är uttömd (enda förslaget var det TÖMDA p005_e27).
+>   Posterna står kvar SMALARE som bindningspass; dömda sidor mäts aldrig
+>   om. Lovligt s. 1 (helt obunden) ommätt med rätt geometri.
+>
+> Regression: sex böcker i kastbara kataloger, läkarens metod. Dåligt
+> vatten 2 ändrade sidor (kartbrus). Sviten 637 grön. Detaljerna står i
+> respektive beslut.md-post.
+
 Alla fyra sitter i samma organ: kolumn-/tröskelbeslut där grafik och sats
 blandas. Facitvärdena nedan är REPRODUCERADE 2026-08-17 mot arkiv-PDF:erna
 (kastbara kataloger; gör om med `analysera` + `radboxar --workdir <scratch>`):
