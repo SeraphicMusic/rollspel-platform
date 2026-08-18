@@ -83,6 +83,31 @@ bläckbredd — där band den tidigare hela kedjor ett steg ur led (mätt på
 MUT-REG-youre-just-a-program s. 2 mot trycket). Den radformade regimen är
 oförändrad, 85,5 % / 3,6 %.
 
+BINDNINGSPASSET 2026-08-18 gav styckeregimen advokatens tre diskriminanter
+(beslut.md Lovligt byte s. 5/6): styckeindraget (INDRAG_STRAFF, även gemen
+fortsättningsstart), rubrikbandshöjden (RUBRIKHOJD_STRAFF), radrännsprovet
+(RANNA_STRAFF) — plus breddförtroendet för kolumnklippta band (_betrodda),
+regionöversättning av suffixade och flerspaltiga regionnamn (_oversatt,
+ordningshållarna) och mätvokabulärens egen normalisering (_radregioner).
+Domaren dömer nu i bokens regim med skiljetröskel (DOMSKILLNAD). Utfall mot
+facitböckerna, före → efter (identiska/avvikande, dom verktyget–facit):
+
+  Lovligt byte     67/11  1–2   →  63/1  1–0   (enda vinsten pixelverifierad:
+                                                facit slukade rubrikbandet)
+  Tanegashima      72/9   3–0   →  58/7  5–0   (s. 4-kedjans sex gamla fel-
+                                                bindningar återskapas inte
+                                                längre; s. 3:s facit är själv
+                                                felbundet, pixelverifierat)
+  del2             85,5 % 18–16 →  85,5 % 12–6
+  del3             74,9 % 18–5  →  74,8 % 12–1
+  stycken del II   68,7 % 15–12 →  52,5 % 33–18
+  stycken del III  62,1 % 18–7  →  51,0 % 68–12
+
+Täckningen i styckeproven sjunker — utskriftstaket (bindning dyrare än en
+obunden lucka skrivs inte), betrodda-filtret och krockfiltret refuserar mer —
+men domkvoten stiger kraftigt: verktyget byter täckning mot korrekthet, och
+en box som fattas är alltid tillåten.
+
 Torrkörning är default. Utvärdera alltid mot facit först:
 
     python3 scripts/binda_rader.py <arbete/slug> --utvardera
@@ -98,8 +123,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from pipeline.regions import (column_count, measured_columns,  # noqa: E402
-                              normalize)
+from pipeline.regions import (FULL_WIDTH, FURNITURE,  # noqa: E402
+                              column_count, measured_columns, normalize)
 
 # Elementtyper som bär sin text i `data` och därför kan spänna flera rader.
 BEHALLARE = {"list", "table", "statblock"}
@@ -224,6 +249,74 @@ MARGINAL = 0.15
 # ett steg — en kort sista rad, en centrerad rubrik, en bildgräns — har inget
 # som håller den på plats och binds inte.
 FORSKJUTNING = 0.50
+
+# Styckeindraget är styckegränsens signal från VÄNSTER, som raggedheten är
+# den från höger. I de här häftena börjar varje stycke utom det första efter
+# en rubrik på en indragen rad, och indraget är uppmätt av advokaten i BÅDA
+# de styckeformade facitböckerna: Lovligt byte 0,0195 (beslut.md s. 5,
+# brödtextkant 0,6735 mot indrag 0,6930) och Tanegashima (s. 4: mittkolumnens
+# enda indragna band 113/117/123 är exakt de tre styckestarterna). Ett
+# indraget band INUTI ett spann — inte som första rad — är alltså en slukad
+# styckegräns, och det var precis så DP:n åt främmande text: e24 på s. 6
+# spände 30 band över styckestarterna 77 och 92 utan att det kostade något.
+#
+# Fönstret skiljer indrag från kolumnklippning: mätningens `columns`-skivor
+# klipper band så att vänsterkanten hamnar 0,08–0,17 höger om bläcket
+# (Lovligt byte s. 5, band 87–90 och 110–111), och ett sådant band är inte
+# en styckestart. Uppmätt på s. 5: äkta indrag 0,0190–0,0200, klippta band
+# 0,1333–0,1738 — fönstret [0,010, 0,045] skiljer dem med god marginal.
+# Kanten tas som medianen av regionens vänsterkanter: styckestarterna är
+# omkring en femtedel av raderna, så medianen är alltid brödtextkanten.
+INDRAG_MIN = 0.010
+INDRAG_MAX = 0.045
+INDRAG_STRAFF = 0.8
+
+# Mörk ränna mellan två grannband i ett spann: banden är skivor av samma
+# bläckblock, inte tryckta rader. En tryckt textrad har alltid en vit
+# radränna mot grannraden; en illustration som mätningen delat i band har
+# bläck i "rännan". Provet är advokatens eget (beslut.md s. 6: "räkna vita
+# rännor i bandets y-intervall"), och det var så p006_e30 avslöjades — bunden
+# till fyra band ur den övre illustrationens sammanhängande block. Uppmätt på
+# s. 6: gapen mellan illustrationsskivorna 30–34 har mörk andel 0,289–0,369,
+# gapen mellan äkta textrader 0,000–0,014. Tröskeln 0,15 skiljer dem med
+# faktor 20 åt båda håll. Behållarna undantas — ett statblock får spänna
+# över sina egna linjer.
+RANNA_MORK = 0.15
+RANNA_STRAFF = 1.0
+
+# Minsta kostnadsskillnad som räknas som en DOM när en avvikelse ställs mot
+# facit (`_domare`). Tröskeln 1e-9 dömde på brus: p005_e12:s två kandidater
+# skilde 0,003 i kostnad — ingen mätning, men det räknades som facitseger.
+# Nivån är samma som MARGINAL, alltså den skillnad bindaren själv kräver för
+# att kalla två tilldelningar åtskiljbara.
+DOMSKILLNAD = 0.15
+
+# Så långt utanför regionens uppmätta högerkant ett bands högerkant får ligga
+# innan breddens mätevidens underkänns. Mätningens `columns`-skivor går ibland
+# ut till sidkanten i stället för till bläcket: Lovligt byte s. 5, band
+# 105–107 har högerkant 0,999 mot spaltens 0,958 (beslut.md: "bandbredd-larmet
+# på band 105–107, bbox-högerkant 0,9990 mot bläckets 0,9596/0,7661").
+KLIPP_TOL = 0.02
+
+# Ett band i RUBRIKHÖJD inuti ett brödtextspann är en slukad rubrik. Höjden
+# är advokatens tredje diskriminant (beslut.md s. 5: "rubrikernas bandhöjd
+# 0,0079–0,0082 mot brödtextens 0,0039–0,0071"), och den är mätt över alla
+# fyra facitböckerna som kvoten bandhöjd/regionmedian för BUNDNA element:
+#
+#   bok           heading p25–p75   paragraph p90
+#   Lovligt byte      1,29–1,53         1,19
+#   Tanegashima       1,60–1,65         1,07
+#   del2              1,00–1,08         1,08
+#   del3              1,04–1,50         1,08
+#
+# Gränsen 1,25 ligger över varje boks paragraph-p90 och under rubrikklustret
+# i de styckeformade böckerna. I del2 är rubrikgraden samma som brödtextens —
+# där skiljer höjden ingenting, men den larmar då inte heller falskt. Straffet
+# gäller bara den styckeformade regimen; den radformade är kalibrerad utan.
+# Det var det här måttet som fällde p005_e12:s sväljning av band 78 —
+# rubrikstumpen »2. SIDODÖRR« (h-kvot 1,30) inne i ett styckespann.
+RUBRIKHOJD_KVOT = 1.25
+RUBRIKHOJD_STRAFF = 0.8
 
 
 def _rader(radboxar):
@@ -471,11 +564,21 @@ def _full_bredd(rows):
     return w[min(int(0.85 * len(w)), len(w) - 1)] or None
 
 
-def _raggedstraff(el, rows, a, b, flerradiga, full_bredd):
+def _raggedstraff(el, rows, a, b, flerradiga, full_bredd, betrodda=None,
+                  indragna=None):
     """Kostnaden för styckegränser som strider mot den raka sättningen.
 
     Två fel, båda mätbara i sidbilden: en KORT rad inne i stycket (där slutade
     i själva verket ett stycke) och en FULL sista rad (där slutade det inte).
+
+    Ett band utan betrodd bredd (`_betrodda`) döms aldrig: ett kolumnklippt
+    band ser kort ut utan att stycket slutat där — det var så facits
+    advokatdömda bindning av p005_e14 fick 2,4 i falskt straff på fyra
+    klippta band. Spannets FÖRSTA rad döms inte heller när den är INDRAGEN:
+    indraget äter en bit av radbredden, så en indragen styckestart är alltid
+    något kort — p006_e21:s eget startband 25 mätte 0,2607 mot gränsen
+    0,2616, fick 0,8 i falskt straff, och DP:n valde hellre att börja stycket
+    en rad för sent än att betala för sin egen styckestart.
     """
     if not flerradiga or not full_bredd:
         return 0.0
@@ -484,17 +587,150 @@ def _raggedstraff(el, rows, a, b, flerradiga, full_bredd):
     gräns = RAGGED_SHARE * full_bredd
     straff = 0.0
     for j in range(a, b - 1):
+        if betrodda is not None and not betrodda[j]:
+            continue
+        if j == a and indragna is not None and indragna[j]:
+            continue
         box = rows[j].get("bbox") or []
         if len(box) == 4 and box[2] < gräns:
             straff += RAGGED_STRAFF
-    sista = rows[b - 1].get("bbox") or []
-    if len(sista) == 4 and sista[2] >= gräns:
-        straff += RAGGED_STRAFF
+    # En full sista rad frias när raden EFTER spannet är indragen: indraget
+    # är styckegränsens direkta bevis och slår slutradens bredd. Tanegashima
+    # s. 4, p004_e19: slutraden 112 mäter 0,96 av fullbredden (över
+    # RAGGED_SHARE) men band 113 är indraget — stycket slutar bevisligen där,
+    # och det falska straffet var med om att skjuta kedjan ett element.
+    if betrodda is None or betrodda[b - 1]:
+        nasta_indragen = (indragna is not None and b < len(rows)
+                          and indragna[b])
+        sista = rows[b - 1].get("bbox") or []
+        if len(sista) == 4 and sista[2] >= gräns and not nasta_indragen:
+            straff += RAGGED_STRAFF
     return min(straff, MAX_KOSTNAD)
 
 
+def _indragna(rows):
+    """Flagga per rad: börjar raden indragen mot regionens brödtextkant?
+
+    Kanten är medianen av radernas vänsterkanter — styckestarterna är omkring
+    en femtedel av raderna, så medianen träffar alltid den raka kanten.
+    Fönstret [INDRAG_MIN, INDRAG_MAX] skiljer äkta styckeindrag från band vars
+    vänsterkant klippts av mätningens kolumnskivor (se konstanterna).
+    """
+    xs = [r["bbox"][0] for r in rows if len(r.get("bbox") or []) == 4]
+    if not xs:
+        return [False] * len(rows)
+    kant = statistics.median(xs)
+    ut = []
+    for r in rows:
+        b = r.get("bbox") or []
+        d = (b[0] - kant) if len(b) == 4 else 0.0
+        ut.append(INDRAG_MIN <= d <= INDRAG_MAX)
+    return ut
+
+
+def _rubrikband(rows):
+    """Flagga per rad: står bandet i rubrikhöjd mot regionens medianhöjd?"""
+    hs = [r["bbox"][3] for r in rows if len(r.get("bbox") or []) == 4]
+    if not hs:
+        return [False] * len(rows)
+    med = statistics.median(hs)
+    if med <= 0:
+        return [False] * len(rows)
+    ut = []
+    for r in rows:
+        b = r.get("bbox") or []
+        ut.append(len(b) == 4 and b[3] / med >= RUBRIKHOJD_KVOT)
+    return ut
+
+
+def _betrodda(rows):
+    """Flagga per rad: bär bandets BREDD mätevidens?
+
+    Mätningens `columns`-skivor klipper band i x, och ett klippt band mäter
+    skivan i stället för bläcket: på Lovligt byte s. 5 börjar banden 87–90 och
+    110–111 0,13–0,17 höger om sitt eget bläck, och 105–107 går ut till 0,999.
+    Advokatens regel (beslut.md s. 5): "klippningen diskvalificerar inte
+    bandet, men bara y, höjd och den OKLIPPTA kanten bär information". Utan
+    den regeln förgiftade de klippta banden varje breddmått i kedjan: facits
+    advokatdömda bindning av p005_e14 kostade 3,49 — nästan allt falskt
+    raggedstraff på fyra klippta band — och verktyget "vann" med en bindning
+    som trycket motsäger.
+
+    Vänsterkanten underkänns när den ligger mer än INDRAG_MAX höger om
+    regionens brödtextkant (medianen av vänsterkanterna): det är antingen en
+    kolumnklippning (0,13–0,17) eller en centrerad rubrik — i båda fallen är
+    bredden ingen brödtextevidens. Högerkanten underkänns när den går mer än
+    KLIPP_TOL utanför regionens uppmätta fullbredd. En kort (ragged) rad är
+    alltid betrodd — det är själva signalen.
+    """
+    boxar = [r.get("bbox") if len(r.get("bbox") or []) == 4 else None
+             for r in rows]
+    xs = [b[0] for b in boxar if b]
+    if not xs:
+        return [True] * len(rows)
+    kant = statistics.median(xs)
+    full = _full_bredd(rows)
+    ut = []
+    for b in boxar:
+        if not b:
+            ut.append(True)
+            continue
+        ok = b[0] - kant <= INDRAG_MAX
+        if ok and full:
+            ok = (b[0] + b[2]) <= kant + full + KLIPP_TOL
+        ut.append(ok)
+    return ut
+
+
+def _morka_gap(rows, png):
+    """Per grannpar i regionen: bär gapet mellan banden bläck i stället för en
+    vit radränna? Då är banden skivor av samma block — en illustration som
+    mätningen delat — och inget textelement får spänna över paret.
+
+    Mäts i sidbilden, i de två bandens gemensamma x-fönster. Ett gap som inte
+    rymmer en enda bildpunktsrad räknas som mörkt: två band som stöter i
+    varandra utan ränna är blockskivor per definition. Utan bild eller Pillow
+    returneras None — provet faller då bort, vilket ger fler felmöjligheter
+    men aldrig fler spärrade sanna bindningar.
+    """
+    if not png or not Path(png).exists():
+        return None
+    try:
+        from PIL import Image
+    except ImportError:
+        return None
+    im = Image.open(png).convert("L").point(lambda v: 255 if v < 128 else 0)
+    W, H = im.size
+    ut = []
+    for j in range(len(rows) - 1):
+        b1 = rows[j].get("bbox") or []
+        b2 = rows[j + 1].get("bbox") or []
+        if len(b1) != 4 or len(b2) != 4:
+            ut.append(False)
+            continue
+        # y räknas från nederkanten: gapet är övre bandets nederkant ned till
+        # nedre bandets överkant.
+        x0, x1 = max(b1[0], b2[0]), min(b1[0] + b1[2], b2[0] + b2[2])
+        upp, ner = int((1 - b1[1]) * H), int((1 - b2[1] - b2[3]) * H)
+        if x1 <= x0:
+            ut.append(False)
+            continue
+        if ner <= upp:
+            ut.append(True)
+            continue
+        bit = im.crop((int(x0 * W), upp, int(x1 * W), ner))
+        if not bit.width or not bit.height:
+            # x-fönstret rundade av till noll bildpunkter — inget att mäta
+            ut.append(False)
+            continue
+        mork = bit.histogram()[255] / (bit.width * bit.height)
+        ut.append(mork >= RANNA_MORK)
+    return ut
+
+
 def _radkostnad(el, rows, a, b, skala, svarta=None, flerradiga=False,
-                full_bredd=None):
+                full_bredd=None, indragna=None, hopp=None, gap=None,
+                betrodda=None, rubrikband=None):
     """Kostnaden för att låta `el` täcka raderna [a, b).
 
     None betyder omöjligt. I den RADFORMADE regimen — den som del I–III är
@@ -514,25 +750,92 @@ def _radkostnad(el, rows, a, b, skala, svarta=None, flerradiga=False,
     typ = el.get("type")
     if typ not in BEHALLARE and n != 1 and not flerradiga:
         return None
+    # Ett spann över en mörk ränna lägger text på skivorna av ett bläckblock —
+    # illustrationens band ser ut som rader men saknar radrännor (RANNA_MORK).
+    # Behållarna undantas: ett statblock spänner över sina egna linjer.
+    ranna = 0.0
+    if gap and n > 1 and typ not in BEHALLARE:
+        ranna = RANNA_STRAFF * sum(1 for j in range(a, b - 1) if gap[j])
     faktor, tolerans = TYPSKALA.get(typ, (None, None))
+    if el.get("_ordningshallare"):
+        # Tvåspaltselementets text fördelar sig över två regioner i okänd
+        # proportion — bredden bär ingen evidens i någon av dem.
+        faktor = None
     if faktor is None:
-        return 0.0
-    bredd = 0.0
+        # Typen bär ingen breddevidens alls (punktledare, breda kolumntitlar —
+        # se TYPSKALA). Då får ett extra band inte vara gratis att svälja:
+        # utan kostnaden slukade sidfoten p006_e33 band 156 — ett band utan
+        # en enda sidfotsink — bara för att slippa hoppstraffet. Varje band
+        # utöver ett kostar precis sitt hoppstraff, så att binda och att
+        # hoppa väger jämnt och elementet lämnas obundet i stället
+        # (marginalen blir noll — en advokat får döma).
+        extra = 0.0
+        if hopp and n > 1:
+            h = [hopp[j] for j in range(a, b)]
+            extra = sum(h) - max(h)
+        svart0 = 0.0
+        if svarta:
+            svart0 = SVART_STRAFF * sum(
+                1 for j in range(a, b)
+                if svarta[j] is not None and svarta[j] >= SVARTA_GRAFIK)
+        return svart0 + extra + ranna
+    bredd, n_ok = 0.0, 0
     for j in range(a, b):
         box = rows[j].get("bbox") or []
         if len(box) != 4:
             return None
-        bredd += box[2]
-    if bredd <= 0:
-        return None
+        if betrodda is None or betrodda[j]:
+            bredd += box[2]
+            n_ok += 1
     svart = 0.0
-    if svarta:
+    if svarta and typ != "heading":
+        # Rubriker undantas: en displayrubrik i fet grad är nästan helsvart
+        # inom sin egen täta box (Tanegashima s. 4, AVSLUTNINGEN band 106:
+        # svärta över tröskeln, höjdkvot 2,54) — straffet som byggdes mot
+        # illustrationspaneler gav facits rubrikbindning 2,0 i falsk kostnad
+        # och sköt hela kedjan ett element ur led.
         svart = SVART_STRAFF * sum(
             1 for j in range(a, b)
             if svarta[j] is not None and svarta[j] >= SVARTA_GRAFIK)
+    svart += ranna
+    # Ett indraget band inuti spannet — inte som första rad — är en slukad
+    # styckestart: indraget är styckegränsens signal från vänster, som
+    # raggedheten är den från höger. Bara i den styckeformade regimen och
+    # bara för brödtexttyperna, precis som RAGGED_STRAFF.
+    if (flerradiga and indragna and typ in RAGGED_TYPER):
+        if n > 1:
+            svart += INDRAG_STRAFF * sum(
+                1 for j in range(a + 1, b) if indragna[j])
+        # ...och ett element vars text BÖRJAR med gemen — en fortsättning
+        # mitt i en mening, som p005_e03 "de tagit över..." från s. 4 — kan
+        # inte börja på ett indraget band: indraget är en styckestart.
+        t = (el.get("text") or "").lstrip()
+        if indragna[a] and t and t[:1].islower():
+            svart += INDRAG_STRAFF
+    # En slukad rubrik syns på HÖJDEN: ett band i rubrikhöjd hör aldrig
+    # hemma i ett brödtextspann (RUBRIKHOJD_KVOT, advokatens tredje
+    # diskriminant). Bara i den styckeformade regimen.
+    if (flerradiga and rubrikband and typ in RAGGED_TYPER):
+        svart += RUBRIKHOJD_STRAFF * sum(
+            1 for j in range(a, b) if rubrikband[j])
+    # Breddkostnaden räknas på de BETRODDA banden (`_betrodda`): ett
+    # kolumnklippt band mäter skivan i stället för bläcket och får inte
+    # vittna om bredden. Den förväntade teckenlängden skalas med den betrodda
+    # andelen — samma antagande som hela måttet vilar på, att texten fördelar
+    # sig jämnt över spannets rader. Utan en enda betrodd rad finns ingen
+    # breddevidens alls; kvar står ordningen och straffen. Tilldelningen
+    # tillåts i DP:n — att förbjuda den fragmenterade kedjorna och rev upp
+    # hela regioner — men den SKRIVS aldrig: utskriftsfiltret i `binda_sida`
+    # släpper inga bindningar utan ett enda betrott band.
+    if n_ok == 0:
+        return svart + _raggedstraff(el, rows, a, b, flerradiga, full_bredd,
+                                     betrodda, indragna)
+    if bredd <= 0:
+        return None
     väntat = _textlangd(el)
     if väntat == 0:
         return svart
+    väntat = väntat * n_ok / n
     väntad_bredd = skala * faktor * bredd
     # Felet mäts mot det MINSTA av de två talen, så att spänna över för många
     # rader kostar lika mycket som att spänna över för få. Med den förväntade
@@ -541,11 +844,13 @@ def _radkostnad(el, rows, a, b, skala, svarta=None, flerradiga=False,
     fel = abs(väntat - väntad_bredd) / max(1e-9, min(väntat, väntad_bredd))
     # Toleransen är typens egen uppmätta spridning: inom den kostar avvikelsen
     # ingenting, utanför växer den linjärt. Över flera rader skärps den — se
-    # TOLERANS_SKARPNING.
-    if flerradiga and n > 1 and TOLERANS_SKARPNING:
-        tolerans = tolerans / (n ** TOLERANS_SKARPNING)
+    # TOLERANS_SKARPNING. Skärpningen räknas på de betrodda raderna, som är
+    # de som medelvärdesbildar bort spridningen.
+    if flerradiga and n_ok > 1 and TOLERANS_SKARPNING:
+        tolerans = tolerans / (n_ok ** TOLERANS_SKARPNING)
     kostnad = min(max(0.0, fel - tolerans), MAX_KOSTNAD) + svart
-    return kostnad + _raggedstraff(el, rows, a, b, flerradiga, full_bredd)
+    return kostnad + _raggedstraff(el, rows, a, b, flerradiga, full_bredd,
+                                   betrodda, indragna)
 
 
 def _svarta(rows, png):
@@ -628,8 +933,12 @@ def _hoppstraff(rows, svarta=None):
     return ut
 
 
-def _losning(els, rows, skala, max_spann, svarta=None, flerradiga=False):
+def _losning(els, rows, skala, max_spann, svarta=None, flerradiga=False,
+             gap=None):
     full = _full_bredd(rows) if flerradiga else None
+    indrag = _indragna(rows) if flerradiga else None
+    betrodda = _betrodda(rows) if flerradiga else None
+    rubrik = _rubrikband(rows) if flerradiga else None
     """Billigaste tilldelningen med en marginal per bindning.
 
     Returnerar `(kostnad, [(elementindex, [radindex], marginal)])`.
@@ -680,7 +989,8 @@ def _losning(els, rows, skala, max_spann, svarta=None, flerradiga=False):
             bind_bäst, bind_val = INF, None
             for n in range(1, min(max_spann, k - j) + 1):
                 c = _radkostnad(els[i], rows, j, j + n, skala, hopp_svarta,
-                                flerradiga, full)
+                                flerradiga, full, indrag, hopp, gap, betrodda,
+                                rubrik)
                 if c is None:
                     continue
                 kost[(i, j, n)] = c
@@ -777,19 +1087,115 @@ def _losning(els, rows, skala, max_spann, svarta=None, flerradiga=False):
     return optimal, ut
 
 
+def _radregioner(rows, kolumner):
+    """Mätradernas regionnamn, normaliserade till spaltvokabulären.
+
+    Mätningen är inte enig med sig själv: på Lovligt byte s. 5 heter
+    högerspalten `högerkolumn` i de flesta y-skivorna men `kolumn 3` i skivan
+    0,4389–0,4768 — och raderna 78–79 (rubriken 2. SIDODÖRR och styckets
+    första rad) föll därmed ur högerkolumnens inventarium. Följden var värre
+    än en lucka: facits bindning [79, 82] gick inte ens att UTTRYCKA, den
+    ärliga kedjan blev omöjlig, och DP:n lät i stället rubriken ta nästa
+    rubriks band (e11@83 → e13@88 → hela kedjan ur led).
+
+    Ordinalen översätts mot mätningens egna spaltnamn i x-ordning — samma
+    `normalize`, men UTAN spaltantalsvakten: den vaktar tryck mot mätning,
+    och här står mätningen på båda sidor. Sidhuvud/sidfot/illustration
+    returneras oförändrade av `normalize`; ett namn som inte går att
+    översätta behåller sitt råa värde.
+    """
+    return [normalize(r.get("region"), kolumner, None) or r.get("region")
+            for r in rows]
+
+
+def _oversatt(els, radboxar):
+    """Region i fritext -> mätningens vokabulär, för en hel sidas element.
+
+    Returnerar `(karta, ooversatt)`. Elementets region står i fritext och
+    mätningens i en kontrollerad vokabulär; `pipeline.regions` översätter, och
+    lämnar det tvetydiga oöversatt (se modulens docstring). Utan
+    översättningen matchar `kolumn 1` aldrig `vänsterkolumn`, och hela
+    bindningen uteblir.
+
+    Transkriptet hänger ofta en beskrivande svans på spaltnamnet —
+    `högerkolumn, spelartext`, `högerkolumn, fortsättning från sida 4` — och
+    ett sådant namn föll tidigare HELT ur bindningen fast spalten är entydig.
+    Det var värre än en missad bindning: elementets textband stod då kvar som
+    herrelöst bete i regionens inventarium, och DP:n sträckte hellre ett
+    ANNAT element över dem än betalade hoppstraffet — på s. 5 åt p005_e08 sju
+    av spelartextens band för att p005_e07:s region inte översattes. Därför
+    prövas basnamnet före kommatecknet genom samma kedja. Ett namn som pekar
+    ut TVÅ spalter (`vänster-/mittkolumn`) har inget kommatecken att klippa
+    vid och förblir oöversatt — det är rätt: elementet spänner två regioner
+    och kan inte bindas i en.
+    """
+    kolumner = measured_columns(radboxar or {})
+    tryckta = column_count([_region(el) for el in els])
+    uppmatta = set(kolumner) | set(FURNITURE) | {FULL_WIDTH}
+    karta, ooversatt, tvaspalt = {}, set(), {}
+    for el in els:
+        rå = _region(el)
+        if rå in karta:
+            continue
+        norm = normalize(rå, kolumner, tryckta)
+        if norm is None and rå and "," in rå:
+            bas = rå.split(",", 1)[0].strip()
+            norm = normalize(bas, kolumner, tryckta)
+            if norm is None and bas in uppmatta:
+                norm = bas
+        if norm is None:
+            # Ett namn som pekar ut FLERA spalter (`vänster-/mittkolumn`)
+            # binds aldrig — men de utpekade spalterna antecknas, så att
+            # elementet kan hålla sin plats i läsordningen där (se
+            # ordningshållarna i `binda_sida`).
+            delar = _tvaspaltsdelar(rå, kolumner)
+            if delar:
+                tvaspalt[rå] = delar
+            ooversatt.add(rå)
+        karta[rå] = norm or rå
+    return karta, ooversatt, tvaspalt
+
+
+def _tvaspaltsdelar(rå, kolumner):
+    """Spalterna ett flerspaltsnamn pekar ut, i mätningens vokabulär.
+
+    `vänster-/mittkolumn` -> `['vänsterkolumn', 'mittkolumn']` (eller vad
+    mätningen nu kallar första och mellersta spalten). Bara namn som entydigt
+    refererar minst två spalter ger något; allt annat ger [].
+    """
+    if not rå or not kolumner:
+        return []
+    bas = rå.split(",", 1)[0]
+    ut = []
+    if "vänster" in bas:
+        ut.append(kolumner[0])
+    if "mitt" in bas and len(kolumner) == 3:
+        ut.append(kolumner[1])
+    if "höger" in bas:
+        ut.append(kolumner[-1])
+    # dubbletter kan uppstå i en tvåspaltsmätning ("mitt-/högerkolumn" när
+    # bara två spalter mätts) — då är referensen inte entydig
+    if len(ut) != len(set(ut)):
+        return []
+    return ut if len(ut) >= 2 else []
+
+
 def binda_sida(els, rows, skala, max_spann=80, png=None, flerradiga=False,
                radboxar=None):
     """Bind en sidas element till dess uppmätta rader, region för region.
 
     Returnerar `(bindningar, anmarkningar)` där bindningar är
     `{elementindex: [radindex]}`.
+
+    Ett TÖMT element (`removed: true`) och en illustration deltar aldrig:
+    det tömda har inget tryckt motstycke att bindas till (Tanegashimas
+    p005_e27 — 28 kartband — var verktygets enda skarpa förslag där, och det
+    refuserades för hand), och illustrationens läge bär ingen breddevidens
+    alls men skulle med sin kostnadsfria typ gärna svälja ett textband för
+    att slippa ett hoppstraff.
     """
     bindningar, anm = {}, []
     svarta = _svarta(rows, png)
-    # Elementets region står i fritext och mätningens i en kontrollerad
-    # vokabulär; `pipeline.regions` översätter, och lämnar det tvetydiga
-    # oöversatt (se modulens docstring). Utan översättningen matchar `kolumn 1`
-    # aldrig `vänsterkolumn`, och hela bindningen uteblir.
     kolumner = measured_columns(radboxar or {})
     tryckta = column_count([_region(el) for el in els])
     # Ett namn som inte gick att översätta faller tillbaka på sitt råa värde.
@@ -797,14 +1203,8 @@ def binda_sida(els, rows, skala, max_spann=80, png=None, flerradiga=False,
     # är rätt — men det ska inte rapporteras som att regionen SAKNAS i
     # mätningen. `mittkolumn` finns i mätningens vokabulär; det som hänt är att
     # översättningen vägrade, och vägran har egna, kända skäl.
-    karta, ooversatt = {}, set()
-    for el in els:
-        rå = _region(el)
-        if rå not in karta:
-            norm = normalize(rå, kolumner, tryckta)
-            if norm is None:
-                ooversatt.add(rå)
-            karta[rå] = norm or rå
+    karta, ooversatt, tvaspalt = _oversatt(els, radboxar)
+    radreg = _radregioner(rows, kolumner)
     if tryckta and kolumner and tryckta != len(kolumner):
         anm.append("trycket har %d spalter, mätningen %d — spaltelementen "
                    "lämnas obundna (mätningen har slagit ihop spalter)"
@@ -816,9 +1216,38 @@ def binda_sida(els, rows, skala, max_spann=80, png=None, flerradiga=False,
         if reg not in elregioner:
             elregioner.append(reg)
 
+    def deltar(el, reg):
+        """Hör elementet hemma i regionens DP — och i så fall hur?
+
+        'bind' är ett vanligt element. 'hallare' är ett tvåspaltselement som
+        deltar som ORDNINGSHÅLLARE: det håller sin plats i läsordningen och
+        får ta sina egna band mot absorptionskostnad, men bredden bär ingen
+        evidens (texten fördelar sig över två regioner i okänd proportion)
+        och bindningen skrivs aldrig — unionen av två spalters band vore
+        innehållslös. Utan hållaren stod tvåspaltselementets band som
+        herrelöst bete: på s. 6 lämnade DP:n hellre tre element utan rad och
+        sköt hela mittkedjan ett steg än betalade sex hoppstraff för
+        p006_e18:s rader.
+        """
+        if el.get("removed") or el.get("type") == "illustration":
+            return None
+        rå = _region(el)
+        if karta[rå] == reg:
+            return "bind"
+        if reg in tvaspalt.get(rå, ()):
+            return "hallare"
+        return None
+
     for reg in elregioner:
-        eidx = [i for i, el in enumerate(els) if karta[_region(el)] == reg]
-        ridx = [j for j, r in enumerate(rows) if r.get("region") == reg]
+        eidx, hallare = [], set()
+        for i, el in enumerate(els):
+            roll = deltar(el, reg)
+            if roll is None:
+                continue
+            if roll == "hallare":
+                hallare.add(len(eidx))
+            eidx.append(i)
+        ridx = [j for j in range(len(rows)) if radreg[j] == reg]
         if not eidx:
             continue
         if not ridx:
@@ -830,7 +1259,13 @@ def binda_sida(els, rows, skala, max_spann=80, png=None, flerradiga=False,
                 anm.append("region %r finns hos %d element men inte i "
                            "mätningen — lämnad obunden" % (reg, len(eidx)))
             continue
-        delels = [els[i] for i in eidx]
+        delels = []
+        for p, i in enumerate(eidx):
+            el = els[i]
+            if p in hallare:
+                el = dict(el)
+                el["_ordningshallare"] = True
+            delels.append(el)
         delrows = [rows[j] for j in ridx]
         delsv = [svarta[j] for j in ridx]
         # I den styckeformade regimen är raggedheten det enda som mäter var
@@ -857,8 +1292,9 @@ def binda_sida(els, rows, skala, max_spann=80, png=None, flerradiga=False,
                            "%d element lämnade obundna"
                            % (reg, ragged, len(delrows), len(delels)))
                 continue
+        gap = _morka_gap(delrows, png)
         _, lösn = _losning(delels, delrows, skala, max_spann, delsv,
-                           flerradiga)
+                           flerradiga, gap)
         if not lösn:
             anm.append("region %r: ingen tilldelning gick att räkna fram"
                        % (reg,))
@@ -871,7 +1307,7 @@ def binda_sida(els, rows, skala, max_spann=80, png=None, flerradiga=False,
         klar = []
         for körning in körningar:
             b = _tal_forskjutning(delels, delrows, skala, delsv, körning,
-                                  jämnt, flerradiga)
+                                  jämnt, flerradiga, gap)
             klar.append(b >= FORSKJUTNING)
             for i, _rr, _m in körning:
                 bevis[i] = b
@@ -908,6 +1344,12 @@ def binda_sida(els, rows, skala, max_spann=80, png=None, flerradiga=False,
         # vars körning var bevisad men vars egen marginal var för tunn, och den
         # felskyltningen kostade en timmes felsökning i fel ände av koden.
         svag_forskjutning = svag_marginal = 0
+        betro = _betrodda(delrows) if flerradiga else None
+        indr = _indragna(delrows) if flerradiga else None
+        rubr = _rubrikband(delrows) if flerradiga else None
+        fullb = _full_bredd(delrows) if flerradiga else None
+        hoppk = _hoppstraff(delrows, delsv)
+        otrodda = dyra = 0
         for i, rr, marginal in lösn:
             if bevis.get(i, 0.0) < FORSKJUTNING:
                 svag_forskjutning += 1
@@ -915,7 +1357,39 @@ def binda_sida(els, rows, skala, max_spann=80, png=None, flerradiga=False,
             if marginal < MARGINAL:
                 svag_marginal += 1
                 continue
+            if i in hallare:
+                continue
+            # En bindning utan ett enda betrott band skrivs aldrig: unionen
+            # av enbart klippta band omsluter inte elementets bläck, och en
+            # sådan box är ett fel som ser ut som data (advokatens dom över
+            # p005_e11@78, vars enda kandidatband täckte 18,5 % av rubrikens
+            # bläck, och p006_e30@153-155, vars två sista rader ligger i ett
+            # sidfotstypat band). Tilldelningen behålls i DP:n för kedjans
+            # stabilitet men stoppas här.
+            if betro is not None and not any(betro[j] for j in rr):
+                otrodda += 1
+                continue
+            # En bindning som kostar mer än priset för att lämna elementet
+            # obundet är sämre än ingen bindning: DP:n kan ha valt den bara
+            # för att slippa hoppstraffen för herrelösa band. På Tanegashima
+            # s. 3 spände rubriken HOTEL GRAND JAPAN 25 band till kostnad
+            # 6,0 hellre än att lämna brevlådornas rader obundna. En sådan
+            # layout är omätbar för verktyget — advokaten får binda.
+            k = _radkostnad(delels[i], delrows, rr[0], rr[-1] + 1, skala,
+                            delsv, flerradiga, fullb, indr, hoppk, gap,
+                            betro, rubr)
+            if k is None or k >= ELEMENT_UTAN_RAD:
+                dyra += 1
+                continue
             bindningar[eidx[i]] = [ridx[j] for j in rr]
+        if otrodda:
+            anm.append("region %r: %d element utan ett enda betrott band — "
+                       "unionen omsluter inte bläcket, lämnade obundna"
+                       % (reg, otrodda))
+        if dyra:
+            anm.append("region %r: %d element vars bindning kostar mer än en "
+                       "obunden lucka — lämnade obundna för advokaten"
+                       % (reg, dyra))
         if svag_forskjutning:
             anm.append("region %r: %d av %d element ligger i en körning som "
                        "går att skjuta ett steg lika billigt — lämnade obundna "
@@ -944,7 +1418,7 @@ def _kor(losn):
 
 
 def _tal_forskjutning(els, rows, skala, svarta, korning, jamnt=True,
-                      flerradiga=False):
+                      flerradiga=False, gap=None):
     """Hur mycket dyrare körningen blir om den skjuts ett steg åt något håll.
 
     Det här är körningens egen bevisbörda. En körning där varje rad är lika
@@ -962,10 +1436,14 @@ def _tal_forskjutning(els, rows, skala, svarta, korning, jamnt=True,
     med två poster obundna — den såg bevisad ut och låg två steg fel.
     """
     full = _full_bredd(rows) if flerradiga else None
+    indrag = _indragna(rows) if flerradiga else None
+    betrodda = _betrodda(rows) if flerradiga else None
+    rubrik = _rubrikband(rows) if flerradiga else None
+    hopp = _hoppstraff(rows, svarta)
     bas = 0.0
     for i, rr, _m in korning:
         c = _radkostnad(els[i], rows, rr[0], rr[-1] + 1, skala, svarta,
-                        flerradiga, full)
+                        flerradiga, full, indrag, hopp, gap, betrodda, rubrik)
         if c is None:
             return 0.0
         bas += c
@@ -978,7 +1456,7 @@ def _tal_forskjutning(els, rows, skala, svarta, korning, jamnt=True,
                 möjligt = False
                 break
             c = _radkostnad(els[i], rows, a, b, skala, svarta, flerradiga,
-                            full)
+                            full, indrag, hopp, gap, betrodda, rubrik)
             if c is None:
                 möjligt = False
                 break
@@ -1016,7 +1494,9 @@ def _lasin(workdir):
     return sidor
 
 
-def _domare(el, rows, facit, mitt, skala, svarta):
+def _domare(el, rows, facit, mitt, skala, svarta, flerradiga=False,
+            full=None, indragna=None, hopp=None, gap=None, betrodda=None,
+            rubrikband=None):
     """Vilken av två bindningar som passar TRYCKET bäst: 'mitt', 'facit' — eller
     `None` när måttet inte kan skilja dem åt.
 
@@ -1027,12 +1507,22 @@ def _domare(el, rows, facit, mitt, skala, svarta):
     använder samma uppmätta breddsamband som bindningen själv — det är inte ett
     oberoende mått, men det är ett mått, och när trycket säger emot facit går
     det att se.
+
+    Domen fälls i BOKENS regim. Utan `flerradiga` fick varje flerradigt spann
+    kostnaden "omöjlig" på båda sidor och blev oskiljbart: på Lovligt byte
+    dömdes 8 av 11 avvikelser till oavgjort fast facit — advokatdömt mot
+    trycket band för band — vann 8 av dem i regimens eget mått. Och en dom
+    kräver en mätbar skillnad (DOMSKILLNAD): 0,003 i kostnad är brus.
     """
-    a = _radkostnad(el, rows, facit[0], facit[-1] + 1, skala, svarta)
-    b = _radkostnad(el, rows, mitt[0], mitt[-1] + 1, skala, svarta)
+    a = _radkostnad(el, rows, facit[0], facit[-1] + 1, skala, svarta,
+                    flerradiga, full, indragna, hopp, gap, betrodda,
+                    rubrikband)
+    b = _radkostnad(el, rows, mitt[0], mitt[-1] + 1, skala, svarta,
+                    flerradiga, full, indragna, hopp, gap, betrodda,
+                    rubrikband)
     a = MAX_KOSTNAD * 10 if a is None else a
     b = MAX_KOSTNAD * 10 if b is None else b
-    if abs(a - b) < 1e-9:
+    if abs(a - b) < DOMSKILLNAD:
         return None
     return "mitt" if b < a else "facit"
 
@@ -1143,6 +1633,25 @@ def utvardera(sidor, skala, flerradiga=False, stycken=False):
         bind, _ = binda_sida(rensade, rows, skala, png=png,
                              flerradiga=flerradiga, radboxar=mat)
         svarta = _svarta(rows, png)
+        # Domen fälls i samma rum som bindningen: regionens egna rader, med
+        # regionens egna mått. I det globala radrummet räknades främmande
+        # regioners band in i spannets bredd — facits [79, 82] på Lovligt
+        # byte s. 5 spänner två vänsterspaltsrader den aldrig rör.
+        karta, _oov, _tva = _oversatt(els, mat)
+        radreg = _radregioner(rows, measured_columns(mat or {}))
+        regmått = {}
+        for reg in set(karta.values()):
+            ridx = [j for j in range(len(rows)) if radreg[j] == reg]
+            delrows = [rows[j] for j in ridx]
+            regmått[reg] = (
+                {j: p for p, j in enumerate(ridx)}, delrows,
+                [svarta[j] for j in ridx],
+                _full_bredd(delrows) if flerradiga else None,
+                _indragna(delrows) if flerradiga else None,
+                _hoppstraff(delrows, [svarta[j] for j in ridx]),
+                _morka_gap(delrows, png),
+                _betrodda(delrows) if flerradiga else None,
+                _rubrikband(delrows) if flerradiga else None)
         sid_fel = 0
         for i, rr in facit.items():
             if i not in bind:
@@ -1152,7 +1661,19 @@ def utvardera(sidor, skala, flerradiga=False, stycken=False):
             else:
                 fel += 1
                 sid_fel += 1
-                dom[_domare(els[i], rows, rr, bind[i], skala, svarta)] += 1
+                (lok, delrows, delsv, full, indrag, hopp, gap, betro,
+                 rubrik) = regmått[karta[_region(els[i])]]
+                if all(j in lok for j in rr) and all(j in lok for j in bind[i]):
+                    dom[_domare(els[i], delrows,
+                                [lok[j] for j in rr],
+                                [lok[j] for j in bind[i]], skala, delsv,
+                                flerradiga, full, indrag, hopp, gap,
+                                betro, rubrik)] += 1
+                else:
+                    # Facit binder över regionvokabulärens gräns (klippta
+                    # kolumnskivor) — måttet kan inte ens uttrycka den
+                    # tilldelningen, alltså ingen dom.
+                    dom[None] += 1
         if sid_fel:
             värst.append((sid_fel, n, len(facit)))
     tot = rätt + fel + utan
@@ -1237,6 +1758,19 @@ def main(argv=None):
                                flerradiga=flerradiga, radboxar=mat)
         nya = {i: rr for i, rr in bind.items()
                if not (els[i].get("source") or {}).get("rader")}
+        # DP:n räknar utan att se de redan skrivna bindningarna — den kan
+        # alltså föreslå ett band som en DÖMD bindning redan äger (på s. 2
+        # föreslogs p002_e12 på exakt de fyra band p002_e11 bär). Ett sådant
+        # förslag skrivs aldrig: två ägare till samma band är ett fel som
+        # ser ut som data.
+        upptagna = set()
+        for el in els:
+            upptagna.update((el.get("source") or {}).get("rader") or [])
+        krockar = {i for i, rr in nya.items() if set(rr) & upptagna}
+        if krockar:
+            anm.append("%d förslag krockar med redan dömda bindningar — "
+                       "släppta" % len(krockar))
+            nya = {i: rr for i, rr in nya.items() if i not in krockar}
         print("\ns. %d — %d element, %d uppmätta rader, %d hade redan bindning"
               % (n, len(els), len(rows), redan))
         for m in anm:
