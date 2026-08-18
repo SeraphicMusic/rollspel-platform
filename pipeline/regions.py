@@ -31,7 +31,12 @@ ser ut som data.
 """
 import re
 
-FURNITURE = ("sidhuvud", "sidfot")
+# `illustration` är mätmotorns namn på ett spaltblock som är en BILDYTA
+# (pipeline/rows.py, klass B-passet): det är ingen spalt och får aldrig
+# räknas i spaltantalet — annars vägrar bindningen med "mätningen har
+# slagit ihop spalter" på varje sida där en illustration står bredvid
+# satsen (Tempokalkylatorn s. 1: två textspalter + en bildyta).
+FURNITURE = ("sidhuvud", "sidfot", "illustration")
 FULL_WIDTH = "sidbredd"
 
 # Namn som talar om HELA satsbredden, inte om en spalt.
