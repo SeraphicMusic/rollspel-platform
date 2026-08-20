@@ -186,6 +186,16 @@ PAGE_TABLE_SHARE = 0.30
 # Blankett: nästan bara korta element, utspridda över många x-lägen.
 PAGE_FORM_SHORT_SHARE = 0.60
 PAGE_FORM_MIN_CLUSTERS = 3
+# Radbaserad prosa mot blankett (BQ-002, MUT-AVE-skymningsmorker): en smal
+# spalt transkriberad EN RAD PER ELEMENT ger korta element i flera x-kluster
+# och klassades därför som blankett — varpå läsordnings- och kolumnreglerna
+# aldrig kördes (sju sidor i rad). Diskriminanten är breddfördelningen:
+# justerade prosarader delar alla spaltens bredd, en blanketts fältetiketter
+# spretar. Uppmätt median/P90-kvot: radprosa 0,82–0,99 (skymningsmorker s. 1–7,
+# mervyn-peak s. 3, elefanten s. 8), äkta blanketter 0,34–0,57 (del I s. 67–68,
+# del II s. 53/57, del III s. 24, terminal-state s. 4/25). Gränsen läggs i
+# luckan.
+PAGE_PROSE_WIDTH_RATIO = 0.70
 # `agarlost-band`: kör bara ägarlöshetssignalerna på en i allt väsentligt
 # bunden sida — under den här andelen ägda textband är ett ägarlöst band
 # bindningens kända skuld, inte en kedja som glidit.
@@ -594,7 +604,32 @@ def rule_column_merge(elements):
     return hits
 
 
-def _column_of(el, elements):
+def _column_bounds(elements):
+    """Sidans spalter som [(namn, lo, hi)] i x, ur elementens vänsterkanter.
+
+    Tvåspaltig som förut (gräns vid sidans mitt), men en sida vars smala
+    element har vänsterkanter i alla tre tredjedelsbanden är TRESPALTIG
+    (BQ-002: äventyrsbockerna och Sinkadus-artiklarna) och delas i tredjedelar.
+    Banden behöver inte träffa spaltmarginalen exakt — de ska bara skilja
+    spalterna åt, och uppmätt ligger vänsterkanterna vid ~0,08/0,38/0,68.
+    """
+    colw = column_width(elements)
+    if not colw:
+        return None
+    xs = []
+    for el in elements:
+        box = _bbox(el)
+        if box and box[2] <= colw * WIDE_ELEMENT:
+            xs.append(box[0])
+    tredjedelar = [sum(1 for x in xs if lo <= x < hi)
+                   for lo, hi in ((0.0, 1 / 3), (1 / 3, 2 / 3), (2 / 3, 1.01))]
+    if all(n >= MIN_COLUMN_ELEMENTS for n in tredjedelar):
+        return [("vänsterkolumn", 0.0, 1 / 3), ("mittkolumn", 1 / 3, 2 / 3),
+                ("högerkolumn", 2 / 3, 1.01)]
+    return [("vänsterkolumn", 0.0, 0.5), ("högerkolumn", 0.5, 1.01)]
+
+
+def _column_of(el, elements, bounds=None):
     """Vilken spalt elementets bbox FAKTISKT ligger i — etiketten struntar vi i.
 
     Regionnamnet kommer ur uppmätningen och kan vara fel. På sida 4 låg
@@ -608,51 +643,78 @@ def _column_of(el, elements):
     if not box:
         return None
     colw = column_width(elements)
-    # Utan uppmätt spaltbredd finns ingen tvåspaltsgeometri att döma mot.
+    # Utan uppmätt spaltbredd finns ingen spaltgeometri att döma mot.
     if not colw or box[2] > colw * WIDE_ELEMENT:
         return None
-    return "högerkolumn" if box[0] >= 0.5 else "vänsterkolumn"
+    if bounds is None:
+        bounds = _column_bounds(elements)
+    for namn, lo, hi in bounds or []:
+        if lo <= box[0] < hi:
+            return namn
+    return None
 
 
 def rule_column_interleaving(elements):
-    """Högerkolumnselement som ligger före vänsterkolumnen i arrayen.
+    """Element ur en senare spalt som ligger före en tidigare i arrayen.
 
-    Läsordningen på en tvåspaltssida är hela vänsterspalten, sedan hela
-    högerspalten. Ett högerkolumnselement inklämt före vänsterspalten är
-    felplacerat — det inträffade på sida 40, där högerkolumnens första rad låg
-    som element nr 2, före hela vänsterspalten. Den varianten syns inte i den
-    y-baserade kontrollen nedan, eftersom elementet ligger först i sin egen spalt.
+    Läsordningen på en flerspaltig sida är hela vänsterspalten, sedan nästa
+    spalt, och så vidare. Ett högerkolumnselement inklämt före vänsterspalten
+    är felplacerat — det inträffade på sida 40, där högerkolumnens första rad
+    låg som element nr 2, före hela vänsterspalten. Den varianten syns inte i
+    den y-baserade kontrollen nedan, eftersom elementet ligger först i sin
+    egen spalt. På en trespaltig sida prövas varje spaltpar i läsordning
+    (vänster→mitt, vänster→höger, mitt→höger).
     """
-    left_idx = [i for i, el in enumerate(elements)
-                if _column_of(el, elements) == "vänsterkolumn"]
-    right = [(i, el) for i, el in enumerate(elements)
-             if _column_of(el, elements) == "högerkolumn"]
-    if len(left_idx) < MIN_COLUMN_ELEMENTS or len(right) < MIN_COLUMN_ELEMENTS:
+    bounds = _column_bounds(elements)
+    if not bounds:
         return []
+    per_spalt = {namn: [] for namn, _, _ in bounds}
+    for i, el in enumerate(elements):
+        namn = _column_of(el, elements, bounds)
+        if namn:
+            per_spalt[namn].append((i, el))
+    ordning = [namn for namn, _, _ in bounds]
     hits = []
-    for idx, el in right:
-        after = sum(1 for i in left_idx if i > idx)
-        # Nästan hela vänsterspalten ligger EFTER elementet — det är inte en
-        # spaltväxling mitt i sidan utan en rad som hamnat i början av arrayen.
-        if after < INTERLEAVE_SHARE * len(left_idx):
+    # Ett element som ligger före FLERA tidigare spalter (höger före både
+    # vänster och mitt) är ändå ETT fynd — flagga det en gång, mot den första
+    # spalten i läsordningen.
+    flaggade = set()
+    for fore_ix in range(len(ordning) - 1):
+        fore = ordning[fore_ix]
+        fore_idx = [i for i, _ in per_spalt[fore]]
+        if len(fore_idx) < MIN_COLUMN_ELEMENTS:
             continue
-        # Korta element är sidhuvud/tabellceller, inte brödtextrader ur spalten
-        # — men en RUBRIK undantas: den är kort av naturen, och det är just
-        # rubriker som hamnar först i arrayen (s. 4: högerspaltens
-        # `ATT LEDA SPELET` låg som element nr 2, så hela vänsterspalten
-        # renderades under en rubrik den inte tillhör).
-        if (el.get("type") != "heading"
-                and len(el.get("text") or "") < MIN_MERGE_TEXT):
-            continue
-        hits.append((el,
-                     "Heuristik (läsordning): elementet hör till högerkolumnen "
-                     "men ligger på plats %d i arrayen, före %d av "
-                     "vänsterkolumnens %d element. Läsordningen är hela "
-                     "vänsterspalten, sedan hela högerspalten, och exporten "
-                     "följer arrayordningen literalt. Kontrollera mot PNG:n var "
-                     "raden hör — högerspaltens första rad fortsätter ofta "
-                     "grammatiskt ur vänsterspaltens sista."
-                     % (idx, after, len(left_idx))))
+        for senare in ordning[fore_ix + 1:]:
+            if len(per_spalt[senare]) < MIN_COLUMN_ELEMENTS:
+                continue
+            for idx, el in per_spalt[senare]:
+                if idx in flaggade:
+                    continue
+                after = sum(1 for i in fore_idx if i > idx)
+                # Nästan hela den tidigare spalten ligger EFTER elementet —
+                # det är inte en spaltväxling mitt i sidan utan en rad som
+                # hamnat i början av arrayen.
+                if after < INTERLEAVE_SHARE * len(fore_idx):
+                    continue
+                # Korta element är sidhuvud/tabellceller, inte brödtextrader
+                # ur spalten — men en RUBRIK undantas: den är kort av naturen,
+                # och det är just rubriker som hamnar först i arrayen (s. 4:
+                # högerspaltens `ATT LEDA SPELET` låg som element nr 2, så
+                # hela vänsterspalten renderades under en rubrik den inte
+                # tillhör).
+                if (el.get("type") != "heading"
+                        and len(el.get("text") or "") < MIN_MERGE_TEXT):
+                    continue
+                flaggade.add(idx)
+                hits.append((el,
+                             "Heuristik (läsordning): elementet hör till %s "
+                             "men ligger på plats %d i arrayen, före %d av "
+                             "%ss %d element. Läsordningen är spalt för spalt "
+                             "i sidled, och exporten följer arrayordningen "
+                             "literalt. Kontrollera mot PNG:n var raden hör — "
+                             "en spalts första rad fortsätter ofta grammatiskt "
+                             "ur den föregående spaltens sista."
+                             % (senare, idx, after, fore, len(fore_idx))))
     return hits
 
 
@@ -1379,16 +1441,48 @@ def classify_page(elements):
              if len((el.get("text") or "").strip()) <= TABLE_CELL_MAX_TEXT]
     clusters = _x_clusters([_bbox(el)[0] for el in body])
     if (len(korta) >= PAGE_FORM_SHORT_SHARE * len(body)
-            and len(clusters) >= PAGE_FORM_MIN_CLUSTERS):
+            and len(clusters) >= PAGE_FORM_MIN_CLUSTERS
+            and not _row_prose(body)):
         return PAGE_FORM
 
     regions = {}
     for el in body:
         regions[_region(el)] = regions.get(_region(el), 0) + 1
-    if (regions.get("vänsterkolumn", 0) >= MIN_COLUMN_ELEMENTS
-            and regions.get("högerkolumn", 0) >= MIN_COLUMN_ELEMENTS):
+    # Spaltnamnen varierar med mätningen (`vänsterkolumn`/`mittkolumn`/
+    # `högerkolumn`, äldre `mittenkolumn`, namnlösa `kolumn 1..3`). Två fyllda
+    # spaltregioner räcker som prosasignal — kravet på just vänster+höger
+    # missade varje trespaltig sida vars tredje spalt bar statblock (s. 6).
+    kolumner = [r for r, n in regions.items()
+                if n >= MIN_COLUMN_ELEMENTS and "kolumn" in r]
+    if len(kolumner) >= 2:
         return PAGE_PROSE
     return PAGE_OTHER
+
+
+def _row_prose(body):
+    """Är sidan löptext transkriberad en rad per element?
+
+    Två mått, båda nödvändiga. Justerade prosarader delar alla sin spalts
+    bredd, så breddfördelningen är tät: medianen ligger vid P90 (kvot
+    0,82–0,99 uppmätt, mot 0,34–0,57 för korpusens äkta blankettsidor). Men
+    en blankett med ENHETLIGA fältetiketter har också tät fördelning — det
+    som skiljer är att prosaraden dessutom FYLLER sin spalt: medianbredden
+    når spaltdelningen (avståndet mellan x-klustren), uppmätt 0,91 för
+    radprosa mot 0,36 för fältetiketter i samma klusterläggning.
+    """
+    widths = sorted(_bbox(el)[2] for el in body if _bbox(el))
+    if len(widths) < MIN_COLUMN_ELEMENTS:
+        return False
+    p90 = _percentile(widths, 0.90)
+    med = _percentile(widths, 0.50)
+    if not p90 or med < PAGE_PROSE_WIDTH_RATIO * p90:
+        return False
+    clusters = _x_clusters([_bbox(el)[0] for el in body if _bbox(el)])
+    if len(clusters) < 2:
+        return False
+    centra = sorted((lo + hi) / 2 for lo, hi in clusters)
+    delning = min(b - a for a, b in zip(centra, centra[1:]))
+    return med >= PAGE_PROSE_WIDTH_RATIO * delning
 
 
 # ---------------------------------------------------------------------------

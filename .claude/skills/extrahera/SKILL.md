@@ -194,6 +194,13 @@ Varje element: `text` (utom table/statblock/list), `confidence` (0–1),
 `source.region` (t.ex. "vänsterkolumn") och `source.bbox`. Osäkra ord markeras
 `[?]` i texten och listas i `uncertain`.
 
+Kursiv: en helt kursiv rad får `"style": "italic"`. Ett ENSTAKA kursivt ord
+inne i en rad får `data.style_spans` — en lista
+`{"start": N, "end": N, "style": "italic"}` med teckenintervall i `text`
+(end exklusiv, på ordgränser). Texten skrivs alltid ren; exporten renderar
+spans som `*…*`. Tappa aldrig en tryckt kursivväxling tyst (BQ-003,
+MUT-AVE-skymningsmorker: `rollpersonerna redan *är* vilse!`).
+
 ### `source.bbox` — hämtas ur mätningen, gissas aldrig
 
 `bbox` är `[x, y, bredd, höjd]`, normaliserat mot sidans mått, med **y räknat

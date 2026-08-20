@@ -348,6 +348,30 @@ SPLIT_MAX_CROSS_DENSITY = 0.01
 # OVANFÖR och NEDANFÖR bandet — det har inga glyfer, bara genomlöpande streck.
 SPLIT_CROSS_RUN = 0.35
 
+# --- Kantskugga (BQ-001, MUT-AVE-skymningsmorker) ---------------------------
+#
+# Skannerns gråa kantskugga ligger i pappersmarginalen och registreras som
+# bläck: på s. 1 drog den fem band ut till x≈0 (facit: spaltens 0,086), på
+# s. 4 slog den på HÖGERkanten (en isolerad fläck 0,93 < x < 0,985 gav e149
+# bredd 0,327 mot spaltens 0,268), och på s. 5 födde den ett helt FANTOMBAND i
+# nedre vänstra hörnet som sidfoten bands till. Maskeringen måste därför sitta
+# FÖRE bandindelningen, inte bara i bandets x-mätning.
+#
+# Skuggan skiljs från sats på sin svärta: uppmätt över fem sidor toppar den
+# på 0,53–0,64 av sidans satssvärta (s. 5:s hörnfläck är värst: svärta 163 mot
+# ink_ref 255 i mätupplösningen), medan en kolumn genom en verklig glyf når
+# nära fullsvärta — trycket är svart, det är skuggan som är grå. En bildkolumn
+# eller bildrad UTAN någon pixel över den här andelen av satssvärtan innehåller
+# alltså ingen sats, och närmast sidkanten är den skugga eller tom marginal —
+# båda maskas riskfritt.
+EDGE_INK_SHARE = 0.7
+# Hur långt in från varje sidkant sådana tomma kolumner/rader får nollas, som
+# andel av sidmåttet. Uppmätt: skuggorna når som längst in till x=0,085
+# (textmarginalen börjar 0,086); folio och sidfot ligger innanför 0,05 från
+# underkanten men har glyfsvärta och stoppar svepet själva. Taket finns för
+# att en nästan tom sida inte ska få halva satsytan nollad.
+EDGE_MASK_MAX = 0.12
+
 # Bandets bakgrundsnivå i `_extent` tas som den här percentilen av svärtan
 # längs bandet — låg nog att träffa pappret på en vanlig rad, hög nog att inte
 # fastna i en enstaka ljus pixel mitt i en tonplatta.
@@ -1388,12 +1412,59 @@ def _box(x0, x1, top, bottom, width, height):
             round((bottom - top) / height, 6)]
 
 
+def _edge_shadow_clean(dark):
+    """Nolla skanningens kantskugga innan någon mätning ser bilden (BQ-001).
+
+    Svep från varje sidkant inåt: en bildkolumn (eller bildrad) vars mörkaste
+    pixel aldrig når `EDGE_INK_SHARE` av sidans satssvärta innehåller ingen
+    sats — närmast kanten är den skannerskugga eller tom marginal, och båda
+    nollas. Svepet stannar vid första kolumn/rad med äkta bläck (en folio, en
+    utfallande illustration) och når aldrig längre in än `EDGE_MASK_MAX`.
+
+    Vinsten är trefaldig, alla tre uppmätta på MUT-AVE-skymningsmorker:
+    banden slutar mätas från skuggan i stället för satsen (s. 1, s. 3, s. 5
+    vänsterkant; s. 2, s. 4 högerkant), rena skuggband vid sidans över- och
+    underkant uppstår inte alls (s. 3 band 0–1, s. 7 band 0), och fantombandet
+    som gav sidfoten dubbel höjd (s. 5 band 219) föds aldrig.
+    """
+    ink_ref = float(np.percentile(dark, 99.9))
+    if ink_ref <= 0:
+        return dark
+    level = EDGE_INK_SHARE * ink_ref
+    height, width = dark.shape
+
+    def spann(maxvarden, tak):
+        i = 0
+        while i < tak and maxvarden[i] < level:
+            i += 1
+        j = len(maxvarden)
+        while j > len(maxvarden) - tak and maxvarden[j - 1] < level:
+            j -= 1
+        return i, j
+
+    v, h = spann(dark.max(axis=0), int(EDGE_MASK_MAX * width))
+    t, b = spann(dark.max(axis=1), int(EDGE_MASK_MAX * height))
+    if v == 0 and h == width and t == 0 and b == height:
+        return dark
+    # Fyll med sidans egen bakgrundsnivå, inte med noll: mot en grå eller
+    # rastrerad botten (i-drakens-klor s. 5) skulle en nollad marginal skapa
+    # en konstgjord kontrastkant som `row_profile` läser som en rad.
+    botten = float(np.median(dark))
+    out = dark.copy()
+    out[:, :v] = botten
+    out[:, h:] = botten
+    out[:t, :] = botten
+    out[b:, :] = botten
+    return out
+
+
 def measure_dark(dark):
     """Mät radboxar ur en svärtbild. Returnerar (rader, spalter).
 
     Bruten ut ur `measure_page` så att den går att testa på syntetiska bilder
     utan PDF — och så att kalibrering mot en känd sida inte kräver rendering.
     """
+    dark = _edge_shadow_clean(dark)
     height, width = dark.shape
 
     # Kroppens utsträckning avgörs först: sidhuvud och sidfot spänner över
